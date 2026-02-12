@@ -1,26 +1,29 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
+@theme {
+  /* falu-red */
+  --color-falu-red-50: #fef2f2;
+  --color-falu-red-100: #ffe1e2;
+  --color-falu-red-200: #ffc9cb;
+  --color-falu-red-300: #fea3a6;
+  --color-falu-red-400: #fc6d72;
+  --color-falu-red-500: #f43f46;
+  --color-falu-red-600: #e12128;
+  --color-falu-red-700: #bd181e;
+  --color-falu-red-800: #9c181d;
+  --color-falu-red-900: #851b1f;
+  --color-falu-red-950: #47080a;
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
-
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  /* yellow-orange */
+  --color-yellow-orange-50: #fff8eb;
+  --color-yellow-orange-100: #feeac7;
+  --color-yellow-orange-200: #fdd48a;
+  --color-yellow-orange-300: #fbb03b;
+  --color-yellow-orange-400: #fa9e25;
+  --color-yellow-orange-500: #f47a0c;
+  --color-yellow-orange-600: #d85607;
+  --color-yellow-orange-700: #b3390a;
+  --color-yellow-orange-800: #922b0e;
+  --color-yellow-orange-900: #78250f;
+  --color-yellow-orange-950: #451003;
 }
