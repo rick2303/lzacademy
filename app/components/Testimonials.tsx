@@ -1,5 +1,13 @@
+"use client";
+
 import { Container } from "./Container";
 import ReactCountryFlag from "react-country-flag";
+
+import { Swiper, SwiperSlide } from "swiper/react";
+import { Autoplay, Pagination } from "swiper/modules";
+
+import "swiper/css";
+import "swiper/css/pagination";
 
 type Testimonial = {
     name: string;
@@ -7,24 +15,49 @@ type Testimonial = {
     countryCode: string;
     text: string;
 };
+
 const testimonials: Testimonial[] = [
     {
-        name: "María Fernández",
-        country: "España",
-        countryCode: "ES",
-        text: "Me ayudó a crear rutina y por fin hablar sin miedo.",
+        name: "Mónica Alvarado de Paz ",
+        country: "Guatemala",
+        countryCode: "GT",
+        text: "El curso 590 me ayudó a aprender inglés después de años de intentar entender el idioma. Mejoró mi confianza y en un mes, comencé a ver los cambios.",
     },
     {
-        name: "Juan Pérez",
-        country: "Honduras",
-        countryCode: "HN",
-        text: "Con el método entendí cómo practicar cada día sin improvisar.",
+        name: "Sharick González",
+        country: "Ecuador",
+        countryCode: "EC",
+        text: "Este curso me ayudó a mejorar y reforzar mucho en mi nivel A2 y tambien hizo que en mi escuela entendiera fácilmente las clases de inglés.",
     },
     {
-        name: "Camila Rojas",
-        country: "Chile",
-        countryCode: "CL",
-        text: "Ahora sí tengo un plan diario. Me siento más segura al hablar.",
+        name: "Anónimo",
+        country: "Estados Unidos",
+        countryCode: "US",
+        text: "El método 590 es completo, refuerza conocimiento, lectura, escritura y speaking, el material proporcionado es totalmente fácil de usar, me ha ayudado mucho.",
+    },
+    {
+        name: "Valeria Aguilar",
+        country: "México",
+        countryCode: "MX",
+        text: "Es un método en donde te acostumbras a la semana y se vuelve un hábito, en un mes tuve más avance que con otros cursos particulares, lo recomiendo mucho.",
+    },
+    {
+        name: "Brendalix Ortega",
+        country: "Colombia",
+        countryCode: "CO",
+        text: "Aprendí a defenderme en inglés, puedo comunicar, realizar preguntas a otras personas y entender lo que me dicen mis compañeros. Super recomiendo este método y curso.",
+    },
+    {
+        name: "Mhia Olvera",
+        country: "México",
+        countryCode: "MX",
+        text: "Me ayudó a entender más la gramática, es muy fácil de aprender. El ser algo que integras en tu día a día, ayuda demasiado a adaptarte y a entenderlo mejor, vale totalmente la pena.",
+    },
+    {
+        name: "Anónimo",
+        country: "El Salvador",
+        countryCode: "SV",
+        text: "El método 590 me ha ayudado mucho a ser más fluida y mejorar mi confianza con el inglés. Tener una rutina de estudio cada día, hace que sea más fácil para mí seguirla.",
     },
 ];
 
@@ -38,7 +71,7 @@ function Card({
     return (
         <div
             className={[
-                "rounded-2xl bg-white p-6 shadow-sm ring-1 ring-black/5",
+                "h-full rounded-2xl bg-white p-6 shadow-sm ring-1 ring-black/5",
                 "transition hover:shadow-md hover:-translate-y-0.5",
                 className,
             ].join(" ")}
@@ -88,43 +121,71 @@ export function TestimonialsSection() {
                     </p>
                 </div>
 
-                <div className="mt-10 grid grid-cols-1 gap-6 md:grid-cols-3">
-                    {testimonials.map((t) => (
-                        <Card key={`${t.name}-${t.country}`} className="hover:ring-yellow-orange-200">
-                            <Pill tone="orange">Experiencia</Pill>
+                {/* Carousel */}
+                <div className="mt-10">
+                    <Swiper
+                        modules={[Autoplay, Pagination]}
+                        loop
+                        centeredSlides
+                        grabCursor
+                        autoplay={{ delay: 4500, disableOnInteraction: false }}
+                        pagination={{ clickable: true }}
+                        // ✅ el default (mobile-first) es 1 slide
+                        slidesPerView={1}
+                        spaceBetween={14}
+                        // ✅ para que en mobile se vea full-width y se sienta “pro”
+                        style={{ paddingBottom: "32px" }}
+                        breakpoints={{
+                            640: { slidesPerView: 1.15, spaceBetween: 16 }, // “peek”
+                            768: { slidesPerView: 2, spaceBetween: 18, centeredSlides: false },
+                            1024: { slidesPerView: 3, spaceBetween: 20, centeredSlides: false },
+                        }}
+                    >
+                        {testimonials.map((t) => (
+                            <SwiperSlide
+                                key={`${t.name}-${t.country}-${t.text.slice(0, 12)}`}
+                                className="h-auto"
+                            >
+                                {/* ✅ h-full + w-full para que no se “encojan” en mobile */}
+                                <div className="h-full w-full">
+                                    <Card className="h-full hover:ring-yellow-orange-200">
+                                        <Pill tone="orange">Experiencia</Pill>
 
-                            <p className="mt-4 text-sm text-zinc-700 leading-relaxed">
-                                <span className="text-zinc-400 font-extrabold">“</span>
-                                {t.text}
-                                <span className="text-zinc-400 font-extrabold">”</span>
-                            </p>
+                                        <p className="mt-4 text-sm text-zinc-700 leading-relaxed">
+                                            <span className="text-zinc-400 font-extrabold">“</span>
+                                            {t.text}
+                                            <span className="text-zinc-400 font-extrabold">”</span>
+                                        </p>
 
-                            <div className="mt-5 flex items-center gap-3">
-                                {/* banderita */}
-                                <span className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-zinc-50 ring-1 ring-inset ring-zinc-200">
-                                    <ReactCountryFlag
-                                        countryCode={t.countryCode}
-                                        svg
-                                        style={{
-                                            width: "16px",
-                                            height: "16px",
-                                            borderRadius: "100px",
-                                        }}
-                                        aria-label={t.country}
-                                        title={t.country}
-                                    />
-                                </span>
+                                        <div className="mt-5 flex items-center gap-3">
+                                            <span className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-zinc-50 ring-1 ring-inset ring-zinc-200">
+                                                <ReactCountryFlag
+                                                    countryCode={t.countryCode}
+                                                    svg
+                                                    style={{
+                                                        width: "16px",
+                                                        height: "16px",
+                                                        borderRadius: "999px",
+                                                    }}
+                                                    aria-label={t.country}
+                                                    title={t.country}
+                                                />
+                                            </span>
 
-                                {/* nombre + país */}
-                                <div className="min-w-0">
-                                    <p className="text-sm font-semibold text-zinc-900 leading-tight">
-                                        {t.name}
-                                    </p>
-                                    <p className="text-xs text-zinc-500 leading-tight">{t.country}</p>
+                                            <div className="min-w-0">
+                                                <p className="text-sm font-semibold text-zinc-900 leading-tight truncate">
+                                                    {t.name}
+                                                </p>
+                                                <p className="text-xs text-zinc-500 leading-tight">
+                                                    {t.country}
+                                                </p>
+                                            </div>
+                                        </div>
+                                    </Card>
                                 </div>
-                            </div>
-                        </Card>
-                    ))}
+                            </SwiperSlide>
+                        ))}
+                    </Swiper>
                 </div>
             </Container>
         </section>

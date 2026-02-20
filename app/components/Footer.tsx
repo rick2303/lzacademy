@@ -1,8 +1,5 @@
 import { Container } from "./Container";
 
-const FORM_URL =
-  "https://docs.google.com/forms/d/e/1FAIpQLSfV00z8jTW-0JL_znLT5yhsU9TmfVcvo3hxhgDXWiobA0nodQ/viewform";
-
 export function Footer() {
   return (
     <footer className="mt-14  mb-7 border-t border-zinc-200/70 pt-8">
@@ -10,7 +7,7 @@ export function Footer() {
         <div className="grid gap-3 sm:grid-cols-3 sm:items-center">
           {/* Izquierda */}
           <p className="text-xs text-zinc-500 sm:justify-self-start">
-            © {new Date().getFullYear()} LZ Academy. Todos los derechos reservados.
+            © {new Date().getFullYear()} LZ English Academy. Todos los derechos reservados.
           </p>
 
           {/* Centro */}
@@ -42,9 +39,7 @@ export function Footer() {
           {/* Derecha */}
           <div className="flex justify-start sm:justify-end">
             <a
-              href={FORM_URL}
-              target="_blank"
-              rel="noreferrer"
+              href="/#form"
               className="text-xs font-semibold text-falu-red-800 hover:text-falu-red-900"
             >
               Inscribirme →

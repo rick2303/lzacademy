@@ -1,281 +1,156 @@
-import Link from "next/link";
 import { Container } from "../components/Container";
-
-const FORM_URL =
-  "https://docs.google.com/forms/d/e/1FAIpQLSfV00z8jTW-0JL_znLT5yhsU9TmfVcvo3hxhgDXWiobA0nodQ/viewform";
-
-function Card({
-  children,
-  className = "",
-}: {
-  children: React.ReactNode;
-  className?: string;
-}) {
-  return (
-    <div
-      className={[
-        "rounded-2xl bg-white p-6 shadow-sm ring-1 ring-black/5",
-        "transition hover:shadow-md hover:-translate-y-0.5",
-        className,
-      ].join(" ")}
-    >
-      {children}
-    </div>
-  );
-}
-
-function Pill({
-  children,
-  tone = "falu",
-}: {
-  children: React.ReactNode;
-  tone?: "falu" | "orange" | "neutral";
-}) {
-  const styles =
-    tone === "orange"
-      ? "bg-yellow-orange-50 text-yellow-orange-900 ring-yellow-orange-200"
-      : tone === "falu"
-        ? "bg-falu-red-50 text-falu-red-900 ring-falu-red-200"
-        : "bg-zinc-50 text-zinc-700 ring-zinc-200";
-
-  return (
-    <span
-      className={[
-        "inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold ring-1 ring-inset",
-        styles,
-      ].join(" ")}
-    >
-      {children}
-    </span>
-  );
-}
+import Card from "../components/Card";
+import Pill from "../components/Pill";
+import { PrimaryButton, SecondaryButton } from "../components/Buttons";
+import Link from "next/link";
+import SEO from "../components/SEO";
 
 const sesiones = [
-  {
-    n: "01",
-    title: "Teoría y estructura (el mapa)",
-    accent: "falu" as const,
-    intro:
-      "Aquí construís la base del día: patrones, estructura y claridad.",
-    body: [
-      "A diferencia de un niño, el adulto necesita un mapa mental para entender cómo funciona el idioma.",
-      "Esta sesión te da dirección: lo que estás aprendiendo, por qué se usa así y cómo aplicarlo.",
-      "No es teoría por teoría. Es estructura para acelerar el proceso y preparar el cerebro para todo lo que viene.",
-    ],
-  },
-  {
-    n: "02",
-    title: "Listening (exposición real)",
-    accent: "orange" as const,
-    intro:
-      "Inmersión auditiva con apoyo visual para entrenar comprensión real.",
-    body: [
-      "El cerebro aprende por exposición constante.",
-      "Se trabaja viendo una película o contenido en inglés con subtítulos en inglés.",
-      "Esto entrena oído (sonidos, ritmo, pronunciación), comprensión real y reconocimiento de palabras en contexto.",
-      "Aquí el idioma comienza a sentirse natural.",
-    ],
-    bullets: [
-      "Oído (sonidos, ritmo, pronunciación)",
-      "Comprensión real",
-      "Reconocimiento de palabras dentro de contexto",
-    ],
-  },
-  {
-    n: "03",
-    title: "Memorización de vocabulario (construcción de base)",
-    accent: "falu" as const,
-    intro:
-      "Construís el material del idioma: palabras, frases y expresiones.",
-    body: [
-      "No es memorizar por memorizar. Es construir vocabulario como herramienta diaria.",
-      "Se trabaja de forma organizada y repetida para que pase de corto plazo a largo plazo.",
-      "Aquí se construye el “banco de palabras” que después se usa al hablar y escribir.",
-    ],
-  },
-  {
-    n: "04",
-    title: "Lectura (estructura interna del idioma)",
-    accent: "orange" as const,
-    intro:
-      "Leer entrena al cerebro a procesar inglés con más profundidad.",
-    body: [
-      "Se lee un libro (adaptado al nivel) para desarrollar comprensión sostenida e intuición del idioma.",
-      "Aprendés gramática en contexto, orden natural de frases, conectores y estilo real.",
-      "Leer no solo enseña inglés: enseña cómo piensa el inglés.",
-    ],
-    bullets: [
-      "Comprensión sostenida",
-      "Intuición del idioma",
-      "Vocabulario contextual",
-      "Fluidez mental al procesar estructuras",
-    ],
-  },
-  {
-    n: "05",
-    title: "Producción: práctica hablada y escrita (donde nace la fluidez)",
-    accent: "falu" as const,
-    intro: "El idioma se vuelve tuyo cuando lo producís.",
-    body: [
-      "Esta sesión transforma el conocimiento en habilidad.",
-      "Speaking Challenge: hablar (aunque sea solo) y enviar audio / responder un reto.",
-      "Journaling: escribir para entrenar pensamiento y expresión real.",
-      "Aquí se consolidan las cuatro sesiones anteriores. Todo lo que escuchás, memorizás y leés… debe salir de vos.",
-    ],
-    bullets: ["Speaking Challenge", "Journaling", "Consolidación diaria"],
-  },
+    {
+        n: "01",
+        title: "Teoría (Estructura)",
+        description:
+            "En esta sesión, entendemos la forma del idioma. Es como construir los cimientos antes de comenzar a hablar o escuchar. Aprenderemos la estructura básica que vamos a utilizar en las siguientes sesiones.",
+        accent: "falu" as const,
+    },
+    {
+        n: "02",
+        title: "Escuchar (Input)",
+        description:
+            "Escuchar es el inicio del lenguaje en los bebés. En esta sesión, escuchamos inglés con subtítulos en inglés para conectar sonido, forma escrita y patrón. No se trata de entender todo, sino de entrenar el cerebro.",
+        accent: "orange" as const,
+    },
+    {
+        n: "03",
+        title: "Memorización (Repetición de palabras)",
+        description:
+            "Al igual que los bebés imitan sonidos, en esta sesión repetimos palabras en contexto. Veremos palabras en frases reales para ayudar a nuestro cerebro a recordar el vocabulario de manera efectiva.",
+        accent: "falu" as const,
+    },
+    {
+        n: "04",
+        title: "Lectura (Consolidación)",
+        description:
+            "Aquí leemos en inglés sin traducir. De igual manera que un niño aprende a leer para consolidar su conocimiento del idioma, nosotros consolidamos lo aprendido a través de la lectura en voz alta.",
+        accent: "orange" as const,
+    },
+    {
+        n: "05",
+        title: "Práctica (Producción)",
+        description:
+            "Esta sesión es donde realmente hacemos nuestro propio idioma. Escribimos y hablamos en inglés, sin miedo. A través de la escritura y el habla, solidificamos lo aprendido y hacemos del inglés una parte de nuestra vida diaria.",
+        accent: "falu" as const,
+    },
 ];
 
 export default function SesionesPage() {
-  return (
-    <main className="bg-white text-zinc-900">
-      <section className="relative overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-b from-falu-red-50 via-white to-yellow-orange-50" />
-        <div className="pointer-events-none absolute -top-24 left-1/2 h-72 w-72 -translate-x-1/2 rounded-full bg-falu-red-300/22 blur-3xl" />
-        <div className="pointer-events-none absolute -bottom-24 right-10 h-72 w-72 rounded-full bg-yellow-orange-300/22 blur-3xl" />
+    return (
+        <>
+            <SEO
+                title="Sesiones del Método 590 | Aprende inglés en 90 días"
+                description="Explora las 5 sesiones diarias del Método 590: Teoría, Escuchar, Memorización, Lectura y Práctica. Una rutina estructurada para aprender inglés en 90 días."
+                url="https://lz-englishacademy.com/sesiones"
+                image="/images/sesiones-590-hero.jpg"
+            />
+            <main className="bg-white text-zinc-900">
+                {/* HERO */}
+                <section className="relative overflow-hidden">
+                    <div className="absolute inset-0 bg-linear-to-b from-falu-red-50 via-white to-yellow-orange-50" />
+                    <div className="pointer-events-none absolute -top-24 left-1/2 h-72 w-72 -translate-x-1/2 rounded-full bg-falu-red-300/25 blur-3xl" />
+                    <div className="pointer-events-none absolute -bottom-24 right-10 h-72 w-72 rounded-full bg-yellow-orange-300/25 blur-3xl" />
 
-        <Container>
-          <div className="relative py-12 sm:py-16">
-            <Pill tone="neutral">Estructura diaria</Pill>
-            <h1 className="mt-4 text-4xl font-extrabold tracking-tight sm:text-6xl">
-              Las 5 sesiones del Método 590
-            </h1>
-            <p className="mt-5 max-w-3xl text-base text-zinc-600 sm:text-lg">
-              Cada sesión activa un canal distinto del cerebro para que el idioma
-              se convierta en experiencia y rutina.
-            </p>
+                    <Container>
+                        <div className="relative py-12 sm:py-16">
+                            <Pill tone="falu">Método 590</Pill>
+                            <h1 className="mt-4 text-4xl font-extrabold tracking-tight sm:text-6xl">
+                                Las 5 sesiones diarias del Método 590
+                            </h1>
+                            <p className="mt-5 max-w-3xl text-base text-zinc-600 sm:text-lg">
+                                El método está diseñado para activar el inglés en tu rutina diaria.
+                                Cada sesión tiene un propósito claro y está estructurada para
+                                facilitar el aprendizaje continuo.
+                            </p>
 
-            <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-              <a
-                href={FORM_URL}
-                target="_blank"
-                rel="noreferrer"
-                className="inline-flex items-center justify-center rounded-xl px-5 py-3 text-sm font-semibold text-white bg-yellow-orange-500 hover:bg-yellow-orange-600 active:bg-yellow-orange-700 transition shadow-sm"
-              >
-                Comenzar proceso
-              </a>
-              <Link
-                href="/metodo"
-                className="inline-flex items-center justify-center rounded-xl px-5 py-3 text-sm font-semibold text-falu-red-800 ring-1 ring-inset ring-falu-red-200 hover:bg-falu-red-50 transition"
-              >
-                Volver a Método
-              </Link>
-            </div>
-          </div>
-        </Container>
-      </section>
+                            <div className="mt-8 flex flex-col gap-3 sm:flex-row">
+                                <PrimaryButton>Comienza tu proceso</PrimaryButton>
+                            </div>
+                        </div>
+                    </Container>
+                </section>
 
-      <section className="py-12 sm:py-16">
-        <Container>
-          <div className="grid grid-cols-1 gap-6">
-            {sesiones.map((s) => {
-              const isOrange = s.accent === "orange";
-              return (
-                <Card key={s.n} className="relative overflow-hidden">
-                  <div
-                    className={[
-                      "pointer-events-none absolute -right-20 -top-20 h-60 w-60 rounded-full blur-3xl",
-                      isOrange ? "bg-yellow-orange-300/12" : "bg-falu-red-300/12",
-                    ].join(" ")}
-                  />
-
-                  <div className="relative">
-                    <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-                      <div className="flex items-start gap-4">
-                        <span
-                          className={[
-                            "inline-flex h-12 w-12 items-center justify-center rounded-2xl text-sm font-extrabold ring-1 ring-inset",
-                            isOrange
-                              ? "bg-yellow-orange-100 text-yellow-orange-900 ring-yellow-orange-200"
-                              : "bg-falu-red-100 text-falu-red-900 ring-falu-red-200",
-                          ].join(" ")}
-                        >
-                          {s.n}
-                        </span>
-
-                        <div>
-                          <div className="flex flex-wrap items-center gap-2">
-                            <Pill tone={isOrange ? "orange" : "falu"}>Sesión</Pill>
-                            <h2 className="text-xl font-extrabold tracking-tight">
-                              {s.title}
+                {/* SESIONES */}
+                <section className="py-12 sm:py-16">
+                    <Container>
+                        <div className="mx-auto max-w-3xl text-center">
+                            <Pill tone="neutral">Las 5 sesiones</Pill>
+                            <h2 className="mt-3 text-3xl font-extrabold tracking-tight sm:text-4xl">
+                                Estructura diaria de sesiones
                             </h2>
-                          </div>
-                          <p className="mt-2 text-sm text-zinc-600">{s.intro}</p>
+                            <p className="mt-4 text-zinc-600">
+                                Cinco bloques diarios que activan el idioma completo: escuchar,
+                                leer, escribir, hablar y pensar en inglés todos los días.
+                            </p>
                         </div>
-                      </div>
-                    </div>
 
-                    <div className="mt-5 grid grid-cols-1 gap-6 lg:grid-cols-12">
-                      <div className="lg:col-span-8 space-y-3 text-zinc-700">
-                        {s.body.map((p, idx) => (
-                          <p key={idx} className="text-sm leading-relaxed">
-                            {p}
-                          </p>
-                        ))}
-                      </div>
-
-                      <div className="lg:col-span-4">
-                        <div className="rounded-2xl bg-zinc-50 p-4 ring-1 ring-inset ring-zinc-200/70">
-                          <p className="text-xs font-semibold text-zinc-700">
-                            En esta sesión entrenás
-                          </p>
-
-                          <div className="mt-3 flex flex-wrap gap-2">
-                            {(s.bullets ?? ["Estructura", "Práctica", "Progreso"]).map(
-                              (b) => (
-                                <span
-                                  key={b}
-                                  className={[
-                                    "inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold ring-1 ring-inset",
-                                    isOrange
-                                      ? "bg-yellow-orange-50 text-yellow-orange-900 ring-yellow-orange-200"
-                                      : "bg-falu-red-50 text-falu-red-900 ring-falu-red-200",
-                                  ].join(" ")}
-                                >
-                                  {b}
-                                </span>
-                              ),
-                            )}
-                          </div>
+                        <div className="mt-10 grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+                            {sesiones.map((s) => (
+                                <Card key={s.n} className="p-5">
+                                    <div className="flex items-start justify-between gap-3">
+                                        <span
+                                            className={[
+                                                "inline-flex h-10 w-10 items-center justify-center rounded-2xl text-sm font-extrabold ring-1 ring-inset",
+                                                s.accent === "orange"
+                                                    ? "bg-yellow-orange-100 text-yellow-orange-900 ring-yellow-orange-200"
+                                                    : "bg-falu-red-100 text-falu-red-900 ring-falu-red-200",
+                                            ].join(" ")}
+                                        >
+                                            {s.n}
+                                        </span>
+                                        <Pill tone={s.accent === "orange" ? "orange" : "falu"}>Sesión</Pill>
+                                    </div>
+                                    <p className="mt-4 text-sm font-semibold text-zinc-900">{s.title}</p>
+                                    <p className="mt-2 text-sm text-zinc-600">{s.description}</p>
+                                </Card>
+                            ))}
                         </div>
-                      </div>
-                    </div>
-                  </div>
-                </Card>
-              );
-            })}
-          </div>
 
-          <div className="mt-10">
-            <Card className="bg-zinc-50">
-              <p className="text-sm font-semibold text-falu-red-900">
-                Cuando repetís estas cinco sesiones diariamente, el inglés deja de ser
-                una materia y se convierte en una rutina cerebral.
-              </p>
-              <p className="mt-2 text-sm text-zinc-700">
-                Esto no es estudiar inglés. Es vivirlo todos los días con intención.
-              </p>
-            </Card>
-          </div>
+                        <div className="mt-8 flex justify-center">
+                            <SecondaryButton href="/metodo">Ver el método completo →</SecondaryButton>
+                        </div>
+                    </Container>
+                </section>
 
-          <div className="mt-8 flex flex-col items-center gap-3 sm:flex-row sm:justify-center">
-            <a
-              href={FORM_URL}
-              target="_blank"
-              rel="noreferrer"
-              className="inline-flex items-center justify-center rounded-xl px-5 py-3 text-sm font-semibold text-white bg-yellow-orange-500 hover:bg-yellow-orange-600 active:bg-yellow-orange-700 transition shadow-sm"
-            >
-              Ir al formulario
-            </a>
-            <Link
-              href="/ciencia"
-              className="inline-flex items-center justify-center rounded-xl px-5 py-3 text-sm font-semibold text-falu-red-800 ring-1 ring-inset ring-falu-red-200 hover:bg-falu-red-50 transition"
-            >
-              Ver la ciencia →
-            </Link>
-          </div>
-        </Container>
-      </section>
-    </main>
-  );
+                {/* CTA FINAL */}
+                <section className="py-14 sm:py-18 bg-yellow-orange-50/35">
+                    <Container>
+                        <Card className="relative overflow-hidden">
+                            <div className="absolute -left-20 -top-20 h-60 w-60 rounded-full bg-falu-red-300/12 blur-3xl" />
+                            <div className="absolute -right-20 -bottom-20 h-60 w-60 rounded-full bg-yellow-orange-300/12 blur-3xl" />
+
+                            <div className="relative grid grid-cols-1 gap-6 lg:grid-cols-12 lg:items-center">
+                                <div className="lg:col-span-8">
+                                    <h3 className="text-2xl font-extrabold tracking-tight sm:text-3xl">
+                                        Comienza tu proceso con el Método 590
+                                    </h3>
+                                    <p className="mt-3 text-zinc-600">
+                                        Llena el formulario y te orientamos para iniciar.
+                                    </p>
+                                </div>
+
+                                <div className="lg:col-span-4 flex flex-col gap-3 sm:flex-row lg:justify-end">
+                                    <PrimaryButton>Inscribirme</PrimaryButton>
+                                    <Link
+                                        href="/como-funciona"
+                                        className="inline-flex items-center justify-center rounded-xl px-5 py-3 text-sm font-semibold text-falu-red-800 ring-1 ring-inset ring-falu-red-200 hover:bg-falu-red-50 transition"
+                                    >
+                                        Ver como funciona
+                                    </Link>
+                                </div>
+                            </div>
+                        </Card>
+                    </Container>
+                </section>
+            </main>
+        </>
+    );
 }

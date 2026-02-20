@@ -1,5 +1,4 @@
 @import "tailwindcss";
-
 @theme {
   /* falu-red */
   --color-falu-red-50: #fef2f2;
@@ -26,4 +25,10 @@
   --color-yellow-orange-800: #922b0e;
   --color-yellow-orange-900: #78250f;
   --color-yellow-orange-950: #451003;
+}
+
+body,
+html {
+  overflow-x: hidden;
+  width: 100%;
 }

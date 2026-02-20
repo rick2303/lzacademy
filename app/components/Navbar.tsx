@@ -6,15 +6,14 @@ import { useEffect, useRef, useState } from "react";
 import { usePathname } from "next/navigation";
 import { Container } from "./Container";
 
-const FORM_URL =
-  "https://docs.google.com/forms/d/e/1FAIpQLSfV00z8jTW-0JL_znLT5yhsU9TmfVcvo3hxhgDXWiobA0nodQ/viewform";
-
 const navItems = [
+  { href: "/", label: "Inicio" },
+  { href: "/historia", label: "Historia" },
   { href: "/metodo", label: "Método" },
-  { href: "/sesiones", label: "Sesiones" },
   { href: "/ciencia", label: "Ciencia" },
-  { href: "/mentora", label: "Mentora" },
+  { href: "/como-funciona", label: "Cómo funciona" },
 ];
+
 
 function IconMenu(props: React.SVGProps<SVGSVGElement>) {
   return (
@@ -74,23 +73,25 @@ export function Navbar() {
   }, [open]);
 
   return (
-    <header className="sticky top-0 z-50 border-b border-zinc-200/70 bg-white/90 backdrop-blur">
+    <header className="sticky top-0 z-60 border-b border-falu-red-200/50 bg-white/85 backdrop-blur">
       <Container>
         <div className="flex h-16 items-center justify-between gap-4">
           <Link href="/" className="flex items-center gap-3">
-            <span className="relative h-9 w-9 overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-black/5">
+            <span className="relative h-10 w-10 overflow-hidden rounded-full bg-white shadow-sm ring-1 ring-black/5">
               <Image
-                src="/lzacademy_logo2.png"
-                alt="LZ Academy"
+                src="/lzacademy_logo1.png"
+                alt="LZ English Academy"
                 fill
-                sizes="36px"
-                className="object-contain p-1"
+                sizes="40px"
+                className="object-cover"
                 priority
               />
             </span>
 
             <div className="leading-tight">
-              <p className="text-sm font-semibold text-zinc-900">LZ Academy</p>
+              <p className="text-sm font-semibold text-zinc-900">
+                LZ English Academy
+              </p>
               <p className="text-xs text-zinc-600">Método 590</p>
             </div>
           </Link>
@@ -117,10 +118,8 @@ export function Navbar() {
             </Link>
 
             <a
-              href={FORM_URL}
-              target="_blank"
-              rel="noreferrer"
-              className="hidden sm:inline-flex items-center justify-center rounded-xl px-4 py-2 text-sm font-semibold text-white bg-yellow-orange-500 hover:bg-yellow-orange-600 active:bg-yellow-orange-700 transition shadow-sm"
+              href="/#planes"
+              className="hidden sm:inline-flex items-center justify-center rounded-xl px-4 py-2 text-sm font-semibold text-white bg-falu-red-700 hover:bg-falu-red-800 active:bg-falu-red-900 transition shadow-sm"
             >
               Inscribirme
             </a>
@@ -129,79 +128,83 @@ export function Navbar() {
             <button
               type="button"
               onClick={() => setOpen(true)}
-              className="inline-flex h-10 w-10 items-center justify-center rounded-xl ring-1 ring-inset ring-zinc-200 hover:bg-zinc-50 transition md:hidden"
+              className="inline-flex h-10 w-10 items-center justify-center rounded-xl ring-1 ring-inset ring-falu-red-200 hover:bg-falu-red-50 transition md:hidden"
               aria-label="Abrir menú"
               aria-expanded={open}
             >
-              <IconMenu className="h-5 w-5 text-zinc-900" />
+              <IconMenu className="h-5 w-5 text-falu-red-900" />
             </button>
           </div>
         </div>
       </Container>
 
+      {/* MOBILE OVERLAY */}
       {open ? (
         <div
-          className="fixed inset-0 z-9999 md:hidden"
+          className="fixed inset-0 z-70 md:hidden"
           role="dialog"
           aria-modal="true"
           aria-label="Menú móvil"
         >
-          <div className="absolute inset-0 bg-white" />
-          <div className="absolute inset-0 bg-linear-to-b from-falu-red-50 via-white to-yellow-orange-50" />
-          <div className="pointer-events-none absolute inset-0">
-            <div className="absolute -top-28 -left-24 h-72 w-72 rounded-full bg-falu-red-300/10 blur-3xl" />
-            <div className="absolute -bottom-28 -right-24 h-72 w-72 rounded-full bg-yellow-orange-300/10 blur-3xl" />
-          </div>
+          {/* backdrop */}
+          <button
+            type="button"
+            aria-label="Cerrar menú"
+            onClick={() => setOpen(false)}
+            className="absolute inset-0 bg-black/40"
+          />
 
-          {/* CONTENIDO DEL MENÚ */}
-          <div className="relative">
-            {/* Header del menú */}
-            <div className="border-b border-zinc-200/70 bg-white">
-              <Container>
-                <div className="flex h-16 items-center justify-between">
-                  <Link
-                    href="/"
-                    onClick={() => setOpen(false)}
-                    className="flex items-center gap-3"
-                  >
-                    <span className="relative h-9 w-9 overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-black/5">
-                      <Image
-                        src="/lzacademy_logo2.png"
-                        alt="LZ Academy"
-                        fill
-                        sizes="36px"
-                        className="object-contain p-1"
-                        priority
-                      />
-                    </span>
-                    <div className="leading-tight">
-                      <p className="text-sm font-semibold text-zinc-900">LZ Academy</p>
-                      <p className="text-xs text-zinc-600">Método 590</p>
-                    </div>
-                  </Link>
+          {/* Panel */}
+          <div className="absolute inset-x-0 top-0">
+            <div className="mx-auto w-full max-w-3xl">
+              <div className="relative overflow-hidden border-b border-falu-red-200 bg-white shadow-xl">
+                {/* Fondo suave rojo */}
+                <div className="absolute inset-0 bg-linear-to-b from-falu-red-50 via-white to-white" />
+                <div className="pointer-events-none absolute -top-24 -left-24 h-72 w-72 rounded-full bg-falu-red-300/20 blur-3xl" />
+                <div className="pointer-events-none absolute -bottom-24 -right-24 h-72 w-72 rounded-full bg-falu-red-300/10 blur-3xl" />
 
-                  <button
-                    type="button"
-                    onClick={() => setOpen(false)}
-                    className="inline-flex h-10 w-10 items-center justify-center rounded-xl ring-1 ring-inset ring-zinc-200 hover:bg-zinc-50 transition"
-                    aria-label="Cerrar menú"
-                  >
-                    <IconX className="h-5 w-5 text-zinc-900" />
-                  </button>
-                </div>
-              </Container>
-            </div>
+                <Container>
+                  {/* header del menú */}
+                  <div className="relative flex h-16 items-center justify-between">
+                    <Link
+                      href="/"
+                      onClick={() => setOpen(false)}
+                      className="flex items-center gap-3"
+                    >
+                      <span className="relative h-10 w-10 overflow-hidden rounded-full bg-white shadow-sm ring-1 ring-black/5">
+                        <Image
+                          src="/lzacademy_logo1.png"
+                          alt="LZ English Academy"
+                          fill
+                          sizes="40px"
+                          className="object-cover"
+                          priority
+                        />
+                      </span>
+                      <div className="leading-tight">
+                        <p className="text-sm font-semibold text-zinc-900">
+                          LZ English Academy
+                        </p>
+                        <p className="text-xs text-zinc-600">Método 590</p>
+                      </div>
+                    </Link>
 
-            {/* Body */}
-            <div className="h-[calc(100vh-4rem)] overflow-y-auto">
-              <Container>
-                <div className="py-6 pb-10">
-                  <div className="py-6">
+                    <button
+                      type="button"
+                      onClick={() => setOpen(false)}
+                      className="inline-flex h-10 w-10 items-center justify-center rounded-xl ring-1 ring-inset ring-falu-red-200 hover:bg-falu-red-50 transition"
+                      aria-label="Cerrar menú"
+                    >
+                      <IconX className="h-5 w-5 text-falu-red-900" />
+                    </button>
+                  </div>
+
+                  {/* body */}
+                  <div className="relative pb-8 pt-4">
                     <p className="text-xs font-semibold uppercase tracking-wide text-zinc-500">
                       Navegación
                     </p>
 
-                    {/* Links GRANDES y limpios */}
                     <div className="mt-4 space-y-3">
                       {navItems.map((i, idx) => (
                         <Link
@@ -209,26 +212,23 @@ export function Navbar() {
                           href={i.href}
                           ref={idx === 0 ? firstLinkRef : null}
                           onClick={() => setOpen(false)}
-                          className="flex items-center justify-between rounded-2xl px-5 py-4 bg-white ring-1 ring-inset ring-zinc-200 hover:bg-zinc-50 transition"
+                          className="flex items-center justify-between rounded-2xl px-5 py-4 bg-white ring-1 ring-inset ring-falu-red-200/60 hover:bg-falu-red-50 transition"
                         >
                           <span className="text-lg font-extrabold text-zinc-900">
                             {i.label}
                           </span>
-                          <span className="text-base font-semibold text-zinc-400">
+                          <span className="text-base font-semibold text-falu-red-700">
                             →
                           </span>
                         </Link>
                       ))}
                     </div>
 
-                    {/* CTA área */}
-                    <div className="mt-8 grid gap-3">
+                    <div className="mt-6 grid gap-3">
                       <a
-                        href={FORM_URL}
-                        target="_blank"
-                        rel="noreferrer"
+                        href="/#form"
                         onClick={() => setOpen(false)}
-                        className="inline-flex items-center justify-center rounded-2xl px-5 py-4 text-base font-extrabold text-white bg-yellow-orange-500 hover:bg-yellow-orange-600 active:bg-yellow-orange-700 transition shadow-sm"
+                        className="inline-flex items-center justify-center rounded-2xl px-5 py-4 text-base font-extrabold text-white bg-falu-red-700 hover:bg-falu-red-800 active:bg-falu-red-900 transition shadow-sm"
                       >
                         Inscribirme
                       </a>
@@ -242,17 +242,16 @@ export function Navbar() {
                       </Link>
                     </div>
 
-                    <p className="mt-10 text-xs text-zinc-500">
-                      © {new Date().getFullYear()} LZ Academy
+                    <p className="mt-8 text-xs text-zinc-500">
+                      © {new Date().getFullYear()} LZ English Academy
                     </p>
                   </div>
-                </div>
-              </Container>
+                </Container>
+              </div>
             </div>
           </div>
         </div>
       ) : null}
-
     </header>
   );
 }
