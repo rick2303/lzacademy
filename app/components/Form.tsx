@@ -1,20 +1,27 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 
 const planDetails = {
-    Essential: { amount: 1000, description: "Plan Essential, este plan incluye: Acceso completo a la plataforma, Rutina diaria guiada, Acceso a grupo de whatsapp, Clases prácticas los viernes" },
-    //Premium: { amount: 5000, description: "Plan Premium, este plan incluye: Acceso completo a la plataforma, Rutina diaria guiada, Acceso a grupo de whatsapp, Clases prácticas los viernes, 1 hora de clase diaria, Unirte a una comunidad avanzada" },
-    //Speaking: { amount: 2000, description: "Sesión de Speaking, mejora tu fluidez en inglés hablado, incluye una sesión personalizada de 20 minutos, Feedback y recomendaciones para seguir avanzando" },
+    Essential: {
+        amount: 1000,
+        description:
+            "Plan Essential, incluye: Acceso completo a la plataforma, Rutina diaria guiada, Grupo de WhatsApp, Clases prácticas los viernes",
+    },
 };
 
-type PlanType = keyof typeof planDetails;
+const today = new Date().toISOString().split("T")[0];
+const availableDates = [
+    { value: "2026-03-09", label: "9 de Marzo de 2026" },
+    { value: "2026-04-06", label: "6 de Abril de 2026" },
+    { value: "2026-05-04", label: "4 de Mayo de 2026" },
+].filter((d) => d.value !== today);
 
+type PlanType = keyof typeof planDetails;
 const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL;
 
 const PaymentForm = ({ selectedPlan }: { selectedPlan: PlanType }) => {
     const [plan, setPlan] = useState<PlanType>(selectedPlan);
-
     const [formData, setFormData] = useState({
         email: "",
         confirmEmail: "",
@@ -22,38 +29,29 @@ const PaymentForm = ({ selectedPlan }: { selectedPlan: PlanType }) => {
         country: "",
         englishLevel: "",
         motive: "",
+        interestDate: "",
     });
-
     const [error, setError] = useState("");
 
-    useEffect(() => {
-        setPlan(selectedPlan);
-    }, [selectedPlan]);
+    useEffect(() => setPlan(selectedPlan), [selectedPlan]);
+    useEffect(() => localStorage.setItem("selectedPlan", plan), [plan]);
 
-    useEffect(() => {
-        localStorage.setItem("selectedPlan", plan);
-    }, [plan]);
-
-    const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+    const handleChange = (
+        e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
+    ) => {
         const { name, value } = e.target;
 
-        if (name === "plan") {
-            setPlan(value as PlanType);
-            return;
-        }
+        if (name === "plan") return setPlan(value as PlanType);
 
         setFormData((prev) => ({ ...prev, [name]: value }));
 
-        if (name === "confirmEmail" && value !== formData.email) {
+        if (name === "confirmEmail" && value !== formData.email)
             setError("Los correos electrónicos no coinciden");
-        } else {
-            setError("");
-        }
+        else setError("");
     };
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-
         if (formData.email !== formData.confirmEmail) {
             setError("Los correos electrónicos no coinciden");
             return;
@@ -64,7 +62,7 @@ const PaymentForm = ({ selectedPlan }: { selectedPlan: PlanType }) => {
         const { amount, description } = planDetails[plan];
 
         try {
-            const response = await fetch(`${BACKEND_URL}/create-checkout-session`, {
+            const res = await fetch(`${BACKEND_URL}/create-checkout-session`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
@@ -75,16 +73,18 @@ const PaymentForm = ({ selectedPlan }: { selectedPlan: PlanType }) => {
                     plan,
                     level: formData.englishLevel,
                     motive: formData.motive,
+                    interestDate: formData.interestDate,
                     description,
                 }),
             });
 
-            const data = await response.json();
-            if (!response.ok) throw new Error(data?.error || "Error creando sesión");
+            const data = await res.json();
+            if (!res.ok) throw new Error(data?.error || "Error creando sesión");
 
             window.location.href = data.url;
-        } catch (err) {
-            console.error("Error al crear la sesión de Checkout:", err);
+        } catch (err: any) {
+            console.error("Error al crear sesión de Checkout:", err);
+            setError(err.message || "Error al procesar tu pago");
         }
     };
 
@@ -234,7 +234,28 @@ const PaymentForm = ({ selectedPlan }: { selectedPlan: PlanType }) => {
                     { /* <option value="Speaking">Sesión de speaking</option> */}
                 </select>
             </div>
+            {/*Fecha de interes para inicio de curso*/}
+            <div>
+                <label htmlFor="interestDate" className="block text-sm font-semibold text-zinc-700">
+                    Selecciona una fecha de inicio*
+                </label>
+                <select
+                    id="interestDate"
+                    name="interestDate"
+                    value={formData.interestDate}
+                    onChange={handleChange}
+                    className="mt-2 p-3 w-full border border-falu-red-200 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-falu-red-500"
+                    required
+                >
+                    <option value="">Selecciona una fecha</option>
+                    {availableDates.map(date => (
+                        <option key={date.value} value={date.value}>
+                            {date.label}
+                        </option>
+                    ))}
+                </select>
 
+            </div>
             {/* Nivel de inglés */}
             <div>
                 <label htmlFor="englishLevel" className="block text-sm font-semibold text-zinc-700">

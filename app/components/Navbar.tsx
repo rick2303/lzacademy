@@ -12,6 +12,7 @@ const navItems = [
   { href: "/metodo", label: "Método" },
   { href: "/ciencia", label: "Ciencia" },
   { href: "/como-funciona", label: "Cómo funciona" },
+  { href: "/fundacion", label: "Fundación LZ" },
 ];
 
 

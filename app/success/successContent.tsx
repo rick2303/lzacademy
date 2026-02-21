@@ -68,11 +68,9 @@ const SuccessContent = () => {
                 setMessage("Verificando el estado de tu pago...");
                 setDetail("Esto puede tardar unos segundos.");
 
-                const response = await fetch(`${BACKEND_URL}/payment-success`, {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ session_id }),
-                });
+                const response = await fetch(
+                    `${BACKEND_URL}/payment-status?session_id=${session_id}`
+                );
 
                 const data = await response.json();
 
@@ -169,7 +167,7 @@ const SuccessContent = () => {
                                     ¡Listo! Tu inscripción quedó registrada.
                                 </p>
                                 <p className="mt-2 text-sm text-green-800 text-center">
-                                    En breve nuestro equipo te contactará para darte los detalles y los siguientes pasos.
+                                    En menos de 24hrs nuestro equipo te contactará para darte los detalles y los siguientes pasos.
                                 </p>
 
                                 <div className="mt-4 grid gap-3 sm:grid-cols-3">
