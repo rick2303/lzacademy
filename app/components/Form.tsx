@@ -4,11 +4,14 @@ import { useEffect, useState } from "react";
 
 const planDetails = {
     Essential: {
-        amount: 1000,
         description:
             "Plan Essential, incluye: Acceso completo a la plataforma, Rutina diaria guiada, Grupo de WhatsApp, Clases prácticas los viernes",
     },
 };
+
+type PlanType = keyof typeof planDetails;
+
+const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL!;
 
 const today = new Date().toISOString().split("T")[0];
 const availableDates = [
@@ -17,11 +20,10 @@ const availableDates = [
     { value: "2026-05-04", label: "4 de Mayo de 2026" },
 ].filter((d) => d.value !== today);
 
-type PlanType = keyof typeof planDetails;
-const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL;
-
 const PaymentForm = ({ selectedPlan }: { selectedPlan: PlanType }) => {
     const [plan, setPlan] = useState<PlanType>(selectedPlan);
+    const [loading, setLoading] = useState(false);
+
     const [formData, setFormData] = useState({
         email: "",
         confirmEmail: "",
@@ -31,63 +33,85 @@ const PaymentForm = ({ selectedPlan }: { selectedPlan: PlanType }) => {
         motive: "",
         interestDate: "",
     });
+
     const [error, setError] = useState("");
 
-    useEffect(() => setPlan(selectedPlan), [selectedPlan]);
-    useEffect(() => localStorage.setItem("selectedPlan", plan), [plan]);
+    useEffect(() => {
+        setPlan(selectedPlan);
+    }, [selectedPlan]);
+
+    const validateForm = () => {
+        if (!formData.email || !formData.fullName) {
+            return "Todos los campos obligatorios deben completarse";
+        }
+
+        if (formData.email !== formData.confirmEmail) {
+            return "Los correos electrónicos no coinciden";
+        }
+
+        if (!formData.country || !formData.englishLevel || !formData.motive) {
+            return "Debes completar todos los campos obligatorios";
+        }
+
+        return null;
+    };
 
     const handleChange = (
         e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
     ) => {
         const { name, value } = e.target;
 
-        if (name === "plan") return setPlan(value as PlanType);
+        if (name === "plan") {
+            setPlan(value as PlanType);
+            return;
+        }
 
         setFormData((prev) => ({ ...prev, [name]: value }));
-
-        if (name === "confirmEmail" && value !== formData.email)
-            setError("Los correos electrónicos no coinciden");
-        else setError("");
+        setError("");
     };
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (formData.email !== formData.confirmEmail) {
-            setError("Los correos electrónicos no coinciden");
+
+        if (loading) return;
+
+        const validationError = validateForm();
+        if (validationError) {
+            setError(validationError);
             return;
         }
 
-        localStorage.setItem("paymentFormData", JSON.stringify({ ...formData, plan }));
-
-        const { amount, description } = planDetails[plan];
+        setLoading(true);
 
         try {
             const res = await fetch(`${BACKEND_URL}/create-checkout-session`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
-                    amount,
-                    email: formData.email,
-                    fullName: formData.fullName,
+                    email: formData.email.trim(),
+                    fullName: formData.fullName.trim(),
                     country: formData.country,
                     plan,
                     level: formData.englishLevel,
                     motive: formData.motive,
                     interestDate: formData.interestDate,
-                    description,
+                    description: planDetails[plan].description,
                 }),
             });
 
             const data = await res.json();
-            if (!res.ok) throw new Error(data?.error || "Error creando sesión");
+
+            if (!res.ok) {
+                throw new Error(data?.error || "Error creando sesión");
+            }
 
             window.location.href = data.url;
         } catch (err: any) {
-            console.error("Error al crear sesión de Checkout:", err);
-            setError(err.message || "Error al procesar tu pago");
+            console.error("Error Checkout:", err);
+            setError("No pudimos iniciar tu pago. Intenta nuevamente.");
+            setLoading(false);
         }
     };
-
     return (
 
         <form onSubmit={handleSubmit} className="space-y-6 mt-8 max-w-3xl mx-auto p-8 bg-white shadow-xl rounded-lg">
@@ -309,9 +333,10 @@ const PaymentForm = ({ selectedPlan }: { selectedPlan: PlanType }) => {
             <div className="flex justify-center mt-6">
                 <button
                     type="submit"
-                    className="px-6 py-3 bg-falu-red-700 text-white rounded-xl text-sm font-semibold hover:bg-falu-red-800 transition"
+                    disabled={loading}
+                    className="px-6 py-3 bg-falu-red-700 text-white rounded-xl text-sm font-semibold hover:bg-falu-red-800 transition disabled:opacity-50"
                 >
-                    Continuar
+                    {loading ? "Procesando..." : "Continuar"}
                 </button>
             </div>
         </form>

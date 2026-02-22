@@ -55,10 +55,10 @@ const SuccessContent = () => {
            }, [state, paidPlan, paidLevel]); */
 
     useEffect(() => {
-        if (!session_id) {
+        if (!session_id || !session_id.startsWith("cs_")) {
             setState("error");
-            setMessage("No encontramos el identificador de la sesión.");
-            setDetail("Vuelve a la página principal e intenta de nuevo.");
+            setMessage("Sesión inválida.");
+            setDetail("El identificador de pago no es válido.");
             return;
         }
 
@@ -69,7 +69,13 @@ const SuccessContent = () => {
                 setDetail("Esto puede tardar unos segundos.");
 
                 const response = await fetch(
-                    `${BACKEND_URL}/payment-status?session_id=${session_id}`
+                    `${BACKEND_URL}/payment-status?session_id=${session_id}`,
+                    {
+                        method: "GET",
+                        headers: {
+                            "Content-Type": "application/json",
+                        },
+                    }
                 );
 
                 const data = await response.json();
@@ -78,25 +84,29 @@ const SuccessContent = () => {
                     throw new Error(data?.error || "No se pudo verificar el pago");
                 }
 
-                /* setPaidPlan((data?.plan as Plan) || null);
-                setPaidLevel((data?.level as string) || null); */
+                if (!data?.paid) {
+                    throw new Error("El pago aún no está confirmado.");
+                }
 
                 setState("success");
-                setMessage("Pago confirmado. ¡Gracias por inscribirte! 🙌");
+                setMessage("¡Gracias por inscribirte! 🙌");
                 setDetail(
                     data?.message ||
-                    "Tu pago se registró correctamente. Nuestro equipo te contactará en breve para darte detalles y próximos pasos."
+                    "Tu pago se registró correctamente. Nuestro equipo te contactará en breve."
                 );
             } catch (err: any) {
                 console.error("Error al verificar el pago:", err);
                 setState("error");
                 setMessage("No pudimos verificar tu pago.");
-                setDetail(err?.message || "Intenta nuevamente o contáctanos si el problema persiste.");
+                setDetail(
+                    err?.message ||
+                    "Intenta nuevamente o contáctanos si el problema persiste."
+                );
             }
         };
 
         verifyPayment();
-    }, [session_id, BACKEND_URL]);
+    }, [session_id]);
 
     //const showCalendly = state === "success" && !!calendlyInfo;
 
@@ -167,7 +177,7 @@ const SuccessContent = () => {
                                     ¡Listo! Tu inscripción quedó registrada.
                                 </p>
                                 <p className="mt-2 text-sm text-green-800 text-center">
-                                    En menos de 24hrs nuestro equipo te contactará para darte los detalles y los siguientes pasos.
+                                    En menos de 48hrs nuestro equipo te contactará para darte los detalles y los siguientes pasos.
                                 </p>
 
                                 <div className="mt-4 grid gap-3 sm:grid-cols-3">

@@ -6,7 +6,7 @@ import Pill from "../components/Pill";
 export const metadata = {
     title: "Nuestro propósito | LZ English Academy",
     description:
-        "Un porcentaje de cada inscripción al Método 590 se destina a la Fundación LZ para apoyar la educación de niños y niñas en situación vulnerable en Honduras.",
+        "Un porcentaje de cada inscripción al Método 590 se destina a la Fundación LZ para financiar la educación de niños y niñas en situación vulnerable en Honduras.",
 };
 
 export default function PropositoPage() {
@@ -56,8 +56,7 @@ export default function PropositoPage() {
                                 <p className="mt-5 max-w-2xl text-base text-zinc-700 sm:text-lg">
                                     En LZ English Academy creemos que la educación transforma vidas.
                                     Por eso, un porcentaje de cada inscripción al Método 590 se destina a la
-                                    Fundación LZ, una iniciativa enfocada en apoyar a niños y niñas en
-                                    situación vulnerable en Honduras.
+                                    Fundación LZ, una iniciativa enfocada en financiar la educación de niños y niñas en situación vulnerable en Honduras.
                                 </p>
 
                                 <div className="mt-8 flex flex-col gap-3 sm:flex-row">
@@ -172,8 +171,7 @@ export default function PropositoPage() {
                             </h2>
 
                             <p className="mt-4 text-zinc-600">
-                                Nuestra fundación trabaja para apoyar a niños y niñas en situación
-                                vulnerable en Honduras. Cada estudiante que se une a la academia no solo
+                                Nuestra fundación trabaja para financiar la educación de niños y niñas en situación vulnerable en Honduras. Cada estudiante que se une a la academia no solo
                                 invierte en su propio crecimiento, también contribuye a que un niño tenga
                                 la oportunidad de aprender, crecer y construir un futuro diferente.
                             </p>

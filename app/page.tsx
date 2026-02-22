@@ -222,9 +222,7 @@ export default function Page() {
                   <li className="flex items-center gap-2">
                     <span className="h-2 w-2 rounded-full bg-falu-red-600" /> Método paso a paso para guiar tu aprendizaje diario </li>
                   <li className="flex items-center gap-2">
-                    <span className="h-2 w-2 rounded-full bg-falu-red-600" /> Reuniones de práctica todos los viernes </li>
-                  <li className="flex items-center gap-2">
-                    <span className="h-2 w-2 rounded-full bg-falu-red-600" /> Diferentes horarios disponibles para que practiques cuando quieras </li> <br></br>
+                    <span className="h-2 w-2 rounded-full bg-falu-red-600" /> Reuniones de práctica todos los viernes con diferentes horarios disponibles para tu comodidad.</li> <br></br>
                   <p className="mt-2 text-sm text-zinc-600">Este plan es 80% autodidacta, ideal para personas disciplinadas que quieren avanzar con apoyo.</p>
                 </ul>
                 <p className="mt-4 text-lg font-semibold text-falu-red-800">$10/mes</p>
@@ -236,13 +234,16 @@ export default function Page() {
               {/* Curso Premium */}
               <Card className="flex flex-col justify-between">
                 <h3 className="text-xl font-extrabold text-zinc-900">Curso Premium</h3>
-                <p className="mt-1 text-sm text-zinc-600">Si quieres resultados más rápidos y mayor acompañamiento, el Plan Premium es para ti.</p>
+                <p className="mt-2 text-sm text-zinc-600">Si quieres mayor acompañamiento y más práctica hablada, el Plan Premium es para ti.</p>
                 <ul className="mt-4 space-y-2 text-sm text-zinc-600">
                   <li className="flex items-center gap-2">
                     <span className="h-2 w-2 rounded-full bg-falu-red-600" />Todo lo del plan Essential, más:
                   </li>
                   <li className="flex items-center gap-2">
                     <span className="h-2 w-2 rounded-full bg-falu-red-600" />1 hora de clase diaria (lunes a jueves)
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <span className="h-2 w-2 rounded-full bg-falu-red-600" />Repasos los viernes para resolver dudas y practicar lo visto en la semana.
                   </li>
                   <li className="flex items-center gap-2">
                     <span className="h-2 w-2 rounded-full bg-falu-red-600" /> Explicación clara de teoría</li>
@@ -255,7 +256,7 @@ export default function Page() {
                   <li className="flex items-center gap-2">
                     <span className="h-2 w-2 rounded-full bg-falu-red-600" /> Estructura diseñada para lograr fluidez en menos tiempo</li>
                 </ul>
-                <p className="mt-1 text-sm text-zinc-600">Agendas tu clase el lunes según tu nivel, ese será tu horario fijo de lunes a jueves</p>
+                <p className="mt-2 text-sm text-zinc-600">Agendas tu clase el lunes según tu nivel, ese será tu horario fijo de lunes a jueves</p>
 
                 <p className="mt-4 text-lg font-semibold text-falu-red-800">$50/mes</p>
                 <div className="mt-4">
@@ -279,7 +280,7 @@ export default function Page() {
                   <li className="flex items-center gap-2">
                     <span className="h-2 w-2 rounded-full bg-falu-red-600" /> Mejoraremos tu pronunciación </li>
                   <li className="flex items-center gap-2">
-                    <span className="h-2 w-2 rounded-full bg-falu-red-600" /> Te ayudaremos a hablar con mayor fluidez y seguridad</li>
+                    <span className="h-2 w-2 rounded-full bg-falu-red-600" /> Te daremos herramientas y estrategias para hablar con mayor fluidez y seguridad</li>
                   <li className="flex items-center gap-2">
                     <span className="h-2 w-2 rounded-full bg-falu-red-600" /> Duración: 30 minutos </li>
                 </ul>
@@ -305,7 +306,7 @@ export default function Page() {
           <Container>
             <div className="relative grid grid-cols-1 gap-8 lg:grid-cols-12 lg:items-center">
               <div className="lg:col-span-7">
-                <Pill tone="falu">La creadora</Pill>
+                <Pill tone="falu">La fundadora</Pill>
                 <h2 className="mt-4 text-3xl font-extrabold tracking-tight sm:text-4xl">
                   El método nació de una{" "}
                   <span className="text-falu-red-800">necesidad real</span>
