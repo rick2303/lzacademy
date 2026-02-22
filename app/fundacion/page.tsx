@@ -11,10 +11,9 @@ export const metadata = {
 
 export default function PropositoPage() {
     const DRIVE_FILE_ID = "1Zm8vIjIBsSRJAHu2d8i-_RIg3GfqZmDx";
+    const Tiktok_URL = "https://www.tiktok.com/t/ZThVwGhUh/";
 
     const drivePreviewUrl = `https://drive.google.com/file/d/${DRIVE_FILE_ID}/preview`;
-
-    const driveOpenUrl = `https://drive.google.com/file/d/${DRIVE_FILE_ID}/view`;
 
     return (
         <main className="bg-white">
@@ -237,7 +236,7 @@ export default function PropositoPage() {
                                 </p>
 
                                 <div className="relative mt-5 overflow-hidden rounded-2xl ring-1 ring-black/5 bg-white">
-                                    {/* ✅ Drive embed */}
+                                    {/* Drive embed */}
                                     <iframe
                                         title="Video Fundación LZ (Drive)"
                                         src={drivePreviewUrl}
@@ -249,12 +248,12 @@ export default function PropositoPage() {
 
                                 <div className="relative mt-5 flex flex-col gap-3">
                                     <a
-                                        href={driveOpenUrl}
+                                        href={Tiktok_URL}
                                         target="_blank"
                                         rel="noreferrer"
                                         className="inline-flex items-center justify-center rounded-xl px-5 py-3 text-sm font-semibold text-white bg-falu-red-700 hover:bg-falu-red-800 transition shadow-sm"
                                     >
-                                        Ver el video en Drive
+                                        Ver el video en Tiktok
                                     </a>
 
                                     <p className="text-xs text-zinc-500">
