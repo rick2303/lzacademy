@@ -27,7 +27,7 @@ const SuccessContent = () => {
     const [state, setState] = useState<UiState>("loading");
     const [message, setMessage] = useState<string>("Verificando el estado de tu pago...");
     const [detail, setDetail] = useState<string>("");
-
+    const [userData, setUserData] = useState<any>(null);
     /*   const [paidPlan, setPaidPlan] = useState<Plan | null>(null);
          const [paidLevel, setPaidLevel] = useState<string | null>(null);
      
@@ -87,7 +87,7 @@ const SuccessContent = () => {
                 if (!data?.paid) {
                     throw new Error("El pago aún no está confirmado.");
                 }
-
+                setUserData(data.user || null);
                 setState("success");
                 setMessage("¡Gracias por inscribirte! 🙌");
                 setDetail(
@@ -109,7 +109,16 @@ const SuccessContent = () => {
     }, [session_id]);
 
     //const showCalendly = state === "success" && !!calendlyInfo;
-
+const formattedStartDate =
+  userData?.inscription_date
+    ? new Date(userData.inscription_date + "T00:00:00Z") // forzar UTC
+        .toLocaleDateString("es-ES", {
+          day: "numeric",
+          month: "long",
+          year: "numeric",
+          timeZone: "UTC", // evita que JS convierta a hora local
+        })
+    : null;
     return (
         <div className="min-h-screen bg-linear-to-b from-falu-red-50 via-white to-falu-red-50 flex items-center justify-center px-4">
             <div className="w-full max-w-xl">
@@ -169,7 +178,24 @@ const SuccessContent = () => {
                         {/* Mensajes */}
                         <p className="mt-3 text-center text-zinc-600">{message}</p>
                         {detail && <p className="mt-2 text-center text-sm text-zinc-500">{detail}</p>}
+                        {state === "success" && formattedStartDate && (
+                            <div className="mt-6 rounded-2xl bg-falu-red-50 p-6 ring-1 ring-falu-red-300 text-center">
+                                <p className="text-sm font-bold text-falu-red-900">
+                                    Fecha oficial de inicio
+                                </p>
 
+                                <p className="mt-3 text-xl font-extrabold text-falu-red-800">
+                                    {formattedStartDate}
+                                </p>
+
+                                <p className="mt-4 text-sm text-falu-red-800">
+                                    Tu pago ha reservado tu cupo.
+                                </p>
+                                <p className="text-sm text-falu-red-800">
+                                    Las clases comienzan en la fecha indicada arriba.
+                                </p>
+                            </div>
+                        )}
                         {/* Qué pasa ahora (solo success) */}
                         {state === "success" && (
                             <div className="mt-6 rounded-2xl bg-green-50 p-5 ring-1 ring-green-200">
@@ -191,8 +217,9 @@ const SuccessContent = () => {
                                     </div>
                                     <div className="rounded-xl bg-white/70 p-3 ring-1 ring-green-200">
                                         <p className="text-xs font-semibold text-green-900">3) Inicio</p>
-                                        <p className="mt-1 text-xs text-green-800">Te damos acceso y el plan de arranque.</p>
-                                    </div>
+                                        <p className="mt-1 text-xs text-green-800">
+                                            Inicio según la fecha oficial de tu grupo.
+                                        </p>                                    </div>
                                 </div>
                             </div>
                         )}

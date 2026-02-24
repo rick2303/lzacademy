@@ -253,7 +253,7 @@ export default function PropositoPage() {
                                         rel="noreferrer"
                                         className="inline-flex items-center justify-center rounded-xl px-5 py-3 text-sm font-semibold text-white bg-falu-red-700 hover:bg-falu-red-800 transition shadow-sm"
                                     >
-                                        Ver el video en Tiktok
+                                        Ver video en TikTok
                                     </a>
 
                                     <p className="text-xs text-zinc-500">

@@ -278,8 +278,17 @@ const PaymentForm = ({ selectedPlan }: { selectedPlan: PlanType }) => {
                         </option>
                     ))}
                 </select>
-
+                <div className="mt-3 rounded-lg bg-falu-red-50 p-4 ring-1 ring-falu-red-200">
+                    <p className="text-xs font-semibold text-falu-red-900">
+                        Importante sobre el inicio
+                    </p>
+                    <p className="mt-1 text-xs text-falu-red-800">
+                        Tu acceso comenzará en la fecha seleccionada arriba.
+                        El pago reserva tu cupo, pero las clases no inician de inmediato.
+                    </p>
+                </div>
             </div>
+
             {/* Nivel de inglés */}
             <div>
                 <label htmlFor="englishLevel" className="block text-sm font-semibold text-zinc-700">
@@ -297,7 +306,7 @@ const PaymentForm = ({ selectedPlan }: { selectedPlan: PlanType }) => {
                     <option value="Principiante">Principiante (A1)</option>
                     <option value="Basico">Básico (A2)</option>
                     <option value="Intermedio">Intermedio (B1)</option>
-                    { /* <option value="Intermedio alto">Intermedio alto (B2)</option> */}
+                    <option value="Intermedio alto">Intermedio alto (B2)</option>
                     { /* <option value="No seguro">No estoy segura/o</option> */}
                 </select>
             </div>
@@ -336,7 +345,7 @@ const PaymentForm = ({ selectedPlan }: { selectedPlan: PlanType }) => {
                     disabled={loading}
                     className="px-6 py-3 bg-falu-red-700 text-white rounded-xl text-sm font-semibold hover:bg-falu-red-800 transition disabled:opacity-50"
                 >
-                    {loading ? "Procesando..." : "Continuar"}
+                    {loading ? "Procesando..." : "Reservar mi cupo"}
                 </button>
             </div>
         </form>

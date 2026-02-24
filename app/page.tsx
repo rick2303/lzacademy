@@ -113,13 +113,15 @@ export default function Page() {
                     El Método 590 convierte el inglés en una rutina diaria estructurada
                     para construir fluidez real.
                   </p>
-
+                  <p className="mt-3 text-sm text-falu-red-800 font-medium">
+                    Próximo inicio disponible según fecha seleccionada al inscribirte.
+                  </p>
                   <div className="mt-8 flex flex-col gap-3 sm:flex-row">
                     <a
                       href="#planes"
                       className="inline-flex items-center justify-center rounded-xl px-5 py-3 text-sm font-semibold text-white bg-falu-red-700 hover:bg-falu-red-800 active:bg-falu-red-900 transition shadow-sm"
                     >
-                      Comenzar mi proceso
+                      Reservar mi cupo
                     </a>
 
                     <Link
@@ -224,11 +226,14 @@ export default function Page() {
                   <li className="flex items-center gap-2">
                     <span className="h-2 w-2 rounded-full bg-falu-red-600" /> Reuniones de práctica todos los viernes con diferentes horarios disponibles para tu comodidad.</li> <br></br>
                   <p className="mt-2 text-sm text-zinc-600">Este plan es 80% autodidacta, ideal para personas disciplinadas que quieren avanzar con apoyo.</p>
+                  <p className="mt-2 text-xs text-falu-red-800 font-medium">
+                    Inicia en la fecha que selecciones en el formulario.
+                  </p>
                 </ul>
                 <p className="mt-4 text-lg font-semibold text-falu-red-800">$10/mes</p>
                 <div className="mt-4">
                   <a href="#form"
-                    className="inline-flex items-center justify-center rounded-xl px-5 py-3 text-sm font-semibold text-white bg-falu-red-700 hover:bg-falu-red-800 transition shadow-sm" > Seleccionar $10/mes </a>
+                    className="inline-flex items-center justify-center rounded-xl px-5 py-3 text-sm font-semibold text-white bg-falu-red-700 hover:bg-falu-red-800 transition shadow-sm" > Reservar Essential - $10/mes </a>
                 </div>
               </Card>
               {/* Curso Premium */}
@@ -387,11 +392,9 @@ export default function Page() {
               <div className="relative grid grid-cols-1 gap-6 lg:grid-cols-12 lg:items-center">
                 <div className="lg:col-span-8">
                   <h2 className="text-2xl font-extrabold tracking-tight sm:text-3xl">
-                    ¿Listo para comenzar tu proceso?
-                  </h2>
+                    ¿Listo para reservar tu cupo?                  </h2>
                   <p className="mt-3 text-zinc-600">
-                    Selecciona el plan que mejor se adapte a tus necesidades, nuestro equipo te orientará para comenzar.
-                  </p>
+                    Selecciona tu plan y reserva tu cupo en el próximo inicio disponible.                  </p>
                 </div>
 
                 <div className="lg:col-span-4 flex flex-col gap-3 sm:flex-row lg:justify-end">
