@@ -290,7 +290,9 @@ export default function Page() {
                     <span className="h-2 w-2 rounded-full bg-falu-red-600" /> Duración: 30 minutos </li>
                 </ul>
                 <p className="mt-2 text-sm text-zinc-600">En algunos casos la sesión puede extenderse un poco más, y no se te cobrará extra. Ideal si quieres mejorar rápido tu speaking y ganar confianza al hablar.</p>
-
+                <p className="mt-2 text-xs text-falu-red-800 font-medium">
+                  *Miembros de la Academia reciben esta sesión con descuento una vez iniciado el mes de clases.
+                </p>
                 <p className="mt-4 text-lg font-semibold text-falu-red-800">$20</p>
                 <div className="mt-4">
                   <a href="#form" onClick={(e) => {
