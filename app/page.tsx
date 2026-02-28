@@ -293,12 +293,12 @@ export default function Page() {
                 <p className="mt-2 text-xs text-falu-red-800 font-medium">
                   *Miembros de la Academia reciben esta sesión con descuento una vez iniciado el mes de clases.
                 </p>
-                <p className="mt-4 text-lg font-semibold text-falu-red-800">$20</p>
+                <p className="mt-4 text-lg font-semibold text-falu-red-800">$15</p>
                 <div className="mt-4">
                   <a href="#form" onClick={(e) => {
                     e.preventDefault();
                     goToSpeakingCalendly();
-                  }} className="inline-flex items-center justify-center rounded-xl px-5 py-3 text-sm font-semibold text-white bg-falu-red-700 hover:bg-falu-red-800 transition shadow-sm" > Reservar sesión $20 </a>
+                  }} className="inline-flex items-center justify-center rounded-xl px-5 py-3 text-sm font-semibold text-white bg-falu-red-700 hover:bg-falu-red-800 transition shadow-sm" > Reservar sesión $15 </a>
                 </div>
               </Card>
             </div>
