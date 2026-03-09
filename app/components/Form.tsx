@@ -18,7 +18,7 @@ const availableDates = [
     { value: "2026-03-09", label: "9 de Marzo de 2026" },
     { value: "2026-04-06", label: "6 de Abril de 2026" },
     { value: "2026-05-04", label: "4 de Mayo de 2026" },
-].filter((d) => d.value !== today);
+];
 
 const PaymentForm = ({ selectedPlan }: { selectedPlan: PlanType }) => {
     const [plan, setPlan] = useState<PlanType>(selectedPlan);
