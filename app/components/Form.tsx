@@ -19,20 +19,34 @@ const availableDates = [
     { value: "2026-05-04", label: "4 de Mayo de 2026" },
 ];
 
-const getPacificTime = () => {
-    return new Date(new Date().toLocaleString("en-US", { timeZone: "America/Los_Angeles" }));
+const getPacificParts = () => {
+    const formatter = new Intl.DateTimeFormat("en-US", {
+        timeZone: "America/Los_Angeles",
+        year: "numeric", month: "2-digit", day: "2-digit",
+        hour: "2-digit", minute: "2-digit",
+        hour12: false,
+    });
+    const parts = Object.fromEntries(
+        formatter.formatToParts(new Date()).map((p) => [p.type, parseInt(p.value)])
+    );
+    // Número comparable: YYYYMMDDHHMI
+    return parts.year * 100000000 + parts.month * 1000000 + parts.day * 10000 + parts.hour * 100 + parts.minute;
 };
 
 const getOpenDates = () => {
-    const now = getPacificTime();
+    const now = getPacificParts();
     return availableDates.filter(({ value }) => {
         const [year, month, day] = value.split("-").map(Number);
-        // Cierre: día siguiente a la 11PM hora California
-        const closeDate = new Date(year, month - 1, day + 1, 23, 0, 0);
-        return now < closeDate;
+        const nextDay = new Date(year, month - 1, day + 1);
+        // Cierre: día siguiente a las 12:00 PM Pacific → número comparable
+        const closeTime =
+            nextDay.getFullYear() * 100000000 +
+            (nextDay.getMonth() + 1) * 1000000 +
+            nextDay.getDate() * 10000 +
+            12 * 100;
+        return now < closeTime;
     });
 };
-
 const PaymentForm = ({ selectedPlan }: { selectedPlan: PlanType }) => {
     const [plan, setPlan] = useState<PlanType>(selectedPlan);
     const [loading, setLoading] = useState(false);
