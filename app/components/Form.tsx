@@ -27,8 +27,8 @@ const getOpenDates = () => {
     const now = getPacificTime();
     return availableDates.filter(({ value }) => {
         const [year, month, day] = value.split("-").map(Number);
-        // Cierre: día siguiente a la 1PM hora California
-        const closeDate = new Date(year, month - 1, day + 1, 13, 0, 0);
+        // Cierre: día siguiente a la 11PM hora California
+        const closeDate = new Date(year, month - 1, day + 1, 23, 0, 0);
         return now < closeDate;
     });
 };
