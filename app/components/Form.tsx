@@ -13,43 +13,19 @@ type PlanType = keyof typeof planDetails;
 
 const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL!;
 
+const today = new Date();
+today.setDate(today.getDate() - 1);
+const yesterday = today.toISOString().split("T")[0];
+
 const availableDates = [
-    { value: "2026-03-09", label: "9 de Marzo de 2026" },
     { value: "2026-04-06", label: "6 de Abril de 2026" },
     { value: "2026-05-04", label: "4 de Mayo de 2026" },
-];
+].filter((d) => d.value > yesterday);
 
-const getPacificParts = () => {
-    const formatter = new Intl.DateTimeFormat("en-US", {
-        timeZone: "America/Los_Angeles",
-        year: "numeric", month: "2-digit", day: "2-digit",
-        hour: "2-digit", minute: "2-digit",
-        hour12: false,
-    });
-    const parts = Object.fromEntries(
-        formatter.formatToParts(new Date()).map((p) => [p.type, parseInt(p.value)])
-    );
-    // Número comparable: YYYYMMDDHHMI
-    return parts.year * 100000000 + parts.month * 1000000 + parts.day * 10000 + parts.hour * 100 + parts.minute;
-};
-
-const getOpenDates = () => {
-    const now = getPacificParts();
-    return availableDates.filter(({ value }) => {
-        const [year, month, day] = value.split("-").map(Number);
-        const nextDay = new Date(year, month - 1, day + 1);
-        // Cierre: día siguiente a las 12:00 PM Pacific → número comparable
-        const closeTime =
-            nextDay.getFullYear() * 100000000 +
-            (nextDay.getMonth() + 1) * 1000000 +
-            nextDay.getDate() * 10000 +
-            12 * 100;
-        return now < closeTime;
-    });
-};
 const PaymentForm = ({ selectedPlan }: { selectedPlan: PlanType }) => {
     const [plan, setPlan] = useState<PlanType>(selectedPlan);
     const [loading, setLoading] = useState(false);
+
     const [formData, setFormData] = useState({
         email: "",
         confirmEmail: "",
@@ -59,10 +35,8 @@ const PaymentForm = ({ selectedPlan }: { selectedPlan: PlanType }) => {
         motive: "",
         interestDate: "",
     });
-    const [error, setError] = useState("");
 
-    const openDates = getOpenDates();
-    const formClosed = openDates.length === 0;
+    const [error, setError] = useState("");
 
     useEffect(() => {
         setPlan(selectedPlan);
@@ -72,12 +46,15 @@ const PaymentForm = ({ selectedPlan }: { selectedPlan: PlanType }) => {
         if (!formData.email || !formData.fullName) {
             return "Todos los campos obligatorios deben completarse";
         }
+
         if (formData.email !== formData.confirmEmail) {
             return "Los correos electrónicos no coinciden";
         }
+
         if (!formData.country || !formData.englishLevel || !formData.motive) {
             return "Debes completar todos los campos obligatorios";
         }
+
         return null;
     };
 
@@ -85,16 +62,19 @@ const PaymentForm = ({ selectedPlan }: { selectedPlan: PlanType }) => {
         e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
     ) => {
         const { name, value } = e.target;
+
         if (name === "plan") {
             setPlan(value as PlanType);
             return;
         }
+
         setFormData((prev) => ({ ...prev, [name]: value }));
         setError("");
     };
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
+
         if (loading) return;
 
         const validationError = validateForm();
@@ -134,23 +114,8 @@ const PaymentForm = ({ selectedPlan }: { selectedPlan: PlanType }) => {
             setLoading(false);
         }
     };
-
-    // Formulario cerrado: no hay fechas disponibles
-    if (formClosed) {
-        return (
-            <div className="space-y-6 mt-8 max-w-3xl mx-auto p-8 bg-white shadow-xl rounded-lg text-center">
-                <h2 className="text-2xl font-bold text-zinc-800">
-                    Inscripciones cerradas
-                </h2>
-                <p className="text-zinc-600 mt-2">
-                    No hay fechas de inicio disponibles en este momento.
-                    Pronto abriremos nuevas inscripciones.
-                </p>
-            </div>
-        );
-    }
-
     return (
+
         <form onSubmit={handleSubmit} className="space-y-6 mt-8 max-w-3xl mx-auto p-8 bg-white shadow-xl rounded-lg">
             <h2 className="text-2xl font-bold text-center text-zinc-800">
                 Comenzá tu camino en inglés con el Plan Essential
@@ -158,7 +123,6 @@ const PaymentForm = ({ selectedPlan }: { selectedPlan: PlanType }) => {
             <p className="text-center text-zinc-600 mt-2">
                 Inscribite completando el siguiente formulario
             </p>
-
             {/* Correo electrónico */}
             <div>
                 <label htmlFor="email" className="block text-sm font-semibold text-zinc-700">
@@ -296,8 +260,7 @@ const PaymentForm = ({ selectedPlan }: { selectedPlan: PlanType }) => {
                     { /* <option value="Speaking">Sesión de speaking</option> */}
                 </select>
             </div>
-
-            {/* Fecha de interés para inicio de curso */}
+            {/*Fecha de interes para inicio de curso*/}
             <div>
                 <label htmlFor="interestDate" className="block text-sm font-semibold text-zinc-700">
                     Selecciona una fecha de inicio*
@@ -311,7 +274,7 @@ const PaymentForm = ({ selectedPlan }: { selectedPlan: PlanType }) => {
                     required
                 >
                     <option value="">Selecciona una fecha</option>
-                    {openDates.map(date => (
+                    {availableDates.map(date => (
                         <option key={date.value} value={date.value}>
                             {date.label}
                         </option>
