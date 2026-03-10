@@ -203,7 +203,7 @@ const formattedStartDate =
                                     ¡Listo! Tu inscripción quedó registrada.
                                 </p>
                                 <p className="mt-2 text-sm text-green-800 text-center">
-                                    En menos de 48hrs nuestro equipo te contactará para darte los detalles y los siguientes pasos.
+                                    En los próximos 4-7 días nuestro equipo te contactará para darte los detalles y los siguientes pasos.
                                 </p>
 
                                 <div className="mt-4 grid gap-3 sm:grid-cols-3">
