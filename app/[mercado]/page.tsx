@@ -8,6 +8,7 @@ import { Container } from "@/app/components/Container";
 import Card from "@/app/components/Card";
 import Pill from "@/app/components/Pill";
 import PaymentFormWrapper from "./_components/PaymentFormWrapper";
+import PreguntasFrecuentes from "../components/Questions";
 
 const NEXT_STARTS = ["6 de abril, 2026", "4 de mayo, 2026"];
 
@@ -368,6 +369,7 @@ export default async function MarketPage({ params }: { params: Promise<{ mercado
                 <section id="form">
                     <PaymentFormWrapper />
                 </section>
+                <PreguntasFrecuentes />
 
             </main>
         </>
