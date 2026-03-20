@@ -234,7 +234,7 @@ export default function MetodoPage() {
                 <div className="lg:col-span-4 flex flex-col gap-3 sm:flex-row lg:justify-end">
                   <PrimaryButton>Ir al formulario</PrimaryButton>
                   <Link
-                    href="/mentora"
+                    href="/historia"
                     className="inline-flex items-center justify-center rounded-xl px-5 py-3 text-sm font-semibold text-falu-red-800 ring-1 ring-inset ring-falu-red-200 hover:bg-falu-red-50 transition"
                   >
                     Conocer la historia
