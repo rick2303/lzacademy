@@ -35,11 +35,12 @@ export default function middleware(request: NextRequest) {
   if (
     pathname.startsWith("/_next") ||
     pathname.startsWith("/api") ||
-    pathname.includes(".") 
+    pathname === "/sitemap.xml" ||
+    pathname === "/robots.txt" ||
+    pathname.includes(".")
   ) {
     return NextResponse.next();
   }
-
   if (!VALID_ROUTES.has(pathname)) {
     return NextResponse.redirect(new URL("/", request.url), 307);
   }
@@ -48,8 +49,14 @@ export default function middleware(request: NextRequest) {
     const country = request.headers.get("x-vercel-ip-country") ?? "";
     const slug = COUNTRY_TO_SLUG[country];
 
+    // En el bloque de geolocalización, antes del redirect:
     if (slug) {
-      return NextResponse.redirect(new URL(`/${slug}`, request.url), 307);
+      const response = NextResponse.redirect(
+        new URL(`/${slug}`, request.url),
+        307,
+      );
+      response.headers.set("Vary", "Accept-Language, X-Vercel-IP-Country");
+      return response;
     }
   }
 
