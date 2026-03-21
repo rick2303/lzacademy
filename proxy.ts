@@ -1,4 +1,3 @@
-// middleware.ts — raíz del proyecto (mismo nivel que package.json)
 import { NextRequest, NextResponse } from "next/server";
 
 // Rutas válidas del sitio — cualquier cosa fuera de esta lista
