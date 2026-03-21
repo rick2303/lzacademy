@@ -385,7 +385,7 @@ export default function Page() {
 
                   {/* CTA */}
                   <a
-                    href="#form"
+                    href="#"
                     onClick={(e) => { e.preventDefault(); openPremiumLevelModal(); }}
                     className="mt-6 inline-flex w-full items-center justify-center rounded-xl px-5 py-3 text-sm font-semibold text-falu-red-900 bg-white hover:bg-zinc-50 transition shadow-sm"
                   >
@@ -448,7 +448,7 @@ export default function Page() {
 
                   {/* CTA */}
                   <a
-                    href="#form"
+                    href="#"
                     onClick={(e) => { e.preventDefault(); goToSpeakingCalendly(); }}
                     className="mt-6 inline-flex w-full items-center justify-center rounded-xl px-5 py-3 text-sm font-semibold text-zinc-700 ring-1 ring-inset ring-zinc-300 hover:bg-zinc-50 hover:ring-zinc-400 transition"
                   >

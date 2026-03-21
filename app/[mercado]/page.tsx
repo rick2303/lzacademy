@@ -8,9 +8,13 @@ import { Container } from "@/app/components/Container";
 import Card from "@/app/components/Card";
 import Pill from "@/app/components/Pill";
 import PaymentFormWrapper from "./_components/PaymentFormWrapper";
+import PremiumButton from "./_components/PremiumButton";
 import PreguntasFrecuentes from "../components/Questions";
 
 const NEXT_STARTS = ["6 de abril, 2026", "4 de mayo, 2026"];
+
+const CALENDLY_SPEAKING_URL =
+    process.env.NEXT_PUBLIC_CALENDLY_SPEAKING_URL || "https://calendly.com/lzacademy590/speaking-session";
 
 export function generateStaticParams() {
     return getAllMarketSlugs().map((slug) => ({ mercado: slug }));
@@ -254,9 +258,7 @@ export default async function MarketPage({ params }: { params: Promise<{ mercado
                                     <p className="mt-4 text-xs text-white/40 italic">
                                         Agendas tu clase el lunes según tu nivel — horario fijo lunes a jueves.
                                     </p>
-                                    <a href="#form" className="mt-6 inline-flex w-full items-center justify-center rounded-xl px-5 py-3 text-sm font-semibold text-falu-red-900 bg-white hover:bg-zinc-50 transition shadow-sm">
-                                        Seleccionar Premium — $50/mes
-                                    </a>
+                                    <PremiumButton />
                                 </div>
                             </div>
 
@@ -296,7 +298,7 @@ export default async function MarketPage({ params }: { params: Promise<{ mercado
                                         ))}
                                     </ul>
                                     <p className="mt-4 text-xs text-zinc-400 italic">* Miembros de la Academia reciben esta sesión con descuento.</p>
-                                    <a href="#form" className="mt-6 inline-flex w-full items-center justify-center rounded-xl px-5 py-3 text-sm font-semibold text-zinc-700 ring-1 ring-inset ring-zinc-300 hover:bg-zinc-50 hover:ring-zinc-400 transition">
+                                    <a href={CALENDLY_SPEAKING_URL} className="mt-6 inline-flex w-full items-center justify-center rounded-xl px-5 py-3 text-sm font-semibold text-zinc-700 ring-1 ring-inset ring-zinc-300 hover:bg-zinc-50 hover:ring-zinc-400 transition">
                                         Reservar sesión — $15
                                     </a>
                                 </div>
