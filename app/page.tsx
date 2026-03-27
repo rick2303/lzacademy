@@ -9,6 +9,7 @@ import Pill from "./components/Pill";
 import Sesiones from "./components/Sessions";
 import { useState } from "react";
 import PaymentForm from "./components/Form";
+import { InfoSessionSection, InfoSessionMini } from "./components/Infosessionsection";
 
 const CALENDLY_SPEAKING_URL =
   process.env.NEXT_PUBLIC_CALENDLY_SPEAKING_URL || "https://calendly.com/lzacademy590/speaking-session";
@@ -20,7 +21,7 @@ const CALENDLY_PREMIUM_BY_LEVEL: Record<string, string> = {
 };
 
 // ─── Actualizar estas fechas cuando cambien ───────────────────────────────────
-const NEXT_START = "6 de abril, 2026";
+const NEXT_STARTS = ["6 de abril, 2026", "4 de mayo, 2026", "1 de junio, 2026"];
 
 export default function Page() {
   const [isLevelModalOpen, setIsLevelModalOpen] = useState(false);
@@ -65,15 +66,6 @@ export default function Page() {
 
       <main className="bg-white">
 
-        {/* ══════════════════════════════════════════════════════════════════
-            HERO — Opción B: headline intacto + mejoras alrededor
-            CAMBIOS vs original:
-              1. Badge de fecha con punto verde pulsante (reemplaza Pill)
-              2. Texto de próximo inicio con fecha real (no genérico)
-              3. CTA primario añade "— desde $10/mes"
-              4. Card derecha: cita de Loren + stats 2x2 (reemplaza bullets)
-              5. Mini badges: países reales con alumnos (reemplaza los 3 genéricos)
-        ══════════════════════════════════════════════════════════════════ */}
         <section className="relative overflow-hidden">
           {/* Fondos — sin cambios */}
           <div className="absolute inset-0 bg-linear-to-b from-falu-red-100 via-white to-falu-red-50" />
@@ -95,7 +87,7 @@ export default function Page() {
                       Original: <Pill tone="falu">Aprende inglés en 90 días</Pill> */}
                   <div className="inline-flex items-center gap-2 rounded-full bg-white/80 px-4 py-1.5 text-xs font-semibold text-zinc-700 ring-1 ring-inset ring-falu-red-200/80">
                     <span className="h-2 w-2 rounded-full bg-green-500 animate-pulse" />
-                    Próximo inicio: {NEXT_START}
+                    Próximo inicio: {NEXT_STARTS[0]}
                   </div>
 
                   {/* Headline — INTACTO, no se toca */}
@@ -158,9 +150,6 @@ export default function Page() {
                   </div>
                 </div>
 
-                {/* ── Columna derecha ───────────────────────────────────── */}
-                {/* CAMBIO 4: Card con cita de Loren + stats reales
-                    Original: card de bullets genéricos ("¿Qué cambia cuando sigues un plan?") */}
                 <div className="lg:col-span-5 flex flex-col gap-4">
 
                   {/* Card con cita de Loren */}
@@ -227,7 +216,8 @@ export default function Page() {
             </div>
           </Container>
         </section>
-
+        <InfoSessionSection />
+        
         {/* ══════════════════════════════════════════════════════════════════
             PLANES — rediseño visual cohesivo con la marca
         ══════════════════════════════════════════════════════════════════ */}
@@ -246,9 +236,11 @@ export default function Page() {
               </h2>
               <p className="mt-3 text-sm text-zinc-500">
                 Próximo inicio:{" "}
-                <span className="font-semibold text-zinc-700">{NEXT_START}</span>
+                <span className="font-semibold text-zinc-700">{NEXT_STARTS[0]}</span>
                 {" · "}
-                <span className="font-semibold text-zinc-700">4 de mayo, 2026</span>
+                <span className="font-semibold text-zinc-700">{NEXT_STARTS[1]}</span>
+                {" · "}
+                <span className="font-semibold text-zinc-700">{NEXT_STARTS[2]}</span>
               </p>
             </div>
 
@@ -278,7 +270,7 @@ export default function Page() {
                   </div>
 
                   <p className="mt-4 text-sm text-zinc-500 leading-relaxed">
-                    Perfecto si quieres aprender inglés de forma flexible pero con una estructura clara. 80% autodidacta.
+                    Perfecto si quieres aprender inglés de forma flexible pero con una estructura clara. Sesiones diarias del Método 590, diseñadas para que avances a tu ritmo.
                   </p>
 
                   {/* Divisor */}
@@ -466,7 +458,7 @@ export default function Page() {
 
           </Container>
         </section>
-
+        <InfoSessionMini/>
         {/* Creadora */}
         <section className="relative py-14 sm:py-18">
           <div className="absolute inset-0 bg-linear-to-b from-falu-red-50/60 via-white to-white" />

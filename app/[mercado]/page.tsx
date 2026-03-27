@@ -1,4 +1,3 @@
-// app/[mercado]/page.tsx
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import Link from "next/link";
@@ -10,8 +9,9 @@ import Pill from "@/app/components/Pill";
 import PaymentFormWrapper from "./_components/PaymentFormWrapper";
 import PremiumButton from "./_components/PremiumButton";
 import PreguntasFrecuentes from "../components/Questions";
+import { InfoSessionSection, InfoSessionMini } from "../components/Infosessionsection";
 
-const NEXT_STARTS = ["6 de abril, 2026", "4 de mayo, 2026"];
+const NEXT_STARTS = ["6 de abril, 2026", "4 de mayo, 2026", "1 de junio, 2026"];
 
 const CALENDLY_SPEAKING_URL =
     process.env.NEXT_PUBLIC_CALENDLY_SPEAKING_URL || "https://calendly.com/lzacademy590/speaking-session";
@@ -144,6 +144,7 @@ export default async function MarketPage({ params }: { params: Promise<{ mercado
                         </div>
                     </Container>
                 </section>
+                <InfoSessionSection />
 
                 {/* ── PLANES — mismo diseño que page.tsx general ── */}
                 <section id="planes" className="relative py-16 sm:py-20 overflow-hidden">
@@ -161,6 +162,8 @@ export default async function MarketPage({ params }: { params: Promise<{ mercado
                                 <span className="font-semibold text-zinc-700">{NEXT_STARTS[0]}</span>
                                 {" · "}
                                 <span className="font-semibold text-zinc-700">{NEXT_STARTS[1]}</span>
+                                {" · "}
+                                <span className="font-semibold text-zinc-700">{NEXT_STARTS[2]}</span>
                             </p>
                         </div>
 
@@ -181,7 +184,7 @@ export default async function MarketPage({ params }: { params: Promise<{ mercado
                                         </div>
                                     </div>
                                     <p className="mt-4 text-sm text-zinc-500 leading-relaxed">
-                                        Perfecto si quieres aprender inglés de forma flexible pero con una estructura clara. 80% autodidacta.
+                                        Perfecto si quieres aprender inglés de forma flexible pero con una estructura clara. Sesiones diarias del Método 590, diseñadas para que avances a tu ritmo.
                                     </p>
                                     <div className="my-5 border-t border-zinc-100" />
                                     <ul className="space-y-3 flex-1">
@@ -311,7 +314,7 @@ export default async function MarketPage({ params }: { params: Promise<{ mercado
                         </p>
                     </Container>
                 </section>
-
+                <InfoSessionMini/>
                 {/* ── TESTIMONIOS ── */}
                 {testimonials.length > 0 && (
                     <section className="py-14 sm:py-16 bg-falu-red-50/40">

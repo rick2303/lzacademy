@@ -9,7 +9,7 @@ const mentora = {
     name: "Loren Laínez",
     role: "Fundadora del Método 590",
     location: "Estados Unidos",
-    photo: "/creadora.jpg",
+    photo: "/creadora.jpeg",
     socials: [
         { platform: "Instagram" as const, handle: "@lz_academym590", href: "https://instagram.com/lz_academym590" },
         { platform: "TikTok" as const, handle: "@lore_lainez21", href: "https://tiktok.com/lore_lainez21" },
@@ -94,7 +94,7 @@ export default function HistoriaPage() {
                 title="La historia de Loren Laínez | Método 590"
                 description="Conoce a Loren Laínez, fundadora del Método 590. Descubre su historia real de aprendizaje intensivo de inglés en 3 meses y cómo creó un método efectivo y estructurado."
                 url="https://lz-englishacademy.com/historia"
-                image="/images/creadora.png"
+                image="/images/creadora.jpeg"
             />
 
             <main className="bg-white text-zinc-900">

@@ -20,6 +20,7 @@ const yesterday = today.toISOString().split("T")[0];
 const availableDates = [
     { value: "2026-04-06", label: "6 de Abril de 2026" },
     { value: "2026-05-04", label: "4 de Mayo de 2026" },
+    { value: "2026-06-01", label: "1 de Junio de 2026" },
 ].filter((d) => d.value > yesterday);
 
 // ─── Subcomponentes de UI ─────────────────────────────────────────────────────
