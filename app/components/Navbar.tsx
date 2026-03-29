@@ -8,6 +8,7 @@ import { Container } from "./Container";
 
 const navItems = [
   { href: "/", label: "Inicio" },
+  { href: "/interes", label: "Interés" },
   { href: "/historia", label: "Historia" },
   { href: "/metodo", label: "Método" },
   { href: "/ciencia", label: "Ciencia" },
@@ -200,7 +201,7 @@ export function Navbar() {
 
                       {/* Info Session en mobile menu */}
                       <a
-                        href= {CALENDLY_INFO_URL}
+                        href={CALENDLY_INFO_URL}
                         target="_blank"
                         rel="noopener noreferrer"
                         onClick={() => setOpen(false)}
