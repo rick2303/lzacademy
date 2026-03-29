@@ -65,11 +65,10 @@ function RadioGroup({
                     key={opt}
                     type="button"
                     onClick={() => onChange(opt)}
-                    className={`px-4 py-2 rounded-xl text-sm font-medium transition border ${
-                        value === opt
+                    className={`px-4 py-2 rounded-xl text-sm font-medium transition border ${value === opt
                             ? "bg-falu-red-700 text-white border-falu-red-700 shadow-sm"
                             : "bg-zinc-50 text-zinc-600 border-zinc-200 hover:border-zinc-300 hover:bg-zinc-100"
-                    }`}
+                        }`}
                 >
                     {opt}
                 </button>
@@ -81,7 +80,6 @@ function RadioGroup({
 const COURSES = [
     { key: "Essential", price: "$10/mes", desc: "Acceso completo + comunidad" },
     { key: "Premium", price: "$50/mes", desc: "Todo Essential + tutorías" },
-    { key: "Individual", price: "$100/mes", desc: "Clases 1 a 1 personalizadas" },
     { key: "Speaking Sessions", price: "À la carte", desc: "Solo sesiones de speaking" },
 ];
 
@@ -246,30 +244,43 @@ export default function InterestForm() {
                         <div>
                             <FieldLabel htmlFor="country">País donde resides *</FieldLabel>
                             <SelectWrapper>
-                                <select id="country" name="country" value={formData.country} onChange={handleChange} className={selectClass} required>
+                                <select
+                                    id="country"
+                                    name="country"
+                                    value={formData.country}
+                                    onChange={handleChange}
+                                    className={selectClass}
+                                    required
+                                >
                                     <option value="">Selecciona tu país</option>
+
+                                    {/* América del Norte */}
                                     <option>México</option>
+                                    <option>Estados Unidos</option>
+                                    <option>Canadá</option>
+                                    <option>Costa Rica</option>
+                                    <option>El Salvador</option>
                                     <option>Guatemala</option>
                                     <option>Honduras</option>
-                                    <option>El Salvador</option>
                                     <option>Nicaragua</option>
-                                    <option>Costa Rica</option>
                                     <option>Panamá</option>
                                     <option>Cuba</option>
-                                    <option>República Dominicana</option>
                                     <option>Puerto Rico</option>
-                                    <option>Colombia</option>
-                                    <option>Venezuela</option>
-                                    <option>Ecuador</option>
-                                    <option>Perú</option>
+                                    <option>República Dominicana</option>
+                                    <option>Argentina</option>
                                     <option>Bolivia</option>
                                     <option>Chile</option>
-                                    <option>Argentina</option>
-                                    <option>Uruguay</option>
+                                    <option>Colombia</option>
+                                    <option>Ecuador</option>
                                     <option>Paraguay</option>
-                                    <option>Estados Unidos</option>
+                                    <option>Perú</option>
+                                    <option>Uruguay</option>
+                                    <option>Venezuela</option>
                                     <option>España</option>
-                                    <option>Otros</option>
+                                    <option>Francia</option>
+                                    <option>Italia</option>
+                                    <option>Guinea Ecuatorial</option>
+                                    <option value="Otros">Otros</option>
                                 </select>
                             </SelectWrapper>
                         </div>
@@ -396,11 +407,10 @@ export default function InterestForm() {
                                         formData.interestedCourse === course.key ? "" : course.key
                                     )
                                 }
-                                className={`text-left rounded-xl border p-4 transition ${
-                                    formData.interestedCourse === course.key
+                                className={`text-left rounded-xl border p-4 transition ${formData.interestedCourse === course.key
                                         ? "border-falu-red-500 bg-falu-red-50 ring-1 ring-falu-red-300"
                                         : "border-zinc-200 bg-zinc-50 hover:border-zinc-300 hover:bg-zinc-100"
-                                }`}
+                                    }`}
                             >
                                 <div className="flex items-center justify-between mb-1">
                                     <span className="text-sm font-semibold text-zinc-800">{course.key}</span>
