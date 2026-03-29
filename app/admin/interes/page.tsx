@@ -1,0 +1,502 @@
+"use client";
+
+import { useEffect, useState } from "react";
+import { supabase } from "../../lib/supabaseClient";
+import { useRouter } from "next/navigation";
+import * as XLSX from "xlsx";
+import { saveAs } from "file-saver";
+import dayjs from "dayjs";
+import utc from "dayjs/plugin/utc";
+dayjs.extend(utc);
+
+interface InterestSubmission {
+    id: string;
+    created_at: string;
+    email: string;
+    full_name: string;
+    country: string;
+    english_level: string;
+    motive: string;
+    main_difficulty: string;
+    daily_routine: string;
+    daily_time: string;
+    community: string;
+    interested_course: string | null;
+    why_community: string | null;
+    life_change: string | null;
+    additional_info: string | null;
+}
+
+interface DashboardStats {
+    total: number;
+    byCountry: Record<string, number>;
+    byCourse: Record<string, number>;
+    byCommunity: Record<string, number>;
+}
+
+const PAGE_SIZE = 15;
+
+function StatCard({
+    label,
+    value,
+    accent,
+}: {
+    label: string;
+    value: string | number;
+    accent: string;
+}) {
+    return (
+        <div className={`bg-white rounded-lg shadow p-4 sm:p-6 border-l-4 ${accent} hover:shadow-lg transition`}>
+            <p className="text-gray-400 text-sm">{label}</p>
+            <p className="text-2xl font-bold text-gray-800 mt-1">{value}</p>
+        </div>
+    );
+}
+
+function Badge({ value }: { value: string | null }) {
+    if (!value) return <span className="text-gray-300 text-xs">—</span>;
+
+    const map: Record<string, string> = {
+        Sí: "bg-green-100 text-green-700",
+        No: "bg-red-100 text-red-600",
+        "Tal vez": "bg-yellow-100 text-yellow-700",
+        Essential: "bg-blue-100 text-blue-700",
+        Premium: "bg-purple-100 text-purple-700",
+        "Speaking Sessions": "bg-orange-100 text-orange-700",
+        Individual: "bg-teal-100 text-teal-700",
+    };
+
+    const cls = map[value] ?? "bg-zinc-100 text-zinc-600";
+    return (
+        <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-medium ${cls}`}>
+            {value}
+        </span>
+    );
+}
+
+function TextModal({
+    title,
+    text,
+    onClose,
+}: {
+    title: string;
+    text: string;
+    onClose: () => void;
+}) {
+    return (
+        <div
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4"
+            onClick={onClose}
+        >
+            <div
+                className="bg-white rounded-2xl shadow-xl max-w-lg w-full p-6"
+                onClick={(e) => e.stopPropagation()}
+            >
+                <div className="flex items-center justify-between mb-4">
+                    <h3 className="font-semibold text-zinc-800 text-sm">{title}</h3>
+                    <button onClick={onClose} className="text-zinc-400 hover:text-zinc-600 transition">
+                        <svg className="h-5 w-5" viewBox="0 0 16 16" fill="none">
+                            <path d="M4 4l8 8M12 4l-8 8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+                        </svg>
+                    </button>
+                </div>
+                <p className="text-sm text-zinc-600 leading-relaxed whitespace-pre-wrap">{text}</p>
+            </div>
+        </div>
+    );
+}
+
+const TABLE_HEADERS = [
+    { label: "Fecha", key: "created_at" },
+    { label: "Nombre", key: "full_name" },
+    { label: "Email", key: "email" },
+    { label: "País", key: "country" },
+    { label: "Nivel", key: "english_level" },
+    { label: "Motivo", key: "motive" },
+    { label: "Dificultad", key: "main_difficulty" },
+    { label: "Rutina diaria", key: "daily_routine" },
+    { label: "Tiempo/día", key: "daily_time" },
+    { label: "Comunidad", key: "community" },
+    { label: "Curso interés", key: "interested_course" },
+    { label: "¿Por qué comunidad?", key: "why_community" },
+    { label: "¿Qué cambiaría?", key: "life_change" },
+    { label: "Info adicional", key: "additional_info" },
+];
+
+export default function InterestDashboard() {
+    const [submissions, setSubmissions] = useState<InterestSubmission[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [filters, setFilters] = useState({
+        country: "",
+        english_level: "",
+        community: "",
+        interested_course: "",
+        dateFrom: "",
+        dateTo: "",
+    });
+    const [modal, setModal] = useState<{ title: string; text: string } | null>(null);
+    const [currentPage, setCurrentPage] = useState(1);
+    const router = useRouter();
+
+    useEffect(() => {
+        async function loadData() {
+            const {
+                data: { session },
+            } = await supabase.auth.getSession();
+
+            if (!session) {
+                router.push("/admin/login");
+                return;
+            }
+
+            const response = await fetch(
+                `${process.env.NEXT_PUBLIC_BACKEND_URL}/admin/interes`,
+                {
+                    headers: {
+                        Authorization: `Bearer ${session.access_token}`,
+                    },
+                }
+            );
+
+            const result = await response.json();
+            if (Array.isArray(result)) setSubmissions(result);
+            setLoading(false);
+        }
+
+        loadData();
+    }, []);
+
+    // Reset página al cambiar filtros
+    useEffect(() => {
+        setCurrentPage(1);
+    }, [filters]);
+
+    const handleLogout = async () => {
+        await supabase.auth.signOut();
+        router.push("/admin/login");
+    };
+
+    const countries = Array.from(new Set(submissions.map((s) => s.country))).sort();
+    const levels = Array.from(new Set(submissions.map((s) => s.english_level))).sort();
+    const courses = Array.from(
+        new Set(submissions.map((s) => s.interested_course ?? "Sin selección"))
+    ).sort();
+
+    const filtered = submissions.filter((s) => {
+        if (filters.country && s.country !== filters.country) return false;
+        if (filters.english_level && s.english_level !== filters.english_level) return false;
+        if (filters.community && s.community !== filters.community) return false;
+        if (
+            filters.interested_course &&
+            (filters.interested_course === "Sin selección"
+                ? s.interested_course !== null
+                : s.interested_course !== filters.interested_course)
+        )
+            return false;
+        if (filters.dateFrom && dayjs.utc(s.created_at).isBefore(dayjs(filters.dateFrom)))
+            return false;
+        if (filters.dateTo && dayjs.utc(s.created_at).isAfter(dayjs(filters.dateTo).endOf("day")))
+            return false;
+        return true;
+    });
+
+    const totalPages = Math.ceil(filtered.length / PAGE_SIZE);
+    const paginated = filtered.slice(
+        (currentPage - 1) * PAGE_SIZE,
+        currentPage * PAGE_SIZE
+    );
+
+    const stats: DashboardStats = {
+        total: filtered.length,
+        byCountry: filtered.reduce<Record<string, number>>((acc, s) => {
+            acc[s.country] = (acc[s.country] ?? 0) + 1;
+            return acc;
+        }, {}),
+        byCourse: filtered.reduce<Record<string, number>>((acc, s) => {
+            const key = s.interested_course ?? "Sin selección";
+            acc[key] = (acc[key] ?? 0) + 1;
+            return acc;
+        }, {}),
+        byCommunity: filtered.reduce<Record<string, number>>((acc, s) => {
+            acc[s.community] = (acc[s.community] ?? 0) + 1;
+            return acc;
+        }, {}),
+    };
+
+    const topCountry =
+        Object.entries(stats.byCountry).sort((a, b) => b[1] - a[1])[0]?.[0] ?? "—";
+    const topCourse =
+        Object.entries(stats.byCourse).sort((a, b) => b[1] - a[1])[0]?.[0] ?? "—";
+
+    const handleExportExcel = () => {
+        const exportData = filtered.map((s) => ({
+            Fecha: dayjs.utc(s.created_at).format("DD/MM/YYYY HH:mm"),
+            Nombre: s.full_name,
+            Email: s.email,
+            País: s.country,
+            "Nivel de inglés": s.english_level,
+            Motivo: s.motive,
+            "Mayor dificultad": s.main_difficulty,
+            "Rutina diaria": s.daily_routine,
+            "Tiempo por día": s.daily_time,
+            "Participaría comunidad": s.community,
+            "Curso de interés": s.interested_course ?? "Sin selección",
+            "¿Por qué comunidad?": s.why_community ?? "",
+            "¿Qué cambiaría?": s.life_change ?? "",
+            "Info adicional": s.additional_info ?? "",
+        }));
+
+        const worksheet = XLSX.utils.json_to_sheet(exportData);
+        const workbook = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(workbook, worksheet, "Interesados");
+        const buffer = XLSX.write(workbook, { bookType: "xlsx", type: "array" });
+        saveAs(new Blob([buffer], { type: "application/octet-stream" }), "interesados.xlsx");
+    };
+
+    const LongText = ({ title, value }: { title: string; value: string | null }) => {
+        if (!value) return <span className="text-gray-300 text-xs">—</span>;
+        const preview = value.length > 40 ? value.slice(0, 40) + "…" : value;
+        return (
+            <button
+                className="text-xs text-left text-zinc-600 hover:text-falu-red-700 hover:underline transition max-w-[160px] truncate block"
+                onClick={() => setModal({ title, text: value })}
+                title="Ver completo"
+            >
+                {preview}
+            </button>
+        );
+    };
+
+    if (loading)
+        return (
+            <p className="text-center mt-20 text-gray-400 text-lg font-medium">Cargando...</p>
+        );
+
+    return (
+        <div className="p-4 md:p-8 bg-gray-50 min-h-screen font-sans">
+
+            {modal && (
+                <TextModal title={modal.title} text={modal.text} onClose={() => setModal(null)} />
+            )}
+
+            {/* Header */}
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 md:mb-8 gap-4">
+                <div>
+                    <h2 className="text-2xl md:text-3xl font-bold text-falu-red-700">Dashboard Admin</h2>
+                    <p className="text-sm text-gray-400 mt-0.5">Formularios de interés recibidos</p>
+                </div>
+                <div className="flex gap-3">
+                    <button
+                        onClick={() => router.push("/admin/dashboard")}
+                        className="bg-white text-falu-red-700 border border-falu-red-300 px-4 py-2 rounded-lg hover:bg-falu-red-50 transition text-sm font-medium"
+                    >
+                        Ver pagos
+                    </button>
+                    <button
+                        onClick={handleLogout}
+                        className="bg-falu-red-500 text-white px-4 py-2 rounded-lg hover:bg-falu-red-600 transition"
+                    >
+                        Cerrar sesión
+                    </button>
+                </div>
+            </div>
+
+            {/* Summary Cards */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 mb-6 md:mb-8">
+                <StatCard label="Total formularios" value={stats.total} accent="border-yellow-orange-500" />
+                <StatCard label="País con más interés" value={topCountry} accent="border-yellow-orange-400" />
+                <StatCard
+                    label="Quieren participar en comunidad"
+                    value={stats.byCommunity["Sí"] ?? 0}
+                    accent="border-green-400"
+                />
+                <StatCard label="Curso más solicitado" value={topCourse} accent="border-yellow-orange-300" />
+            </div>
+
+            {/* Filters + Export */}
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4 mb-6 bg-white p-4 rounded-lg shadow-md">
+                <div className="flex flex-wrap gap-4 w-full md:w-auto">
+
+                    <div className="flex flex-col">
+                        <label className="text-xs text-gray-500 font-medium mb-1">País</label>
+                        <select
+                            className="p-2 border rounded focus:outline-none focus:ring-2 focus:ring-yellow-orange-400 shadow-sm text-sm"
+                            value={filters.country}
+                            onChange={(e) => setFilters({ ...filters, country: e.target.value })}
+                        >
+                            <option value="">Todos</option>
+                            {countries.map((c) => <option key={c}>{c}</option>)}
+                        </select>
+                    </div>
+
+                    <div className="flex flex-col">
+                        <label className="text-xs text-gray-500 font-medium mb-1">Nivel de inglés</label>
+                        <select
+                            className="p-2 border rounded focus:outline-none focus:ring-2 focus:ring-yellow-orange-400 shadow-sm text-sm"
+                            value={filters.english_level}
+                            onChange={(e) => setFilters({ ...filters, english_level: e.target.value })}
+                        >
+                            <option value="">Todos</option>
+                            {levels.map((l) => <option key={l}>{l}</option>)}
+                        </select>
+                    </div>
+
+                    <div className="flex flex-col">
+                        <label className="text-xs text-gray-500 font-medium mb-1">Comunidad</label>
+                        <select
+                            className="p-2 border rounded focus:outline-none focus:ring-2 focus:ring-yellow-orange-400 shadow-sm text-sm"
+                            value={filters.community}
+                            onChange={(e) => setFilters({ ...filters, community: e.target.value })}
+                        >
+                            <option value="">Todos</option>
+                            <option>Sí</option>
+                            <option>No</option>
+                            <option>Tal vez</option>
+                        </select>
+                    </div>
+
+                    <div className="flex flex-col">
+                        <label className="text-xs text-gray-500 font-medium mb-1">Curso de interés</label>
+                        <select
+                            className="p-2 border rounded focus:outline-none focus:ring-2 focus:ring-yellow-orange-400 shadow-sm text-sm"
+                            value={filters.interested_course}
+                            onChange={(e) => setFilters({ ...filters, interested_course: e.target.value })}
+                        >
+                            <option value="">Todos</option>
+                            {courses.map((c) => <option key={c}>{c}</option>)}
+                        </select>
+                    </div>
+
+                    <div className="flex flex-col">
+                        <label className="text-xs text-gray-500 font-medium mb-1">Desde</label>
+                        <input
+                            type="date"
+                            className="p-2 border rounded focus:outline-none focus:ring-2 focus:ring-yellow-orange-400 shadow-sm text-sm"
+                            value={filters.dateFrom}
+                            onChange={(e) => setFilters({ ...filters, dateFrom: e.target.value })}
+                        />
+                    </div>
+
+                    <div className="flex flex-col">
+                        <label className="text-xs text-gray-500 font-medium mb-1">Hasta</label>
+                        <input
+                            type="date"
+                            className="p-2 border rounded focus:outline-none focus:ring-2 focus:ring-yellow-orange-400 shadow-sm text-sm"
+                            value={filters.dateTo}
+                            onChange={(e) => setFilters({ ...filters, dateTo: e.target.value })}
+                        />
+                    </div>
+
+                    {Object.values(filters).some(Boolean) && (
+                        <div className="flex flex-col justify-end">
+                            <button
+                                onClick={() => setFilters({ country: "", english_level: "", community: "", interested_course: "", dateFrom: "", dateTo: "" })}
+                                className="p-2 text-xs text-zinc-500 hover:text-zinc-700 underline transition"
+                            >
+                                Limpiar filtros
+                            </button>
+                        </div>
+                    )}
+                </div>
+
+                <div className="w-full md:w-auto flex justify-start md:justify-end">
+                    <button
+                        onClick={handleExportExcel}
+                        className="bg-yellow-orange-500 text-white px-5 py-2 rounded-lg hover:bg-yellow-orange-600 transition shadow-sm text-sm"
+                    >
+                        Exportar Excel
+                    </button>
+                </div>
+            </div>
+
+            {/* Result count */}
+            <p className="text-xs text-gray-400 mb-3">
+                Mostrando{" "}
+                <strong className="text-gray-600">
+                    {filtered.length === 0 ? 0 : (currentPage - 1) * PAGE_SIZE + 1}–{Math.min(currentPage * PAGE_SIZE, filtered.length)}
+                </strong>{" "}
+                de <strong className="text-gray-600">{filtered.length}</strong> registros
+            </p>
+
+            {/* Table */}
+            <div className="overflow-x-auto bg-white rounded-lg shadow">
+                <table className="min-w-full divide-y divide-gray-200 text-sm">
+                    <thead className="bg-falu-red-50">
+                        <tr>
+                            {TABLE_HEADERS.map((h) => (
+                                <th
+                                    key={h.key}
+                                    className="px-3 py-3 text-left text-xs font-medium text-falu-red-700 uppercase tracking-wider whitespace-nowrap"
+                                >
+                                    {h.label}
+                                </th>
+                            ))}
+                        </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-100">
+                        {paginated.length === 0 ? (
+                            <tr>
+                                <td colSpan={TABLE_HEADERS.length} className="text-center py-12 text-gray-400 text-sm">
+                                    No hay registros que coincidan con los filtros.
+                                </td>
+                            </tr>
+                        ) : (
+                            paginated.map((s) => (
+                                <tr key={s.id} className="hover:bg-falu-red-50 transition">
+                                    <td className="px-3 py-2 whitespace-nowrap text-xs text-gray-500">
+                                        {dayjs.utc(s.created_at).format("DD/MM/YY HH:mm")}
+                                    </td>
+                                    <td className="px-3 py-2 whitespace-nowrap font-medium text-gray-800">{s.full_name}</td>
+                                    <td className="px-3 py-2 whitespace-nowrap text-gray-600">{s.email}</td>
+                                    <td className="px-3 py-2 whitespace-nowrap">{s.country}</td>
+                                    <td className="px-3 py-2 whitespace-nowrap text-xs text-gray-600">{s.english_level}</td>
+                                    <td className="px-3 py-2 text-xs text-gray-600 max-w-[140px] truncate" title={s.motive}>{s.motive}</td>
+                                    <td className="px-3 py-2 text-xs text-gray-600 max-w-[140px] truncate" title={s.main_difficulty}>{s.main_difficulty}</td>
+                                    <td className="px-3 py-2"><Badge value={s.daily_routine} /></td>
+                                    <td className="px-3 py-2 whitespace-nowrap text-xs text-gray-600">{s.daily_time}</td>
+                                    <td className="px-3 py-2"><Badge value={s.community} /></td>
+                                    <td className="px-3 py-2"><Badge value={s.interested_course} /></td>
+                                    <td className="px-3 py-2">
+                                        <LongText title="¿Por qué comunidad?" value={s.why_community} />
+                                    </td>
+                                    <td className="px-3 py-2">
+                                        <LongText title="¿Qué cambiaría en tu vida?" value={s.life_change} />
+                                    </td>
+                                    <td className="px-3 py-2">
+                                        <LongText title="Información adicional" value={s.additional_info} />
+                                    </td>
+                                </tr>
+                            ))
+                        )}
+                    </tbody>
+                </table>
+
+                {/* Pagination */}
+                {totalPages > 1 && (
+                    <div className="flex items-center justify-between px-4 py-3 border-t border-gray-200">
+                        <p className="text-xs text-gray-400">
+                            Página <strong className="text-gray-600">{currentPage}</strong> de{" "}
+                            <strong className="text-gray-600">{totalPages}</strong>
+                        </p>
+                        <div className="flex gap-2">
+                            <button
+                                onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                                disabled={currentPage === 1}
+                                className="px-3 py-1.5 text-xs rounded-lg border border-gray-200 disabled:opacity-40 hover:bg-gray-50 transition"
+                            >
+                                ← Anterior
+                            </button>
+                            <button
+                                onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                                disabled={currentPage === totalPages}
+                                className="px-3 py-1.5 text-xs rounded-lg border border-gray-200 disabled:opacity-40 hover:bg-gray-50 transition"
+                            >
+                                Siguiente →
+                            </button>
+                        </div>
+                    </div>
+                )}
+            </div>
+        </div>
+    );
+}

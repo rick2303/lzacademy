@@ -31,6 +31,8 @@ interface DashboardData {
     users: User[];
 }
 
+const PAGE_SIZE = 15;
+
 export default function Dashboard() {
     const [data, setData] = useState<DashboardData | null>(null);
     const [filters, setFilters] = useState({
@@ -39,6 +41,7 @@ export default function Dashboard() {
         inscriptionDate: "",
         paymentDate: "",
     });
+    const [currentPage, setCurrentPage] = useState(1);
     const router = useRouter();
 
     useEffect(() => {
@@ -67,6 +70,11 @@ export default function Dashboard() {
 
         loadDashboard();
     }, []);
+
+    // Reset página al cambiar filtros
+    useEffect(() => {
+        setCurrentPage(1);
+    }, [filters]);
 
     const handleLogout = async () => {
         await supabase.auth.signOut();
@@ -122,6 +130,12 @@ export default function Dashboard() {
         return matchCountry && matchStatus && matchInscription && matchPayment;
     });
 
+    const totalPages = Math.ceil(filteredUsers.length / PAGE_SIZE);
+    const paginatedUsers = filteredUsers.slice(
+        (currentPage - 1) * PAGE_SIZE,
+        currentPage * PAGE_SIZE
+    );
+
     const countries = Array.from(new Set(data.users.map((u) => u.country)));
     const statuses = Array.from(new Set(data.users.map((u) => u.status)));
 
@@ -129,13 +143,24 @@ export default function Dashboard() {
         <div className="p-4 md:p-8 bg-gray-50 min-h-screen font-sans">
             {/* Header */}
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 md:mb-8 gap-4">
-                <h2 className="text-2xl md:text-3xl font-bold text-falu-red-700">Dashboard Admin</h2>
-                <button
-                    onClick={handleLogout}
-                    className="bg-falu-red-500 text-white px-4 py-2 rounded-lg hover:bg-falu-red-600 transition"
-                >
-                    Cerrar sesión
-                </button>
+                <div>
+                    <h2 className="text-2xl md:text-3xl font-bold text-falu-red-700">Dashboard Admin</h2>
+                    <p className="text-sm text-gray-400 mt-0.5">Pagos recibidos</p>
+                </div>
+                <div className="flex gap-3">
+                    <button
+                        onClick={() => router.push("/admin/interes")}
+                        className="bg-white text-falu-red-700 border border-falu-red-300 px-4 py-2 rounded-lg hover:bg-falu-red-50 transition text-sm font-medium"
+                    >
+                        Ver formularios de interés
+                    </button>
+                    <button
+                        onClick={handleLogout}
+                        className="bg-falu-red-500 text-white px-4 py-2 rounded-lg hover:bg-falu-red-600 transition"
+                    >
+                        Cerrar sesión
+                    </button>
+                </div>
             </div>
 
             {/* Summary Cards */}
@@ -158,7 +183,6 @@ export default function Dashboard() {
 
             {/* Filters + Export */}
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6 bg-white p-4 rounded-lg shadow-md">
-                {/* Filtros */}
                 <div className="flex flex-wrap gap-4 md:gap-6 w-full md:w-auto">
                     <div className="flex flex-col">
                         <label className="text-xs text-gray-500 font-medium mb-1">País</label>
@@ -169,9 +193,7 @@ export default function Dashboard() {
                         >
                             <option value="">Todos los países</option>
                             {countries.map((c) => (
-                                <option key={c} value={c}>
-                                    {c}
-                                </option>
+                                <option key={c} value={c}>{c}</option>
                             ))}
                         </select>
                     </div>
@@ -185,9 +207,7 @@ export default function Dashboard() {
                         >
                             <option value="">Todos los estados</option>
                             {statuses.map((s) => (
-                                <option key={s} value={s}>
-                                    {s}
-                                </option>
+                                <option key={s} value={s}>{s}</option>
                             ))}
                         </select>
                     </div>
@@ -213,7 +233,6 @@ export default function Dashboard() {
                     </div>
                 </div>
 
-                {/* Botón Export */}
                 <div className="w-full md:w-auto flex justify-start md:justify-end">
                     <button
                         onClick={handleExportExcel}
@@ -224,6 +243,14 @@ export default function Dashboard() {
                 </div>
             </div>
 
+            {/* Result count */}
+            <p className="text-xs text-gray-400 mb-3">
+                Mostrando{" "}
+                <strong className="text-gray-600">
+                    {(currentPage - 1) * PAGE_SIZE + 1}–{Math.min(currentPage * PAGE_SIZE, filteredUsers.length)}
+                </strong>{" "}
+                de <strong className="text-gray-600">{filteredUsers.length}</strong> registros
+            </p>
 
             {/* Users Table */}
             <div className="overflow-x-auto bg-white rounded-lg shadow">
@@ -252,33 +279,67 @@ export default function Dashboard() {
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-200">
-                        {filteredUsers.map((user) => (
-                            <tr
-                                key={user.id}
-                                className="hover:bg-falu-red-100 transition cursor-pointer"
-                            >
-                                <td className="px-2 sm:px-4 py-1 sm:py-2">{user.id}</td>
-                                <td className="px-2 sm:px-4 py-1 sm:py-2">{user.email}</td>
-                                <td className="px-2 sm:px-4 py-1 sm:py-2">{user.full_name}</td>
-                                <td className="px-2 sm:px-4 py-1 sm:py-2">
-                                    {user.inscription_date
-                                        ? dayjs.utc(user.inscription_date).format("DD/MM/YYYY")
-                                        : "N/A"}
-                                </td>
-                                <td className="px-2 sm:px-4 py-1 sm:py-2">{user.country}</td>
-                                <td className="px-2 sm:px-4 py-1 sm:py-2">{user.plan}</td>
-                                <td className="px-2 sm:px-4 py-1 sm:py-2">{user.level}</td>
-                                <td className="px-2 sm:px-4 py-1 sm:py-2">{user.motive}</td>
-                                <td className="px-2 sm:px-4 py-1 sm:py-2">{user.status}</td>
-                                <td className="px-2 sm:px-4 py-1 sm:py-2">
-                                    {user.last_payment_date
-                                        ? dayjs.utc(user.last_payment_date).format("DD/MM/YYYY")
-                                        : "N/A"}
+                        {paginatedUsers.length === 0 ? (
+                            <tr>
+                                <td colSpan={10} className="text-center py-12 text-gray-400 text-sm">
+                                    No hay registros que coincidan con los filtros.
                                 </td>
                             </tr>
-                        ))}
+                        ) : (
+                            paginatedUsers.map((user) => (
+                                <tr
+                                    key={user.id}
+                                    className="hover:bg-falu-red-100 transition cursor-pointer"
+                                >
+                                    <td className="px-2 sm:px-4 py-1 sm:py-2">{user.id}</td>
+                                    <td className="px-2 sm:px-4 py-1 sm:py-2">{user.email}</td>
+                                    <td className="px-2 sm:px-4 py-1 sm:py-2">{user.full_name}</td>
+                                    <td className="px-2 sm:px-4 py-1 sm:py-2">
+                                        {user.inscription_date
+                                            ? dayjs.utc(user.inscription_date).format("DD/MM/YYYY")
+                                            : "N/A"}
+                                    </td>
+                                    <td className="px-2 sm:px-4 py-1 sm:py-2">{user.country}</td>
+                                    <td className="px-2 sm:px-4 py-1 sm:py-2">{user.plan}</td>
+                                    <td className="px-2 sm:px-4 py-1 sm:py-2">{user.level}</td>
+                                    <td className="px-2 sm:px-4 py-1 sm:py-2">{user.motive}</td>
+                                    <td className="px-2 sm:px-4 py-1 sm:py-2">{user.status}</td>
+                                    <td className="px-2 sm:px-4 py-1 sm:py-2">
+                                        {user.last_payment_date
+                                            ? dayjs.utc(user.last_payment_date).format("DD/MM/YYYY")
+                                            : "N/A"}
+                                    </td>
+                                </tr>
+                            ))
+                        )}
                     </tbody>
                 </table>
+
+                {/* Pagination */}
+                {totalPages > 1 && (
+                    <div className="flex items-center justify-between px-4 py-3 border-t border-gray-200">
+                        <p className="text-xs text-gray-400">
+                            Página <strong className="text-gray-600">{currentPage}</strong> de{" "}
+                            <strong className="text-gray-600">{totalPages}</strong>
+                        </p>
+                        <div className="flex gap-2">
+                            <button
+                                onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                                disabled={currentPage === 1}
+                                className="px-3 py-1.5 text-xs rounded-lg border border-gray-200 disabled:opacity-40 hover:bg-gray-50 transition"
+                            >
+                                ← Anterior
+                            </button>
+                            <button
+                                onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                                disabled={currentPage === totalPages}
+                                className="px-3 py-1.5 text-xs rounded-lg border border-gray-200 disabled:opacity-40 hover:bg-gray-50 transition"
+                            >
+                                Siguiente →
+                            </button>
+                        </div>
+                    </div>
+                )}
             </div>
         </div>
     );
