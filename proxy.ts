@@ -5,6 +5,7 @@ import { NextRequest, NextResponse } from "next/server";
 const VALID_ROUTES = new Set([
   "/",
   "/historia",
+  "/interes",
   "/metodo",
   "/ciencia",
   "/como-funciona",
