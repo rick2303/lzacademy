@@ -333,7 +333,8 @@ const PaymentForm = ({ selectedPlan }: { selectedPlan: PlanType }) => {
                                         <option value="Principiante">Principiante (A1)</option>
                                         <option value="Basico">Básico (A2)</option>
                                         <option value="Intermedio">Intermedio (B1)</option>
-                                        <option value="Intermedio alto">Intermedio alto (B2)</option>
+                                        <option value="Intermedio alto-gramatica">Intermedio alto (B2.1)</option>
+                                        <option value="Intermedio alto-produccion">Intermedio alto (B2.2)</option>
                                     </select>
                                     <div className="pointer-events-none absolute inset-y-0 right-3 flex items-center">
                                         <svg className="h-4 w-4 text-zinc-400" viewBox="0 0 16 16" fill="none">
