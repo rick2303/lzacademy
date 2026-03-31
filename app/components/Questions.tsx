@@ -35,6 +35,15 @@ const preguntasFrecuentes: { pregunta: string; respuesta: React.ReactNode }[] = 
     ),
   },
   {
+    pregunta: "¿Cúal es la diferencia entre B2.1 y B2.2?",
+    respuesta: (
+      <>
+        B2.1: dirigido a estudiantes que aún no dominan las estructuras gramaticales del nivel B2 y necesitan fortalecer esa base, usualmente vienen de B1.<br /><br />
+        B2.2: dirigido a estudiantes que ya manejan el nivel B2 y están enfocados en consolidar, afianzar y perfeccionar su uso del idioma. Usualmente ya cursaron el B2.1
+      </>
+    ),
+  },
+  {
     pregunta: "¿Se tienen que hacer las 5 sesiones juntas de una sola vez?",
     respuesta:
       "No necesariamente. Pueden hacerse en distintas partes del día, unas en la mañana, otras en la tarde, últimas en la noche.",
