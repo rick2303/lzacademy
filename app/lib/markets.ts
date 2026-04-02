@@ -58,7 +58,7 @@ export const markets: Market[] = [
       headlineAccent: "ganar en dólares.",
       subheadline:
         "Empresas como Amazon, Concentrix y Teleperformance pagan hasta 2x más a empleados bilingües. El Método 590 te da el nivel B1 que necesitas en 90 días — por $10/mes.",
-      ctaPrimary: "Quiero trabajar en empresa con sueldo en dólares",
+      ctaPrimary: "Quiero empezar",
       stats: [
         { value: "$10 USD", label: "al mes" },
         { value: "≈ $170 MXN", label: "equivalente" },
@@ -115,7 +115,7 @@ export const markets: Market[] = [
       headlineAccent: "trabajar remoto o viajar.",
       subheadline:
         "El inglés es el principal obstáculo para conseguir trabajo remoto en dólares o iniciar un proceso de visa. Con el Método 590 llegas a B1 conversacional en 3 meses — desde $10/mes.",
-      ctaPrimary: "Quiero trabajar remoto o viajar este año",
+      ctaPrimary: "Iniciar proceso",
       stats: [
         { value: "$10 USD", label: "al mes" },
         { value: "≈ $41.000 COP", label: "equivalente" },
@@ -171,7 +171,7 @@ export const markets: Market[] = [
       headlineAccent: "siguiente nivel. Finalmente.",
       subheadline:
         "Ya vives en EEUU pero el inglés te frena en el trabajo. El Método 590 está diseñado para hispanos que entienden pero no hablan con confianza — por $10/mes, menos que Netflix.",
-      ctaPrimary: "Empezar a hablar inglés con confianza",
+      ctaPrimary: "Empezar ahora",
       stats: [
         { value: "$10 USD", label: "al mes" },
         { value: "Menos que Netflix", label: "en costo" },
@@ -182,7 +182,7 @@ export const markets: Market[] = [
       title: "El inglés que ya casi tienes.",
       points: [
         "Hay 62 millones de hispanos en EEUU. La mayoría entiende inglés pero no habla con la confianza necesaria para avanzar en su carrera.",
-        "El 'entiendo pero no hablo' tiene solución: el Método 590 trabaja la producción oral (speaking) desde el día 1.",
+        "El entiendo pero no hablo' tiene solución: el Método 590 trabaja la producción oral (speaking) desde el día 1.",
         "Una promoción, un mejor trabajo, o simplemente comunicarte sin nervios — todo eso está del otro lado de 90 días de práctica.",
         "El método es completamente en español para que no haya barreras en el aprendizaje.",
       ],
@@ -228,7 +228,7 @@ export const markets: Market[] = [
       headlineAccent: "Ahora es tu turno.",
       subheadline:
         "Loren Laínez, fundadora del Método 590, es hondureña. Aprendió de cero a B1 en 3 meses para estudiar en EEUU. Su método ahora está disponible para que tú hagas lo mismo — desde $10/mes.",
-      ctaPrimary: "Quiero seguir los pasos de Loren",
+      ctaPrimary: "Quiero iniciar",
       stats: [
         { value: "$10 USD", label: "al mes" },
         { value: "Hondureña", label: "fundadora" },

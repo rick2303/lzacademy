@@ -7,6 +7,10 @@ const planDetails = {
         description:
             "Plan Essential, incluye: Acceso completo a la plataforma, Rutina diaria guiada, Grupo de WhatsApp, Clases prácticas los viernes",
     },
+    Personalizado: {
+        description:
+            "Plan Personalizado, incluye: Todo lo del Plan Premium, más: Rutinas personalizadas, Sesiones Personales, Seguimiento, Correciones en tiempo real.",
+    },
 };
 
 type PlanType = keyof typeof planDetails;
@@ -123,7 +127,7 @@ const PaymentForm = ({ selectedPlan }: { selectedPlan: PlanType }) => {
                         Comenzá tu camino en inglés
                     </h2>
                     <p className="mt-2 text-sm text-zinc-500">
-                        Completá el formulario y te reservamos tu cupo en el Plan Essential.
+                        Completá el formulario y te reservamos tu cupo en el Plan que elijas.
                     </p>
                 </div>
 
@@ -265,6 +269,7 @@ const PaymentForm = ({ selectedPlan }: { selectedPlan: PlanType }) => {
                                         required
                                     >
                                         <option value="Essential">Essential — $10/mes</option>
+                                        <option value="Personalizado">Personalizado — $100/mes</option>
                                     </select>
                                     <div className="pointer-events-none absolute inset-y-0 right-3 flex items-center">
                                         <svg className="h-4 w-4 text-zinc-400" viewBox="0 0 16 16" fill="none">
@@ -394,9 +399,9 @@ const PaymentForm = ({ selectedPlan }: { selectedPlan: PlanType }) => {
                                 </>
                             ) : (
                                 <>
-                                    Reservar mi cupo — $10/mes
+                                    Adquirir acceso
                                     <svg className="h-4 w-4" viewBox="0 0 16 16" fill="none">
-                                        <path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                                        <path stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
                                     </svg>
                                 </>
                             )}

@@ -80,6 +80,7 @@ function RadioGroup({
 const COURSES = [
     { key: "Essential", price: "$10/mes", desc: "Acceso completo + comunidad" },
     { key: "Premium", price: "$50/mes", desc: "Todo Essential + tutorías" },
+    { key: "Personalizado", price: "$100/mes", desc: "Todo Premium + Sesiones personales + Correcciones en tiempo real" },
     { key: "Speaking Sessions", price: "À la carte", desc: "Solo sesiones de speaking" },
 ];
 

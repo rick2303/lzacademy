@@ -11,18 +11,17 @@ export default function PremiumButton() {
     const [isOpen, setIsOpen] = useState(false);
 
     const goToPremiumCalendly = (level: "A1" | "A2" | "B1") => {
-        window.location.href = CALENDLY_PREMIUM_BY_LEVEL[level];
+        window.open(CALENDLY_PREMIUM_BY_LEVEL[level], "_blank");
     };
 
     return (
         <>
             <button
                 onClick={() => setIsOpen(true)}
-                className="mt-6 inline-flex w-full items-center justify-center rounded-xl px-5 py-3 text-sm font-semibold text-falu-red-900 bg-white hover:bg-zinc-50 transition shadow-sm"
+                className="mt-6 inline-flex w-full items-center justify-center rounded-xl px-5 py-3 text-sm font-semibold text-falu-red-900 bg-white hover:bg-zinc-50 transition shadow-sm cursor-pointer"
             >
-                Seleccionar Premium — $50/mes
+                Seleccionar Premium
             </button>
-
             {isOpen && (
                 <div
                     className="fixed inset-0 z-50 flex items-center justify-center px-4"
