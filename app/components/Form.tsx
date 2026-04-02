@@ -315,7 +315,7 @@ const PaymentForm = ({ selectedPlan }: { selectedPlan: PlanType }) => {
                                 <div>
                                     <p className="text-xs font-semibold text-falu-red-900">Importante sobre el inicio</p>
                                     <p className="mt-0.5 text-xs text-falu-red-700">
-                                        Tu acceso comenzará en la fecha seleccionada. El pago reserva tu cupo, pero las clases no inician de inmediato.
+                                        Accede hoy a la plataforma. Las clases en vivo inician en la fecha seleccionada en el formulario.
                                     </p>
                                 </div>
                             </div>
