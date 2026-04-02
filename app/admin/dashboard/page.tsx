@@ -61,11 +61,11 @@ function StatCard({ label, value, sub, icon, accent = "text-falu-red-600", bg = 
     icon: React.ReactNode; accent?: string; bg?: string;
 }) {
     return (
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 flex items-start gap-4 hover:shadow-md transition-shadow">
-            <div className={`flex-shrink-0 w-10 h-10 rounded-xl ${bg} flex items-center justify-center ${accent}`}>{icon}</div>
-            <div>
-                <p className="text-xs font-medium text-gray-400 uppercase tracking-wide">{label}</p>
-                <p className="text-2xl font-bold text-gray-800 mt-0.5">{value}</p>
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 sm:p-5 flex items-start gap-3 sm:gap-4 hover:shadow-md transition-shadow">
+            <div className={`flex-shrink-0 w-9 h-9 sm:w-10 sm:h-10 rounded-xl ${bg} flex items-center justify-center ${accent}`}>{icon}</div>
+            <div className="min-w-0 flex-1">
+                <p className="text-xs font-medium text-gray-400 uppercase tracking-wide leading-tight">{label}</p>
+                <p className="text-lg sm:text-2xl font-bold text-gray-800 mt-0.5 truncate">{value}</p>
                 {sub && <p className="text-xs text-gray-400 mt-0.5">{sub}</p>}
             </div>
         </div>
@@ -172,7 +172,7 @@ export default function Dashboard() {
             </div>
 
             {/* Summary Cards */}
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-5">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-5">
                 <StatCard label="Total usuarios" value={data.totalUsers}
                     icon={<svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}><path strokeLinecap="round" strokeLinejoin="round" d="M17 20h5v-2a4 4 0 00-5-3.87M9 20H4v-2a4 4 0 015-3.87m6-4a4 4 0 11-8 0 4 4 0 018 0z" /></svg>}
                 />
@@ -247,7 +247,7 @@ export default function Dashboard() {
                         <div className="px-5 py-4 border-b border-gray-50">
                             <h3 className="text-sm font-semibold text-gray-700">Revenue por mes</h3>
                         </div>
-                        <div className="overflow-y-auto max-h-64">
+                        <div className="overflow-auto max-h-64">
                             <table className="min-w-full">
                                 <thead className="sticky top-0 bg-gray-50">
                                     <tr>
@@ -300,7 +300,7 @@ export default function Dashboard() {
                         className="w-full pl-9 pr-4 py-2 text-sm border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-yellow-orange-300 bg-gray-50"
                     />
                 </div>
-                <div className="flex flex-wrap gap-3 items-end">
+                <div className="flex flex-wrap gap-3 items-end w-full">
                     <div className="flex flex-col gap-1">
                         <label className="text-xs text-gray-400 font-medium">País</label>
                         <select className="p-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-orange-300 bg-gray-50"
@@ -317,14 +317,14 @@ export default function Dashboard() {
                             {statuses.map((s) => <option key={s} value={s}>{s}</option>)}
                         </select>
                     </div>
-                    <div className="flex flex-col gap-1">
+                    <div className="flex flex-col gap-1 min-w-0">
                         <label className="text-xs text-gray-400 font-medium">Inscripción</label>
-                        <input type="date" className="p-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-orange-300 bg-gray-50"
+                        <input type="date" className="p-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-orange-300 bg-gray-50 max-w-full"
                             value={filters.inscriptionDate} onChange={(e) => setFilters({ ...filters, inscriptionDate: e.target.value })} />
                     </div>
-                    <div className="flex flex-col gap-1">
+                    <div className="flex flex-col gap-1 min-w-0">
                         <label className="text-xs text-gray-400 font-medium">Último pago</label>
-                        <input type="date" className="p-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-orange-300 bg-gray-50"
+                        <input type="date" className="p-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-orange-300 bg-gray-50 max-w-full"
                             value={filters.paymentDate} onChange={(e) => setFilters({ ...filters, paymentDate: e.target.value })} />
                     </div>
                     {hasActiveFilters && (

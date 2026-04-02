@@ -61,7 +61,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col">
+    <div className="min-h-screen bg-gray-50 flex flex-col overflow-x-hidden">
       <nav className="bg-white border-b border-gray-100 shadow-sm sticky top-0 z-20">
         <div className="px-4 md:px-8 flex items-center justify-between h-14">
           {/* Logo + desktop links */}

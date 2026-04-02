@@ -46,9 +46,9 @@ function StatCard({
     accent: string;
 }) {
     return (
-        <div className={`bg-white rounded-2xl shadow-sm border border-gray-100 p-4 sm:p-5 border-l-4 ${accent} hover:shadow-md transition-shadow`}>
-            <p className="text-xs font-medium text-gray-400 uppercase tracking-wide">{label}</p>
-            <p className="text-2xl font-bold text-gray-800 mt-1">{value}</p>
+        <div className={`bg-white rounded-2xl shadow-sm border border-gray-100 p-4 sm:p-5 border-l-4 ${accent} hover:shadow-md transition-shadow min-w-0`}>
+            <p className="text-xs font-medium text-gray-400 uppercase tracking-wide leading-tight">{label}</p>
+            <p className="text-lg sm:text-2xl font-bold text-gray-800 mt-1 truncate">{value}</p>
         </div>
     );
 }
@@ -301,7 +301,7 @@ export default function InterestDashboard() {
             </div>
 
             {/* Summary Cards */}
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 mb-7">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 mb-7">
                 <StatCard label="Total formularios" value={stats.total} accent="border-yellow-orange-500" />
                 <StatCard label="País con más interés" value={topCountry} accent="border-yellow-orange-400" />
                 <StatCard
@@ -375,21 +375,21 @@ export default function InterestDashboard() {
                         </select>
                     </div>
 
-                    <div className="flex flex-col">
+                    <div className="flex flex-col min-w-0">
                         <label className="text-xs text-gray-500 font-medium mb-1">Desde</label>
                         <input
                             type="date"
-                            className="p-2 border rounded focus:outline-none focus:ring-2 focus:ring-yellow-orange-400 shadow-sm text-sm"
+                            className="p-2 border rounded focus:outline-none focus:ring-2 focus:ring-yellow-orange-400 shadow-sm text-sm max-w-full"
                             value={filters.dateFrom}
                             onChange={(e) => setFilters({ ...filters, dateFrom: e.target.value })}
                         />
                     </div>
 
-                    <div className="flex flex-col">
+                    <div className="flex flex-col min-w-0">
                         <label className="text-xs text-gray-500 font-medium mb-1">Hasta</label>
                         <input
                             type="date"
-                            className="p-2 border rounded focus:outline-none focus:ring-2 focus:ring-yellow-orange-400 shadow-sm text-sm"
+                            className="p-2 border rounded focus:outline-none focus:ring-2 focus:ring-yellow-orange-400 shadow-sm text-sm max-w-full"
                             value={filters.dateTo}
                             onChange={(e) => setFilters({ ...filters, dateTo: e.target.value })}
                         />
