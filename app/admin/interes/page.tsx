@@ -46,8 +46,8 @@ function StatCard({
     accent: string;
 }) {
     return (
-        <div className={`bg-white rounded-lg shadow p-4 sm:p-6 border-l-4 ${accent} hover:shadow-lg transition`}>
-            <p className="text-gray-400 text-sm">{label}</p>
+        <div className={`bg-white rounded-2xl shadow-sm border border-gray-100 p-4 sm:p-5 border-l-4 ${accent} hover:shadow-md transition-shadow`}>
+            <p className="text-xs font-medium text-gray-400 uppercase tracking-wide">{label}</p>
             <p className="text-2xl font-bold text-gray-800 mt-1">{value}</p>
         </div>
     );
@@ -123,8 +123,15 @@ const TABLE_HEADERS = [
     { label: "Info adicional", key: "additional_info" },
 ];
 
+interface ConversionData {
+    converted: number;
+    totalLeads: number;
+    rate: number;
+}
+
 export default function InterestDashboard() {
     const [submissions, setSubmissions] = useState<InterestSubmission[]>([]);
+    const [conversion, setConversion] = useState<ConversionData | null>(null);
     const [loading, setLoading] = useState(true);
     const [filters, setFilters] = useState({
         country: "",
@@ -159,7 +166,12 @@ export default function InterestDashboard() {
             );
 
             const result = await response.json();
-            if (Array.isArray(result)) setSubmissions(result);
+            if (result.submissions) {
+                setSubmissions(result.submissions);
+                setConversion({ converted: result.converted, totalLeads: result.totalLeads, rate: result.rate });
+            } else if (Array.isArray(result)) {
+                setSubmissions(result);
+            }
             setLoading(false);
         }
 
@@ -170,11 +182,6 @@ export default function InterestDashboard() {
     useEffect(() => {
         setCurrentPage(1);
     }, [filters]);
-
-    const handleLogout = async () => {
-        await supabase.auth.signOut();
-        router.push("/admin/login");
-    };
 
     const countries = Array.from(new Set(submissions.map((s) => s.country))).sort();
     const levels = Array.from(new Set(submissions.map((s) => s.english_level))).sort();
@@ -269,52 +276,53 @@ export default function InterestDashboard() {
 
     if (loading)
         return (
-            <p className="text-center mt-20 text-gray-400 text-lg font-medium">Cargando...</p>
+            <div className="flex items-center justify-center min-h-[60vh]">
+                <div className="flex flex-col items-center gap-3 text-gray-400">
+                    <svg className="w-8 h-8 animate-spin" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
+                    </svg>
+                    <span className="text-sm">Cargando…</span>
+                </div>
+            </div>
         );
 
     return (
-        <div className="p-4 md:p-8 bg-gray-50 min-h-screen font-sans">
+        <div className="p-4 md:p-8 max-w-screen-xl mx-auto">
 
             {modal && (
                 <TextModal title={modal.title} text={modal.text} onClose={() => setModal(null)} />
             )}
 
             {/* Header */}
-            <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 md:mb-8 gap-4">
-                <div>
-                    <h2 className="text-2xl md:text-3xl font-bold text-falu-red-700">Dashboard Admin</h2>
-                    <p className="text-sm text-gray-400 mt-0.5">Formularios de interés recibidos</p>
-                </div>
-                <div className="flex gap-3">
-                    <button
-                        onClick={() => router.push("/admin/dashboard")}
-                        className="bg-white text-falu-red-700 border border-falu-red-300 px-4 py-2 rounded-lg hover:bg-falu-red-50 transition text-sm font-medium"
-                    >
-                        Ver pagos
-                    </button>
-                    <button
-                        onClick={handleLogout}
-                        className="bg-falu-red-500 text-white px-4 py-2 rounded-lg hover:bg-falu-red-600 transition"
-                    >
-                        Cerrar sesión
-                    </button>
-                </div>
+            <div className="mb-7">
+                <h1 className="text-2xl md:text-3xl font-bold text-gray-800">Formularios de interés</h1>
+                <p className="text-sm text-gray-400 mt-1">Formularios de interés recibidos</p>
             </div>
 
             {/* Summary Cards */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 mb-6 md:mb-8">
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 mb-7">
                 <StatCard label="Total formularios" value={stats.total} accent="border-yellow-orange-500" />
                 <StatCard label="País con más interés" value={topCountry} accent="border-yellow-orange-400" />
                 <StatCard
-                    label="Quieren participar en comunidad"
+                    label="Quieren comunidad"
                     value={stats.byCommunity["Sí"] ?? 0}
                     accent="border-green-400"
                 />
                 <StatCard label="Curso más solicitado" value={topCourse} accent="border-yellow-orange-300" />
+                {conversion && (
+                    <div className="bg-white rounded-2xl shadow-sm border-l-4 border-violet-400 border border-gray-100 p-4 sm:p-5 hover:shadow-md transition-shadow col-span-2 md:col-span-1">
+                        <p className="text-xs font-medium text-gray-400 uppercase tracking-wide">Tasa de conversión</p>
+                        <p className="text-2xl font-bold text-gray-800 mt-1">{conversion.rate}%</p>
+                        <p className="text-xs text-gray-400 mt-1">
+                            {conversion.converted} de {conversion.totalLeads} leads pagaron
+                        </p>
+                    </div>
+                )}
             </div>
 
             {/* Filters + Export */}
-            <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4 mb-6 bg-white p-4 rounded-lg shadow-md">
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4 mb-5 bg-white p-4 rounded-2xl border border-gray-100 shadow-sm">
                 <div className="flex flex-wrap gap-4 w-full md:w-auto">
 
                     <div className="flex flex-col">
@@ -402,58 +410,59 @@ export default function InterestDashboard() {
                 <div className="w-full md:w-auto flex justify-start md:justify-end">
                     <button
                         onClick={handleExportExcel}
-                        className="bg-yellow-orange-500 text-white px-5 py-2 rounded-lg hover:bg-yellow-orange-600 transition shadow-sm text-sm"
+                        className="flex items-center gap-2 bg-yellow-orange-500 text-white px-4 py-2 rounded-lg hover:bg-yellow-orange-600 transition shadow-sm text-sm font-medium"
                     >
-                        Exportar Excel
+                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                        </svg>
+                        Excel
                     </button>
                 </div>
             </div>
 
             {/* Result count */}
-            <p className="text-xs text-gray-400 mb-3">
-                Mostrando{" "}
-                <strong className="text-gray-600">
-                    {filtered.length === 0 ? 0 : (currentPage - 1) * PAGE_SIZE + 1}–{Math.min(currentPage * PAGE_SIZE, filtered.length)}
-                </strong>{" "}
-                de <strong className="text-gray-600">{filtered.length}</strong> registros
+            <p className="text-xs text-gray-400 mb-3 px-1">
+                {filtered.length === 0 ? "Sin registros" : (
+                    <><strong className="text-gray-600">{(currentPage - 1) * PAGE_SIZE + 1}–{Math.min(currentPage * PAGE_SIZE, filtered.length)}</strong> de <strong className="text-gray-600">{filtered.length}</strong> registros</>
+                )}
             </p>
 
             {/* Table */}
-            <div className="overflow-x-auto bg-white rounded-lg shadow">
-                <table className="min-w-full divide-y divide-gray-200 text-sm">
-                    <thead className="bg-falu-red-50">
+            <div className="overflow-x-auto bg-white rounded-2xl shadow-sm border border-gray-100">
+                <table className="min-w-full divide-y divide-gray-100 text-sm">
+                    <thead className="bg-gray-50">
                         <tr>
                             {TABLE_HEADERS.map((h) => (
                                 <th
                                     key={h.key}
-                                    className="px-3 py-3 text-left text-xs font-medium text-falu-red-700 uppercase tracking-wider whitespace-nowrap"
+                                    className="px-3 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider whitespace-nowrap"
                                 >
                                     {h.label}
                                 </th>
                             ))}
                         </tr>
                     </thead>
-                    <tbody className="divide-y divide-gray-100">
+                    <tbody className="divide-y divide-gray-50">
                         {paginated.length === 0 ? (
                             <tr>
-                                <td colSpan={TABLE_HEADERS.length} className="text-center py-12 text-gray-400 text-sm">
-                                    No hay registros que coincidan con los filtros.
+                                <td colSpan={TABLE_HEADERS.length} className="text-center py-12 text-gray-300 text-sm">
+                                    Sin registros para los filtros aplicados.
                                 </td>
                             </tr>
                         ) : (
                             paginated.map((s) => (
-                                <tr key={s.id} className="hover:bg-falu-red-50 transition">
-                                    <td className="px-3 py-2 whitespace-nowrap text-xs text-gray-500">
+                                <tr key={s.id} className="hover:bg-gray-50 transition-colors">
+                                    <td className="px-3 py-2 whitespace-nowrap text-xs text-gray-400">
                                         {dayjs.utc(s.created_at).format("DD/MM/YY HH:mm")}
                                     </td>
-                                    <td className="px-3 py-2 whitespace-nowrap font-medium text-gray-800">{s.full_name}</td>
-                                    <td className="px-3 py-2 whitespace-nowrap text-gray-600">{s.email}</td>
-                                    <td className="px-3 py-2 whitespace-nowrap">{s.country}</td>
-                                    <td className="px-3 py-2 whitespace-nowrap text-xs text-gray-600">{s.english_level}</td>
-                                    <td className="px-3 py-2 text-xs text-gray-600 max-w-[140px] truncate" title={s.motive}>{s.motive}</td>
-                                    <td className="px-3 py-2 text-xs text-gray-600 max-w-[140px] truncate" title={s.main_difficulty}>{s.main_difficulty}</td>
+                                    <td className="px-3 py-2 whitespace-nowrap font-semibold text-gray-800">{s.full_name}</td>
+                                    <td className="px-3 py-2 whitespace-nowrap text-gray-500">{s.email}</td>
+                                    <td className="px-3 py-2 whitespace-nowrap text-gray-600">{s.country}</td>
+                                    <td className="px-3 py-2 whitespace-nowrap text-xs text-gray-500">{s.english_level}</td>
+                                    <td className="px-3 py-2 text-xs text-gray-500 max-w-[140px] truncate" title={s.motive}>{s.motive}</td>
+                                    <td className="px-3 py-2 text-xs text-gray-500 max-w-[140px] truncate" title={s.main_difficulty}>{s.main_difficulty}</td>
                                     <td className="px-3 py-2"><Badge value={s.daily_routine} /></td>
-                                    <td className="px-3 py-2 whitespace-nowrap text-xs text-gray-600">{s.daily_time}</td>
+                                    <td className="px-3 py-2 whitespace-nowrap text-xs text-gray-500">{s.daily_time}</td>
                                     <td className="px-3 py-2"><Badge value={s.community} /></td>
                                     <td className="px-3 py-2"><Badge value={s.interested_course} /></td>
                                     <td className="px-3 py-2">
@@ -473,26 +482,15 @@ export default function InterestDashboard() {
 
                 {/* Pagination */}
                 {totalPages > 1 && (
-                    <div className="flex items-center justify-between px-4 py-3 border-t border-gray-200">
+                    <div className="flex items-center justify-between px-5 py-3 border-t border-gray-100 bg-gray-50">
                         <p className="text-xs text-gray-400">
-                            Página <strong className="text-gray-600">{currentPage}</strong> de{" "}
-                            <strong className="text-gray-600">{totalPages}</strong>
+                            Pág. <strong className="text-gray-600">{currentPage}</strong> / <strong className="text-gray-600">{totalPages}</strong>
                         </p>
                         <div className="flex gap-2">
-                            <button
-                                onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-                                disabled={currentPage === 1}
-                                className="px-3 py-1.5 text-xs rounded-lg border border-gray-200 disabled:opacity-40 hover:bg-gray-50 transition"
-                            >
-                                ← Anterior
-                            </button>
-                            <button
-                                onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
-                                disabled={currentPage === totalPages}
-                                className="px-3 py-1.5 text-xs rounded-lg border border-gray-200 disabled:opacity-40 hover:bg-gray-50 transition"
-                            >
-                                Siguiente →
-                            </button>
+                            <button onClick={() => setCurrentPage((p) => Math.max(1, p - 1))} disabled={currentPage === 1}
+                                className="px-3 py-1.5 text-xs rounded-lg border border-gray-200 disabled:opacity-30 hover:bg-white transition">← Ant.</button>
+                            <button onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))} disabled={currentPage === totalPages}
+                                className="px-3 py-1.5 text-xs rounded-lg border border-gray-200 disabled:opacity-30 hover:bg-white transition">Sig. →</button>
                         </div>
                     </div>
                 )}

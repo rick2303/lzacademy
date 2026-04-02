@@ -14,6 +14,7 @@ const VALID_ROUTES = new Set([
   "/success",
   "/admin/dashboard",
   "/admin/interes",
+  "/admin/recurrentes",
   "/admin/login",
   // Landings por mercado
   "/mexico",

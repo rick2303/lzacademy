@@ -1,8 +1,7 @@
 import "./globals.css";
 import type { Metadata } from "next";
 import Script from "next/script";
-import { Navbar } from "./components/Navbar";
-import { Footer } from "./components/Footer";
+import { SiteWrapper } from "./components/SiteWrapper";
 
 const BASE_URL = "https://lz-englishacademy.com";
 
@@ -94,9 +93,7 @@ export default function RootLayout({
         <OrganizationSchema />
       </head>
       <body className="min-h-screen bg-white text-zinc-900 flex flex-col">
-        <Navbar />
-        <div className="flex-1">{children}</div>
-        <Footer />
+        <SiteWrapper>{children}</SiteWrapper>
 
         {/* Google Analytics 4 */}
         <Script
