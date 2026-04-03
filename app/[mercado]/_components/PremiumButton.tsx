@@ -5,12 +5,13 @@ const CALENDLY_PREMIUM_BY_LEVEL: Record<string, string> = {
     A1: process.env.NEXT_PUBLIC_CALENDLY_PREMIUM_A1_URL || "https://calendly.com/lzacademy590/a1-daily-classes",
     A2: process.env.NEXT_PUBLIC_CALENDLY_PREMIUM_A2_URL || "https://calendly.com/lzacademy590/a2-daily-classes",
     B1: process.env.NEXT_PUBLIC_CALENDLY_PREMIUM_B1_URL || "https://calendly.com/lzacademy590/b1-daily-classes",
+    B2: process.env.NEXT_PUBLIC_CALENDLY_PREMIUM_B2_URL || "https://calendly.com/lzacademy590/new-meeting-2",
 };
 
 export default function PremiumButton() {
     const [isOpen, setIsOpen] = useState(false);
 
-    const goToPremiumCalendly = (level: "A1" | "A2" | "B1") => {
+    const goToPremiumCalendly = (level: "A1" | "A2" | "B1" | "B2") => {
         window.open(CALENDLY_PREMIUM_BY_LEVEL[level], "_blank");
     };
 
@@ -67,6 +68,12 @@ export default function PremiumButton() {
                                 className="rounded-xl px-4 py-3 text-sm font-semibold bg-falu-red-700 text-white hover:bg-falu-red-800 transition"
                             >
                                 B1 — Intermedio
+                            </button>
+                            <button
+                                onClick={() => goToPremiumCalendly("B2")}
+                                className="rounded-xl px-4 py-3 text-sm font-semibold bg-falu-red-700 text-white hover:bg-falu-red-800 transition"
+                            >
+                                B2 — Intermedio Alto
                             </button>
                         </div>
                         <p className="mt-4 text-xs text-zinc-500">
