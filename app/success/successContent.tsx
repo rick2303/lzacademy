@@ -522,7 +522,7 @@ const SuccessContent = () => {
                                 <div className="sc-steps-card">
                                     <p className="sc-steps-title">¡Tu inscripción quedó registrada!</p>
                                     <p className="sc-steps-sub">
-                                        En los próximos 4–7 días nuestro equipo te contactará con todos los detalles.
+                                        En las próximas 24 horas nuestro equipo te contactará con todos los detalles.
                                     </p>
                                     <div className="sc-steps-grid">
                                         <div className="sc-step">
