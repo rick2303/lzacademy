@@ -28,9 +28,12 @@ function planColor(plan: string) {
     return PLAN_COLORS[plan] ?? "bg-gray-400";
 }
 
+const PAGE_SIZE = 15;
+
 export default function RecurrentesPage() {
     const [users, setUsers] = useState<RecurringUser[]>([]);
     const [loading, setLoading] = useState(true);
+    const [currentPage, setCurrentPage] = useState(1);
     const router = useRouter();
 
     useEffect(() => {
@@ -61,6 +64,8 @@ export default function RecurrentesPage() {
 
     const totalRevenue = users.reduce((sum, u) => sum + u.total_paid, 0);
     const totalPayments = users.reduce((sum, u) => sum + u.payment_count, 0);
+    const totalPages = Math.ceil(users.length / PAGE_SIZE);
+    const paginated = users.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
 
     return (
         <div className="p-4 md:p-8 max-w-screen-xl mx-auto">
@@ -107,6 +112,12 @@ export default function RecurrentesPage() {
                 </div>
             </div>
 
+            {users.length > 0 && (
+                <p className="text-xs text-gray-400 mb-3 px-1">
+                    <strong className="text-gray-600">{(currentPage - 1) * PAGE_SIZE + 1}–{Math.min(currentPage * PAGE_SIZE, users.length)}</strong> de <strong className="text-gray-600">{users.length}</strong> registros
+                </p>
+            )}
+
             {users.length === 0 ? (
                 <div className="bg-white rounded-2xl border border-gray-100 p-12 text-center">
                     <div className="w-12 h-12 rounded-2xl bg-gray-50 flex items-center justify-center mx-auto mb-3">
@@ -130,7 +141,7 @@ export default function RecurrentesPage() {
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-gray-50">
-                                    {users.map((u) => (
+                                    {paginated.map((u) => (
                                         <tr key={u.email} className="hover:bg-gray-50 transition-colors">
                                             <td className="px-5 py-3 text-sm font-semibold text-gray-800 whitespace-nowrap">{u.full_name}</td>
                                             <td className="px-5 py-3 text-sm text-gray-500">{u.email}</td>
@@ -154,11 +165,22 @@ export default function RecurrentesPage() {
                                 </tbody>
                             </table>
                         </div>
+                        {totalPages > 1 && (
+                            <div className="flex items-center justify-between px-5 py-3 border-t border-gray-100 bg-gray-50">
+                                <p className="text-xs text-gray-400">Pág. <strong className="text-gray-600">{currentPage}</strong> / <strong className="text-gray-600">{totalPages}</strong></p>
+                                <div className="flex gap-2">
+                                    <button onClick={() => setCurrentPage((p) => Math.max(1, p - 1))} disabled={currentPage === 1}
+                                        className="px-3 py-1.5 text-xs rounded-lg border border-gray-200 disabled:opacity-30 hover:bg-white transition">← Ant.</button>
+                                    <button onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))} disabled={currentPage === totalPages}
+                                        className="px-3 py-1.5 text-xs rounded-lg border border-gray-200 disabled:opacity-30 hover:bg-white transition">Sig. →</button>
+                                </div>
+                            </div>
+                        )}
                     </div>
 
                     {/* Mobile Cards */}
                     <div className="md:hidden flex flex-col gap-3">
-                        {users.map((u) => (
+                        {paginated.map((u) => (
                             <div key={u.email} className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4">
                                 <div className="flex items-start justify-between gap-2 mb-3">
                                     <div>
@@ -186,6 +208,17 @@ export default function RecurrentesPage() {
                                 </div>
                             </div>
                         ))}
+                        {totalPages > 1 && (
+                            <div className="flex justify-between items-center py-2 px-1">
+                                <p className="text-xs text-gray-400">Pág. {currentPage} / {totalPages}</p>
+                                <div className="flex gap-2">
+                                    <button onClick={() => setCurrentPage((p) => Math.max(1, p - 1))} disabled={currentPage === 1}
+                                        className="px-3 py-1.5 text-xs rounded-lg border border-gray-200 disabled:opacity-30 bg-white hover:bg-gray-50 transition">← Ant.</button>
+                                    <button onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))} disabled={currentPage === totalPages}
+                                        className="px-3 py-1.5 text-xs rounded-lg border border-gray-200 disabled:opacity-30 bg-white hover:bg-gray-50 transition">Sig. →</button>
+                                </div>
+                            </div>
+                        )}
                     </div>
                 </>
             )}

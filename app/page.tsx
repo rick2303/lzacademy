@@ -9,6 +9,7 @@ import Pill from "./components/Pill";
 import Sesiones from "./components/Sessions";
 import { useState } from "react";
 import PaymentForm from "./components/Form";
+import { useStartDates } from "./hooks/useStartDates";
 import { InfoSessionSection, InfoSessionMini } from "./components/Infosessionsection";
 import PlansSection from "./components/Plan";
 
@@ -22,11 +23,9 @@ const CALENDLY_PREMIUM_BY_LEVEL: Record<string, string> = {
   B2: process.env.NEXT_PUBLIC_CALENDLY_PREMIUM_B2_URL || "https://calendly.com/lzacademy590/new-meeting-2",
 };
 
-// ─── Actualizar estas fechas cuando cambien ───────────────────────────────────
-const NEXT_STARTS = ["6 de abril, 2026", "4 de mayo, 2026", "1 de junio, 2026"];
-
 export default function Page() {
   const [isLevelModalOpen, setIsLevelModalOpen] = useState(false);
+  const { dates: startDates } = useStartDates();
 
   const openPremiumLevelModal = () => setIsLevelModalOpen(true);
   const closePremiumLevelModal = () => setIsLevelModalOpen(false);
@@ -89,7 +88,7 @@ export default function Page() {
                       Original: <Pill tone="falu">Aprende inglés en 90 días</Pill> */}
                   <div className="inline-flex items-center gap-2 rounded-full bg-white/80 px-4 py-1.5 text-xs font-semibold text-zinc-700 ring-1 ring-inset ring-falu-red-200/80">
                     <span className="h-2 w-2 rounded-full bg-green-500 animate-pulse" />
-                    Próximo inicio: {NEXT_STARTS[0]}
+                    Próximo inicio: {startDates[0]?.label ?? "Próximamente"}
                   </div>
 
                   {/* Headline — INTACTO, no se toca */}
@@ -220,7 +219,7 @@ export default function Page() {
 
         {/* ── PLANES ── */}
         <section id="planes">
-          <PlansSection nextStarts={NEXT_STARTS} />
+          <PlansSection />
         </section>
         <InfoSessionMini />
         {/* Creadora */}

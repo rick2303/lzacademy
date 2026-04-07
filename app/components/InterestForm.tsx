@@ -134,6 +134,7 @@ export default function InterestForm() {
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
+        if (loading) return;
         const validationError = validate();
         if (validationError) { setError(validationError); return; }
         setLoading(true);

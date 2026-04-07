@@ -9,6 +9,8 @@ const navItems = [
   { label: "Pagos", href: "/admin/dashboard" },
   { label: "Formularios de interés", href: "/admin/interes" },
   { label: "Usuarios recurrentes", href: "/admin/recurrentes" },
+  { label: "Fechas de inicio", href: "/admin/fechas" },
+  { label: "Contenido", href: "/admin/contenido" },
 ];
 
 const IDLE_MS = 20 * 60 * 1000; // 20 minutos

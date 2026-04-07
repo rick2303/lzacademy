@@ -17,6 +17,7 @@ const SuccessContent = () => {
     const [detail, setDetail] = useState<string>("");
     const [userData, setUserData] = useState<any>(null);
     const [visible, setVisible] = useState(false);
+    const [contactMessage, setContactMessage] = useState("En las próximas 24 horas nuestro equipo te contactará con todos los detalles.");
 
     useEffect(() => {
         if (!session_id || !session_id.startsWith("cs_")) {
@@ -56,6 +57,11 @@ const SuccessContent = () => {
         };
 
         verifyPayment();
+
+        fetch(`${BACKEND_URL}/config/content`)
+            .then((r) => r.json())
+            .then((d) => { if (d.success_contact_message) setContactMessage(d.success_contact_message); })
+            .catch(() => {});
     }, [session_id]);
 
     useEffect(() => {
@@ -522,7 +528,7 @@ const SuccessContent = () => {
                                 <div className="sc-steps-card">
                                     <p className="sc-steps-title">¡Tu inscripción quedó registrada!</p>
                                     <p className="sc-steps-sub">
-                                        En las próximas 24 horas nuestro equipo te contactará con todos los detalles.
+                                        {contactMessage}
                                     </p>
                                     <div className="sc-steps-grid">
                                         <div className="sc-step">

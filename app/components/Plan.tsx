@@ -2,15 +2,13 @@
 
 import { Container } from "@/app/components/Container";
 import PremiumButton from "../[mercado]/_components/PremiumButton";
+import { useStartDates } from "../hooks/useStartDates";
 
 const CALENDLY_SPEAKING_URL =
     process.env.NEXT_PUBLIC_CALENDLY_SPEAKING_URL || "https://calendly.com/lzacademy590/speaking-session";
 
-interface PlansSectionProps {
-    nextStarts: string[];
-}
-
-export default function PlansSection({ nextStarts }: PlansSectionProps) {
+export default function PlansSection() {
+    const { dates } = useStartDates();
     return (
         <section id="planes" className="relative py-16 sm:py-20 overflow-hidden">
             <div className="absolute inset-0 bg-zinc-50" />
@@ -23,12 +21,19 @@ export default function PlansSection({ nextStarts }: PlansSectionProps) {
                         Elige el plan que se adapta a tu ritmo y objetivo
                     </h2>
                     <p className="mt-3 text-sm text-zinc-500">
-                        Próximo inicio:{" "}
-                        <span className="font-semibold text-zinc-700">{nextStarts[0]}</span>
-                        {" · "}
-                        <span className="font-semibold text-zinc-700">{nextStarts[1]}</span>
-                        {" · "}
-                        <span className="font-semibold text-zinc-700">{nextStarts[2]}</span>
+                        {dates.length > 0 ? (
+                            <>
+                                Próximo inicio:{" "}
+                                {dates.slice(0, 3).map((d, i) => (
+                                    <span key={d.value}>
+                                        <span className="font-semibold text-zinc-700">{d.label}</span>
+                                        {i < Math.min(dates.length, 3) - 1 && " · "}
+                                    </span>
+                                ))}
+                            </>
+                        ) : (
+                            <span className="font-semibold text-zinc-700">Próximamente</span>
+                        )}
                     </p>
                 </div>
 

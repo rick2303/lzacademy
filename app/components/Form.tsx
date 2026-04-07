@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useStartDates } from "../hooks/useStartDates";
 
 const planDetails = {
     Essential: {
@@ -17,15 +18,6 @@ type PlanType = keyof typeof planDetails;
 
 const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL!;
 
-const today = new Date();
-today.setDate(today.getDate() - 1);
-const yesterday = today.toISOString().split("T")[0];
-
-const availableDates = [
-    { value: "2026-04-06", label: "6 de Abril de 2026" },
-    { value: "2026-05-04", label: "4 de Mayo de 2026" },
-    { value: "2026-06-01", label: "1 de Junio de 2026" },
-].filter((d) => d.value > yesterday);
 
 // ─── Subcomponentes de UI ─────────────────────────────────────────────────────
 
@@ -48,6 +40,7 @@ const selectClass =
 const PaymentForm = ({ selectedPlan }: { selectedPlan: PlanType }) => {
     const [plan, setPlan] = useState<PlanType>(selectedPlan);
     const [loading, setLoading] = useState(false);
+    const { dates: availableDates } = useStartDates();
     const [formData, setFormData] = useState({
         email: "",
         confirmEmail: "",

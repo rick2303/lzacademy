@@ -11,8 +11,7 @@ import PremiumButton from "./_components/PremiumButton";
 import PreguntasFrecuentes from "../components/Questions";
 import { InfoSessionSection, InfoSessionMini } from "../components/Infosessionsection";
 import PlansSection from "../components/Plan";
-
-const NEXT_STARTS = ["6 de abril, 2026", "4 de mayo, 2026", "1 de junio, 2026"];
+import NextStartBadge from "./_components/NextStartBadge";
 
 const CALENDLY_SPEAKING_URL =
     process.env.NEXT_PUBLIC_CALENDLY_SPEAKING_URL || "https://calendly.com/lzacademy590/speaking-session";
@@ -97,7 +96,7 @@ export default async function MarketPage({ params }: { params: Promise<{ mercado
                                 <div className="lg:col-span-7">
                                     <div className="inline-flex items-center gap-2 rounded-full bg-white/80 px-4 py-1.5 text-xs font-semibold text-zinc-700 ring-1 ring-inset ring-falu-red-200/80 mb-5">
                                         <span className="h-2 w-2 rounded-full bg-green-500 animate-pulse" />
-                                        Próximo inicio: {NEXT_STARTS[0]}
+                                        Próximo inicio: <NextStartBadge />
                                     </div>
                                     <Pill tone="falu">{hero.pill}</Pill>
                                     <h1 className="mt-5 text-4xl font-extrabold tracking-tight text-zinc-900 sm:text-6xl leading-[1.1]">
@@ -148,7 +147,7 @@ export default async function MarketPage({ params }: { params: Promise<{ mercado
                 <InfoSessionSection />
                 {/* ── PLANES ── */}
                 <section id="planes">
-                    <PlansSection nextStarts={NEXT_STARTS} />
+                    <PlansSection />
                 </section>
                 <InfoSessionMini />
                 {/* ── TESTIMONIOS ── */}
@@ -190,7 +189,7 @@ export default async function MarketPage({ params }: { params: Promise<{ mercado
                                     <h2 className="text-2xl font-extrabold tracking-tight sm:text-3xl">{finalCta.headline}</h2>
                                     <p className="mt-3 text-zinc-600">{finalCta.body}</p>
                                     <p className="mt-2 text-sm text-zinc-500">
-                                        Próximo inicio: <span className="font-semibold text-zinc-700">{NEXT_STARTS[0]}</span>
+                                        Próximo inicio: <span className="font-semibold text-zinc-700"><NextStartBadge /></span>
                                     </p>
                                 </div>
                                 <div className="lg:col-span-4 flex flex-col gap-3 lg:justify-end">

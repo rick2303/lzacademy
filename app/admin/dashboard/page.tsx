@@ -76,6 +76,7 @@ export default function Dashboard() {
     const [data, setData] = useState<DashboardData | null>(null);
     const [filters, setFilters] = useState({ country: "", status: "", inscriptionDate: "", paymentDate: "" });
     const [search, setSearch] = useState("");
+    const [sortBy, setSortBy] = useState<"last_payment_date" | "id">("last_payment_date");
     const [showAtRisk, setShowAtRisk] = useState(false);
     const [currentPage, setCurrentPage] = useState(1);
     const router = useRouter();
@@ -110,11 +111,11 @@ export default function Dashboard() {
 
     const handleExportExcel = () => {
         if (!data) return;
-        const rows = filteredUsers.map((u) => ({
+        const rows = sortedUsers.map((u) => ({
             ID: u.id, Email: u.email, Nombre: u.full_name,
-            "Fecha de Inicio": u.inscription_date ? dayjs.utc(u.inscription_date).format("DD/MM/YYYY") : "N/A",
+            "Fecha de Inicio": u.inscription_date ? dayjs.utc(u.inscription_date).format("MM/DD/YYYY") : "N/A",
             País: u.country, Plan: u.plan, Nivel: u.level, Motivo: u.motive, Estado: u.status,
-            "Último Pago": u.last_payment_date ? dayjs.utc(u.last_payment_date).format("DD/MM/YYYY") : "N/A",
+            "Último Pago": u.last_payment_date ? dayjs.utc(u.last_payment_date).format("MM/DD/YYYY") : "N/A",
         }));
         const ws = XLSX.utils.json_to_sheet(rows);
         const wb = XLSX.utils.book_new();
@@ -151,8 +152,17 @@ export default function Dashboard() {
         return true;
     });
 
-    const totalPages = Math.ceil(filteredUsers.length / PAGE_SIZE);
-    const paginatedUsers = filteredUsers.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
+    const sortedUsers = [...filteredUsers].sort((a, b) => {
+        if (sortBy === "id") return a.id - b.id;
+        // last_payment_date desc, nulls last
+        if (!a.last_payment_date && !b.last_payment_date) return 0;
+        if (!a.last_payment_date) return 1;
+        if (!b.last_payment_date) return -1;
+        return b.last_payment_date.localeCompare(a.last_payment_date);
+    });
+
+    const totalPages = Math.ceil(sortedUsers.length / PAGE_SIZE);
+    const paginatedUsers = sortedUsers.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
     const countries = Array.from(new Set(data.users.map((u) => u.country)));
     const statuses = Array.from(new Set(data.users.map((u) => u.status)));
 
@@ -162,6 +172,7 @@ export default function Dashboard() {
 
     const ticketPromedio = data.totalPayments > 0 ? data.totalRevenue / data.totalPayments : 0;
     const hasActiveFilters = Object.values(filters).some(Boolean) || !!search || showAtRisk;
+
 
     return (
         <div className="p-4 md:p-8 max-w-screen-xl mx-auto">
@@ -333,6 +344,17 @@ export default function Dashboard() {
                             Limpiar
                         </button>
                     )}
+                    <div className="flex flex-col gap-1">
+                        <label className="text-xs text-gray-400 font-medium">Ordenar por</label>
+                        <select
+                            className="p-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-orange-300 bg-gray-50"
+                            value={sortBy}
+                            onChange={(e) => { setSortBy(e.target.value as "last_payment_date" | "id"); setCurrentPage(1); }}
+                        >
+                            <option value="last_payment_date">Último pago</option>
+                            <option value="id">ID usuario</option>
+                        </select>
+                    </div>
                     <div className="ml-auto">
                         <button onClick={handleExportExcel}
                             className="flex items-center gap-2 bg-yellow-orange-500 text-white px-4 py-2 rounded-lg hover:bg-yellow-orange-600 transition shadow-sm text-sm font-medium">
@@ -346,8 +368,8 @@ export default function Dashboard() {
             </div>
 
             <p className="text-xs text-gray-400 mb-3 px-1">
-                {filteredUsers.length === 0 ? "Sin registros" : (
-                    <><strong className="text-gray-600">{(currentPage - 1) * PAGE_SIZE + 1}–{Math.min(currentPage * PAGE_SIZE, filteredUsers.length)}</strong> de <strong className="text-gray-600">{filteredUsers.length}</strong> registros</>
+                {sortedUsers.length === 0 ? "Sin registros" : (
+                    <><strong className="text-gray-600">{(currentPage - 1) * PAGE_SIZE + 1}–{Math.min(currentPage * PAGE_SIZE, sortedUsers.length)}</strong> de <strong className="text-gray-600">{sortedUsers.length}</strong> registros</>
                 )}
             </p>
 
@@ -376,7 +398,7 @@ export default function Dashboard() {
                                             {u.full_name}
                                         </td>
                                         <td className="px-4 py-3 text-xs text-gray-500 whitespace-nowrap">
-                                            {u.inscription_date ? dayjs.utc(u.inscription_date).format("DD/MM/YYYY") : "—"}
+                                            {u.inscription_date ? dayjs.utc(u.inscription_date).format("MM/DD/YYYY") : "—"}
                                         </td>
                                         <td className="px-4 py-3 text-sm text-gray-600">{u.country}</td>
                                         <td className="px-4 py-3">
@@ -395,7 +417,7 @@ export default function Dashboard() {
                                             </select>
                                         </td>
                                         <td className="px-4 py-3 text-xs text-gray-500 whitespace-nowrap">
-                                            {u.last_payment_date ? dayjs.utc(u.last_payment_date).format("DD/MM/YYYY") : "—"}
+                                            {u.last_payment_date ? dayjs.utc(u.last_payment_date).format("MM/DD/YYYY") : "—"}
                                         </td>
                                         <td className="px-4 py-3 text-xs text-gray-400">{u.level}</td>
                                     </tr>
@@ -449,7 +471,7 @@ export default function Dashboard() {
                                 <span className="text-xs text-gray-600 bg-white px-2 py-1 rounded-lg border border-gray-100">{u.country}</span>
                                 {u.last_payment_date && (
                                     <span className="text-xs text-gray-400 bg-white px-2 py-1 rounded-lg border border-gray-100">
-                                        Pago: {dayjs.utc(u.last_payment_date).format("DD/MM/YY")}
+                                        Pago: {dayjs.utc(u.last_payment_date).format("MM/DD/YY")}
                                     </span>
                                 )}
                             </div>
