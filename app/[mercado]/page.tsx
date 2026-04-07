@@ -12,6 +12,7 @@ import PreguntasFrecuentes from "../components/Questions";
 import { InfoSessionSection, InfoSessionMini } from "../components/Infosessionsection";
 import PlansSection from "../components/Plan";
 import NextStartBadge from "./_components/NextStartBadge";
+import { TestimonialsSection } from "../components/Testimonials";
 
 const CALENDLY_SPEAKING_URL =
     process.env.NEXT_PUBLIC_CALENDLY_SPEAKING_URL || "https://calendly.com/lzacademy590/speaking-session";
@@ -73,7 +74,7 @@ export default async function MarketPage({ params }: { params: Promise<{ mercado
     const market = getMarketBySlug(mercado);
     if (!market) notFound();
 
-    const { hero, whySection, testimonials, finalCta } = market;
+    const { hero, whySection, finalCta } = market;
 
     return (
         <>
@@ -151,31 +152,7 @@ export default async function MarketPage({ params }: { params: Promise<{ mercado
                 </section>
                 <InfoSessionMini />
                 {/* ── TESTIMONIOS ── */}
-                {testimonials.length > 0 && (
-                    <section className="py-14 sm:py-16 bg-falu-red-50/40">
-                        <Container>
-                            <h2 className="text-2xl font-extrabold text-center text-zinc-900 mb-8">
-                                Lo que dicen quienes ya lo hicieron
-                            </h2>
-                            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 max-w-3xl mx-auto">
-                                {testimonials.map((t, i) => (
-                                    <Card key={i} className="flex flex-col gap-4">
-                                        <p className="text-sm text-zinc-700 leading-relaxed">&ldquo;{t.quote}&rdquo;</p>
-                                        <div className="flex items-center gap-3 mt-auto pt-3 border-t border-zinc-100">
-                                            <div className="h-8 w-8 rounded-full bg-falu-red-100 flex items-center justify-center text-xs font-bold text-falu-red-800 shrink-0">
-                                                {t.name.charAt(0)}
-                                            </div>
-                                            <div>
-                                                <p className="text-sm font-semibold text-zinc-900">{t.name}</p>
-                                                <p className="text-xs text-zinc-500">{t.location}</p>
-                                            </div>
-                                        </div>
-                                    </Card>
-                                ))}
-                            </div>
-                        </Container>
-                    </section>
-                )}
+                <TestimonialsSection />
 
                 {/* ── CTA FINAL ── */}
                 <section className="relative py-16 sm:py-20">

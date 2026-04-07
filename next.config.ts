@@ -1,7 +1,17 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  /* config options here */
+  async redirects() {
+    return [
+      // www → non-www (301 permanent)
+      {
+        source: "/:path*",
+        has: [{ type: "host", value: "www.lz-englishacademy.com" }],
+        destination: "https://lz-englishacademy.com/:path*",
+        permanent: true,
+      },
+    ];
+  },
 };
 
 export default nextConfig;

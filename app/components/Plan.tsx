@@ -140,7 +140,7 @@ export default function PlansSection() {
                     </div>
 
                     {/* ── 3. Personalizado ── */}
-                    <div className="relative flex flex-col p-7 bg-[#3b0a0e] border-r border-white/5">
+                    <div className="relative flex flex-col p-7 bg-falu-red-950 border-r border-white/5">
                         <div className="absolute top-4 right-4">
                             <span className="inline-flex items-center gap-1.5 rounded-full bg-white/20 px-2.5 py-1 text-xs font-semibold text-white ring-1 ring-inset ring-white/25">
                                 <span className="h-1.5 w-1.5 rounded-full bg-green-300 animate-pulse" />
@@ -181,13 +181,13 @@ export default function PlansSection() {
                             </ul>
                             <p className="mt-4 text-xs text-white/30 italic">Agendas tu primera sesión y definimos juntos el plan.</p>
                         </div>
-                        <a href="#form" className="mt-6 w-full inline-flex items-center justify-center rounded-xl px-4 py-3 text-sm font-semibold text-[#3b0a0e] bg-white hover:bg-rose-50 transition">
+                        <a href="#form" className="mt-6 w-full inline-flex items-center justify-center rounded-xl px-4 py-3 text-sm font-semibold text-falu-red-950 bg-white hover:bg-rose-50 transition">
                             Seleccionar Personalizado
                         </a>
                     </div>
 
                     {/* ── 4. Speaking ── */}
-                    <div className="flex flex-col p-7 bg-white">
+                    <div className="flex flex-col p-7 bg-yellow-orange-50">
                         <div>
                             <p className="text-xs font-semibold uppercase tracking-widest text-zinc-400 mb-1">Speaking</p>
                             <h3 className="text-xl font-extrabold text-zinc-900">Sesión de Speaking</h3>
@@ -220,7 +220,7 @@ export default function PlansSection() {
                             </ul>
                             <p className="mt-4 text-xs text-zinc-400 italic">* Miembros de la Academia reciben esta sesión con descuento.</p>
                         </div>
-                        <a href={CALENDLY_SPEAKING_URL} target="_blank" className="mt-6 w-full inline-flex items-center justify-center rounded-xl px-4 py-3 text-sm font-semibold text-zinc-700 ring-1 ring-inset ring-zinc-300 hover:bg-zinc-50 hover:ring-zinc-400 transition">
+                        <a href={CALENDLY_SPEAKING_URL} target="_blank" className="mt-6 w-full inline-flex items-center justify-center rounded-xl px-4 py-3 text-sm font-semibold text-zinc-900 bg-white hover:bg-zinc-50 transition">
                             Reservar sesión
                         </a>
                     </div>
