@@ -7,7 +7,13 @@ import * as XLSX from "xlsx";
 import { saveAs } from "file-saver";
 import dayjs from "dayjs";
 import utc from "dayjs/plugin/utc";
+import timezone from "dayjs/plugin/timezone";
 dayjs.extend(utc);
+dayjs.extend(timezone);
+
+const PT = "America/Los_Angeles";
+const fmtPT = (ts: string | null, fmt = "MM/DD/YYYY h:mm a") =>
+    ts ? dayjs.utc(ts).tz(PT).format(fmt) : "—";
 
 const MONTH_NAMES = ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"];
 function formatMonth(key: string) {
@@ -115,7 +121,7 @@ export default function Dashboard() {
             ID: u.id, Email: u.email, Nombre: u.full_name,
             "Fecha de Inicio": u.inscription_date ? dayjs.utc(u.inscription_date).format("MM/DD/YYYY") : "N/A",
             País: u.country, Plan: u.plan, Nivel: u.level, Motivo: u.motive, Estado: u.status,
-            "Último Pago": u.last_payment_date ? dayjs.utc(u.last_payment_date).format("MM/DD/YYYY") : "N/A",
+            "Último Pago (PT)": fmtPT(u.last_payment_date),
         }));
         const ws = XLSX.utils.json_to_sheet(rows);
         const wb = XLSX.utils.book_new();
@@ -165,6 +171,9 @@ export default function Dashboard() {
     const paginatedUsers = sortedUsers.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
     const countries = Array.from(new Set(data.users.map((u) => u.country)));
     const statuses = Array.from(new Set(data.users.map((u) => u.status)));
+    const inscriptionDates = Array.from(
+        new Set(data.users.map((u) => u.inscription_date).filter(Boolean))
+    ).sort() as string[];
 
     const monthlyRows = Object.entries(data.revenueByMonth ?? {}).sort((a, b) => b[0].localeCompare(a[0]));
     const planRows = Object.entries(data.paymentsByPlan ?? {}).sort((a, b) => b[1].count - a[1].count);
@@ -328,10 +337,15 @@ export default function Dashboard() {
                             {statuses.map((s) => <option key={s} value={s}>{s}</option>)}
                         </select>
                     </div>
-                    <div className="flex flex-col gap-1 min-w-0">
-                        <label className="text-xs text-gray-400 font-medium">Inscripción</label>
-                        <input type="date" className="p-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-orange-300 bg-gray-50 max-w-full"
-                            value={filters.inscriptionDate} onChange={(e) => setFilters({ ...filters, inscriptionDate: e.target.value })} />
+                    <div className="flex flex-col gap-1">
+                        <label className="text-xs text-gray-400 font-medium">Fecha de inicio</label>
+                        <select className="p-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-orange-300 bg-gray-50"
+                            value={filters.inscriptionDate} onChange={(e) => setFilters({ ...filters, inscriptionDate: e.target.value })}>
+                            <option value="">Todas</option>
+                            {inscriptionDates.map((d) => (
+                                <option key={d} value={d}>{dayjs.utc(d).format("MM/DD/YYYY")}</option>
+                            ))}
+                        </select>
                     </div>
                     <div className="flex flex-col gap-1 min-w-0">
                         <label className="text-xs text-gray-400 font-medium">Último pago</label>
@@ -417,7 +431,7 @@ export default function Dashboard() {
                                             </select>
                                         </td>
                                         <td className="px-4 py-3 text-xs text-gray-500 whitespace-nowrap">
-                                            {u.last_payment_date ? dayjs.utc(u.last_payment_date).format("MM/DD/YYYY") : "—"}
+                                            {fmtPT(u.last_payment_date)}
                                         </td>
                                         <td className="px-4 py-3 text-xs text-gray-400">{u.level}</td>
                                     </tr>
@@ -471,7 +485,7 @@ export default function Dashboard() {
                                 <span className="text-xs text-gray-600 bg-white px-2 py-1 rounded-lg border border-gray-100">{u.country}</span>
                                 {u.last_payment_date && (
                                     <span className="text-xs text-gray-400 bg-white px-2 py-1 rounded-lg border border-gray-100">
-                                        Pago: {dayjs.utc(u.last_payment_date).format("MM/DD/YY")}
+                                        Pago: {fmtPT(u.last_payment_date, "MM/DD/YY h:mm a")}
                                     </span>
                                 )}
                             </div>

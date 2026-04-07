@@ -7,6 +7,7 @@ import { supabase } from "../lib/supabaseClient";
 
 const navItems = [
   { label: "Pagos", href: "/admin/dashboard" },
+  { label: "Búsqueda", href: "/admin/busqueda" },
   { label: "Formularios de interés", href: "/admin/interes" },
   { label: "Usuarios recurrentes", href: "/admin/recurrentes" },
   { label: "Fechas de inicio", href: "/admin/fechas" },
