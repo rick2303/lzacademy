@@ -40,20 +40,31 @@ export default function PlansSection() {
                 <div className="relative grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 rounded-2xl overflow-hidden ring-1 ring-zinc-200 shadow-lg">
 
                     {/* ── 1. Essential ── */}
-                    <div className="flex flex-col p-7 bg-white border-r border-zinc-100">
+                    <div className="relative flex flex-col p-7 border-r border-[#c9a227]/30" style={{ background: "linear-gradient(160deg, #fdf6dc 0%, #f5e4a0 60%, #eedB82 100%)" }}>
+                        <div className="absolute top-4 right-4">
+                            <span className="inline-flex items-center gap-1.5 rounded-full bg-[#c9a227]/20 px-2.5 py-1 text-xs font-semibold text-[#7a5c10] ring-1 ring-inset ring-[#c9a227]/40">
+                                <span className="h-1.5 w-1.5 rounded-full bg-[#c9a227] animate-pulse" />
+                                Nivel base
+                            </span>
+                        </div>
                         <div>
-                            <p className="text-xs font-semibold uppercase tracking-widest text-zinc-400 mb-1">Essential</p>
-                            <h3 className="text-xl font-extrabold text-zinc-900">Curso Essential</h3>
+                            <p className="text-xs font-semibold uppercase tracking-widest text-[#8a6510] mb-1">
+                                Essential
+                            </p>
+                            <h3 className="text-xl font-extrabold text-zinc-900">
+                                Curso Essential
+                            </h3>
                             <div className="mt-4 flex items-baseline gap-1">
                                 <span className="text-4xl font-extrabold text-zinc-900">$10</span>
-                                <span className="text-sm text-zinc-400">/ mes</span>
+                                <span className="text-sm text-[#8a6510]">/ mes</span>
                             </div>
-                            <p className="mt-3 text-sm text-zinc-500 leading-relaxed">
+                            <p className="mt-3 text-sm text-zinc-700 leading-relaxed">
                                 Para quienes quieren aprender con estructura clara y a su propio ritmo.
                             </p>
                         </div>
-                        <div className="border-t border-zinc-100 pt-5 mt-6 flex-1">
-                            <p className="text-xs font-semibold text-zinc-500 mb-3">Incluye:</p>
+
+                        <div className="border-t border-[#c9a227]/40 pt-5 mt-6 flex-1">
+                            <p className="text-xs font-semibold text-[#8a6510] mb-3">Incluye:</p>
                             <ul className="space-y-3">
                                 {[
                                     "Acceso completo a la plataforma",
@@ -62,18 +73,21 @@ export default function PlansSection() {
                                     "Método paso a paso",
                                     "Reuniones de práctica los viernes",
                                 ].map((item) => (
-                                    <li key={item} className="flex items-start gap-2.5 text-sm text-zinc-600">
+                                    <li key={item} className="flex items-start gap-2.5 text-sm text-zinc-800">
                                         <svg className="mt-0.5 h-4 w-4 shrink-0 text-green-500" viewBox="0 0 16 16" fill="none">
-                                            <circle cx="8" cy="8" r="7" stroke="currentColor" strokeWidth="1.2" opacity="0.3" />
+                                            <circle cx="8" cy="8" r="7" stroke="currentColor" strokeWidth="1.2" opacity="0.4" />
                                             <path d="M4.5 8l2.5 2.5L11.5 5.5" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
                                         </svg>
                                         {item}
                                     </li>
                                 ))}
                             </ul>
-                            <p className="mt-4 text-xs text-zinc-400 italic">Accede hoy a la plataforma. Las clases en vivo incian en la fecha seleccionada en el formulario.</p>
+                            <p className="mt-4 text-xs text-[#7a5c10] italic">
+                                Accede hoy a la plataforma. Las clases en vivo inician en la fecha seleccionada en el formulario.
+                            </p>
                         </div>
-                        <a href="#form" className="mt-6 w-full inline-flex items-center justify-center rounded-xl px-4 py-3 text-sm font-semibold text-zinc-700 ring-1 ring-inset ring-zinc-300 hover:bg-zinc-50 hover:ring-zinc-400 transition">
+
+                        <a href="#form" className="mt-6 w-full inline-flex items-center justify-center rounded-xl px-4 py-3 text-sm font-semibold text-zinc-900 bg-white hover:bg-zinc-50 transition">
                             Seleccionar Essential
                         </a>
                     </div>
