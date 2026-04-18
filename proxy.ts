@@ -1,7 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
 
-// Rutas válidas del sitio — cualquier cosa fuera de esta lista
-// que no sea un archivo estático redirige al home
 const VALID_ROUTES = new Set([
   "/",
   "/historia",
@@ -19,21 +17,7 @@ const VALID_ROUTES = new Set([
   "/admin/contenido",
   "/admin/login",
   "/admin/busqueda",
-
-  // Landings por mercado
-  "/mexico",
-  "/colombia",
-  "/latinos-usa",
-  "/honduras",
 ]);
-
-// Países que tienen landing propia
-const COUNTRY_TO_SLUG: Record<string, string> = {
-  MX: "mexico",
-  CO: "colombia",
-  HN: "honduras",
-  US: "latinos-usa",
-};
 
 export default function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
@@ -47,23 +31,9 @@ export default function middleware(request: NextRequest) {
   ) {
     return NextResponse.next();
   }
+
   if (!VALID_ROUTES.has(pathname)) {
     return NextResponse.redirect(new URL("/", request.url), 307);
-  }
-
-  if (pathname === "/") {
-    const country = request.headers.get("x-vercel-ip-country") ?? "";
-    const slug = COUNTRY_TO_SLUG[country];
-
-    // En el bloque de geolocalización, antes del redirect:
-    if (slug) {
-      const response = NextResponse.redirect(
-        new URL(`/${slug}`, request.url),
-        307,
-      );
-      response.headers.set("Vary", "Accept-Language, X-Vercel-IP-Country");
-      return response;
-    }
   }
 
   return NextResponse.next();
