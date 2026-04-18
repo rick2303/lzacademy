@@ -1,7 +1,7 @@
 "use client";
 
 import { Container } from "@/app/components/Container";
-import PremiumButton from "../[mercado]/_components/PremiumButton";
+import PremiumButton from "./PremiumButton";
 import { useStartDates } from "../hooks/useStartDates";
 
 const CALENDLY_SPEAKING_URL =
