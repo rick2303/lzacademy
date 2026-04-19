@@ -5,19 +5,62 @@ import { Container } from "../components/Container";
 
 const preguntasFrecuentes: { pregunta: string; respuesta: React.ReactNode }[] = [
   {
-    pregunta: "¿Cómo puedo contactar al equipo de LZ Academy?",
+    pregunta: "¿Puedo cancelar en cualquier momento?",
+    respuesta:
+      "Sí, sin compromisos ni contratos. Puedes cancelar cuando quieras desde tu cuenta. No hay penalizaciones ni cargos ocultos.",
+  },
+  {
+    pregunta: "¿Qué pasa si no soy constante con la rutina diaria?",
+    respuesta:
+      "El método está diseñado para que puedas retomarlo sin perder el hilo. Las 5 sesiones son flexibles: puedes hacerlas en distintos momentos del día. Si un día no puedes, simplemente continúas al día siguiente. La comunidad de WhatsApp y las clases de los viernes también te ayudan a mantenerte en ritmo.",
+  },
+  {
+    pregunta: "¿Garantizan resultados en 90 días?",
     respuesta: (
       <>
-        Pues contactarte traves del correo: {" "} info@lz-englishacademy.com o al correo lzacademy590@gmail.com
+        El Método 590 está diseñado para llevarte de cero a un nivel B1 conversacional en 90 días si sigues la rutina completa. Los resultados dependen de tu consistencia — quienes completan las 5 sesiones diarias ven progreso real desde las primeras semanas. Si tienes dudas sobre si es para ti, puedes escribirnos a{" "}
+        <a href="mailto:info@lz-englishacademy.com" className="font-semibold text-falu-red-800 hover:text-falu-red-900 underline">
+          info@lz-englishacademy.com
+        </a>
+        .
       </>
     ),
   },
   {
-    pregunta: "¿Cómo puedo saber mi nivel de inglés?",
+    pregunta: "¿Necesito experiencia previa en inglés?",
+    respuesta:
+      "No. El método empieza desde nivel A1 (principiante absoluto). También tenemos niveles A2, B1 y B2 para quienes ya tienen una base. Al inscribirte seleccionas tu nivel actual y el material se adapta a él.",
+  },
+  {
+    pregunta: "¿Cuál es la diferencia entre Essential y Personalizado?",
+    respuesta:
+      "Con Essential accedes a la plataforma con todo el material organizado por sesiones, la comunidad de WhatsApp y las clases grupales en vivo los viernes — aprendes a tu propio ritmo. Con Personalizado tienes además clases 1:1 privadas con tu propio profesor, horario flexible y un plan de trabajo adaptado a tu nivel y objetivos desde el día 1.",
+  },
+  {
+    pregunta: "¿Cuánto tiempo al día necesito dedicarle?",
+    respuesta:
+      "El método tiene 5 sesiones diarias que en total toman entre 2 y 3 horas. Pueden distribuirse durante el día — no tienen que hacerse seguidas. Con Essential tú decides cuándo; con Personalizado defines el horario con tu profesor.",
+  },
+  {
+    pregunta: "¿Qué pasa si no puedo asistir a la clase del viernes?",
+    respuesta:
+      "No hay problema. Las clases de los viernes son en vivo por Zoom y tienen distintos horarios (mañana, tarde y noche). Si no puedes asistir una semana, el material sigue disponible en la plataforma y puedes retomar en la siguiente sesión.",
+  },
+  {
+    pregunta: "¿Qué incluye la plataforma?",
+    respuesta:
+      "La plataforma organiza todo el material por sesión y nivel: teoría para la sesión 1, película o series con subtítulos en inglés para la sesión 2, flashcards de vocabulario en Quizlet para la sesión 3, lectura asignada para la sesión 4 y un tema de journaling + speaking challenge para la sesión 5. Todo está listo para que solo tengas que seguir la rutina.",
+  },
+  {
+    pregunta: "¿Las 5 sesiones tienen que hacerse seguidas?",
+    respuesta:
+      "No. Puedes distribuirlas durante el día según tu horario — unas en la mañana, otras en la tarde y las últimas en la noche. Lo importante es completarlas todas dentro del día, en el orden indicado.",
+  },
+  {
+    pregunta: "¿Cómo sé cuál es mi nivel de inglés?",
     respuesta: (
       <>
-        Puedes hacer un test de nivel en línea para tener una idea aproximada de tu nivel actual.
-        Te recomiendo este:{" "}
+        Puedes hacer un test gratuito aquí:{" "}
         <a
           href="https://www.englishradar.com/english-test/"
           target="_blank"
@@ -26,54 +69,9 @@ const preguntasFrecuentes: { pregunta: string; respuesta: React.ReactNode }[] = 
         >
           EnglishRadar – English Test
         </a>
-        .<br /><br />
-        También puedes revisar los descriptores del MCER (Marco Común Europeo de Referencia para
-        las Lenguas) para ver cuál se ajusta mejor a tus habilidades. En caso de duda, puedes
-        elegir el nivel que creas que se acerca más a tu nivel actual y ajustarlo después si es
-        necesario.
+        . Si aún tienes dudas, elige el nivel más cercano al tuyo — podemos ajustarlo después de que empieces.
       </>
     ),
-  },
-  {
-    pregunta: "¿Cúal es la diferencia entre B2.1 y B2.2?",
-    respuesta: (
-      <>
-        B2.1: dirigido a estudiantes que aún no dominan las estructuras gramaticales del nivel B2 y necesitan fortalecer esa base, usualmente vienen de B1.<br /><br />
-        B2.2: dirigido a estudiantes que ya manejan el nivel B2 y están enfocados en consolidar, afianzar y perfeccionar su uso del idioma. Usualmente ya cursaron el B2.1
-      </>
-    ),
-  },
-  {
-    pregunta: "¿Se tienen que hacer las 5 sesiones juntas de una sola vez?",
-    respuesta:
-      "No necesariamente. Pueden hacerse en distintas partes del día, unas en la mañana, otras en la tarde, últimas en la noche.",
-  },
-  {
-    pregunta: "¿Hay que seguir el orden de las sesiones?",
-    respuesta: "Sí, están hechas con estrategia.",
-  },
-  {
-    pregunta: "¿Cuánto dura cada nivel?",
-    respuesta: "Cada nivel dura aproximadamente 1 mes.",
-  },
-  {
-    pregunta: "¿Cómo son las sesiones de práctica de los viernes?",
-    respuesta:
-      "Las reuniones son por Zoom, hacemos repaso primero y luego les damos las indicaciones para conversar por 5 min en una salita privada con otra persona.",
-  },
-  {
-    pregunta: "¿A qué hora son las reuniones los viernes?",
-    respuesta: "Hay distintos horarios: horarios en la mañana, tarde y noche.",
-  },
-  {
-    pregunta: "¿Qué incluye la plataforma?",
-    respuesta:
-      "La plataforma te da el material de aprendizaje para la sesión 1, una película o shows para la sesión 2, un set de vocabulario en flashcards de Quizlet para la sesión 3, un libro y páginas asignadas diarias para la sesión 4, una recomendación de tema para escribir en el journaling de la sesión 5 y un speaking challenge que envías al grupo de WhatsApp.",
-  },
-  {
-    pregunta: "¿Qué pasa si no puedo asistir a las reuniones de los viernes?",
-    respuesta:
-      "No te preocupes, las reuniones de los viernes son para resolver dudas y practicar, pero el material de aprendizaje está disponible en la plataforma para que puedas seguirlo a tu ritmo. Si no puedes asistir a una reunión, puedes revisar el material asignado para esa semana y unirte a la siguiente reunión para resolver cualquier duda que tengas.",
   },
 ];
 
@@ -160,10 +158,10 @@ export default function PreguntasFrecuentes() {
             <p className="text-sm text-zinc-500">
               ¿Tienes otra pregunta?{" "}
               <a
-                href="/#faq"
+                href="mailto:info@lz-englishacademy.com"
                 className="font-semibold text-falu-red-800 hover:text-falu-red-900 transition-colors"
               >
-                Contáctanos directamente →
+                Escríbenos directamente →
               </a>
             </p>
           </div>

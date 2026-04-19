@@ -1,9 +1,22 @@
+import type { Metadata } from "next";
 import { Container } from "../components/Container";
 import Card from "../components/Card";
 import Pill from "../components/Pill";
 import { PrimaryButton, SecondaryButton } from "../components/Buttons";
 import Link from "next/link";
-import SEO from "../components/SEO";
+
+export const metadata: Metadata = {
+  title: "Sesiones del Método 590 | Aprende inglés en 90 días",
+  description:
+    "Explora las 5 sesiones diarias del Método 590: Teoría, Escuchar, Memorización, Lectura y Práctica. Una rutina estructurada para aprender inglés en 90 días.",
+  alternates: { canonical: "https://lz-englishacademy.com/sesiones" },
+  openGraph: {
+    title: "Sesiones del Método 590 | Aprende inglés en 90 días",
+    description:
+      "Explora las 5 sesiones diarias del Método 590: Teoría, Escuchar, Memorización, Lectura y Práctica. Una rutina estructurada para aprender inglés en 90 días.",
+    url: "https://lz-englishacademy.com/sesiones",
+  },
+};
 
 const sesiones = [
     {
@@ -46,12 +59,6 @@ const sesiones = [
 export default function SesionesPage() {
     return (
         <>
-            <SEO
-                title="Sesiones del Método 590 | Aprende inglés en 90 días"
-                description="Explora las 5 sesiones diarias del Método 590: Teoría, Escuchar, Memorización, Lectura y Práctica. Una rutina estructurada para aprender inglés en 90 días."
-                url="https://lz-englishacademy.com/sesiones"
-                image="/images/sesiones-590-hero.jpg"
-            />
             <main className="bg-white text-zinc-900">
                 {/* HERO */}
                 <section className="relative overflow-hidden">

@@ -10,6 +10,11 @@ const nextConfig: NextConfig = {
         destination: "https://lz-englishacademy.com/:path*",
         permanent: true,
       },
+      // Rutas de mercado eliminadas → home (301 permanent)
+      { source: "/mexico", destination: "/", permanent: true },
+      { source: "/colombia", destination: "/", permanent: true },
+      { source: "/honduras", destination: "/", permanent: true },
+      { source: "/latinos-usa", destination: "/", permanent: true },
     ];
   },
 };

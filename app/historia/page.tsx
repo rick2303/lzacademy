@@ -1,9 +1,23 @@
+import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
 import { Container } from "../components/Container";
 import Card from "../components/Card";
 import Pill from "../components/Pill";
-import SEO from "../components/SEO";
+
+export const metadata: Metadata = {
+  title: "La historia de Loren Laínez | Método 590",
+  description:
+    "Conoce a Loren Laínez, fundadora del Método 590. Descubre su historia real de aprendizaje intensivo de inglés en 3 meses y cómo creó un método efectivo y estructurado.",
+  alternates: { canonical: "https://lz-englishacademy.com/historia" },
+  openGraph: {
+    title: "La historia de Loren Laínez | Método 590",
+    description:
+      "Conoce a Loren Laínez, fundadora del Método 590. Descubre su historia real de aprendizaje intensivo de inglés en 3 meses y cómo creó un método efectivo y estructurado.",
+    url: "https://lz-englishacademy.com/historia",
+    images: [{ url: "https://lz-englishacademy.com/creadora.jpeg" }],
+  },
+};
 
 const mentora = {
     name: "Loren Laínez",
@@ -90,13 +104,6 @@ function StageChip({ label, accent = false }: { label: string; accent?: boolean 
 export default function HistoriaPage() {
     return (
         <>
-            <SEO
-                title="La historia de Loren Laínez | Método 590"
-                description="Conoce a Loren Laínez, fundadora del Método 590. Descubre su historia real de aprendizaje intensivo de inglés en 3 meses y cómo creó un método efectivo y estructurado."
-                url="https://lz-englishacademy.com/historia"
-                image="/images/creadora.jpeg"
-            />
-
             <main className="bg-white text-zinc-900">
 
                 {/* HERO */}

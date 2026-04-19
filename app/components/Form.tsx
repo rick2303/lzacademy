@@ -43,11 +43,9 @@ const PaymentForm = ({ selectedPlan }: { selectedPlan: PlanType }) => {
     const { dates: availableDates } = useStartDates();
     const [formData, setFormData] = useState({
         email: "",
-        confirmEmail: "",
         fullName: "",
         country: "",
         englishLevel: "",
-        motive: "",
         interestDate: "",
     });
     const [error, setError] = useState("");
@@ -56,11 +54,9 @@ const PaymentForm = ({ selectedPlan }: { selectedPlan: PlanType }) => {
 
     const validateForm = () => {
         if (!formData.email || !formData.fullName)
-            return "Todos los campos obligatorios deben completarse";
-        if (formData.email !== formData.confirmEmail)
-            return "Los correos electrónicos no coinciden";
-        if (!formData.country || !formData.englishLevel || !formData.motive)
-            return "Debes completar todos los campos obligatorios";
+            return "Completa tu correo y nombre";
+        if (!formData.country || !formData.englishLevel)
+            return "Selecciona tu país y nivel de inglés";
         return null;
     };
 
@@ -87,7 +83,6 @@ const PaymentForm = ({ selectedPlan }: { selectedPlan: PlanType }) => {
                     country: formData.country,
                     plan,
                     level: formData.englishLevel,
-                    motive: formData.motive,
                     interestDate: formData.interestDate,
                     description: planDetails[plan].description,
                 }),
@@ -114,7 +109,9 @@ const PaymentForm = ({ selectedPlan }: { selectedPlan: PlanType }) => {
                 <div className="text-center mb-10">
                     <div className="inline-flex items-center gap-2 rounded-full bg-white px-4 py-1.5 text-xs font-semibold text-zinc-600 ring-1 ring-inset ring-zinc-200 mb-4">
                         <span className="h-2 w-2 rounded-full bg-green-500 animate-pulse" />
-                        Cupos disponibles para abril y mayo
+                        {availableDates.length > 0
+                            ? `Próximo inicio: ${availableDates[0].label}`
+                            : "Cupos disponibles · Próximamente"}
                     </div>
                     <h2 className="text-2xl font-extrabold text-zinc-900 sm:text-3xl">
                         Comenzá tu camino en inglés
@@ -132,34 +129,18 @@ const PaymentForm = ({ selectedPlan }: { selectedPlan: PlanType }) => {
 
                     <form onSubmit={handleSubmit} className="p-6 sm:p-8 space-y-5">
 
-                        {/* Email en dos columnas en desktop */}
-                        <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
-                            <div>
-                                <FieldLabel htmlFor="email">Correo electrónico *</FieldLabel>
-                                <input
-                                    type="email"
-                                    id="email"
-                                    name="email"
-                                    value={formData.email}
-                                    onChange={handleChange}
-                                    placeholder="tu@correo.com"
-                                    className={inputClass}
-                                    required
-                                />
-                            </div>
-                            <div>
-                                <FieldLabel htmlFor="confirmEmail">Confirma tu correo *</FieldLabel>
-                                <input
-                                    type="email"
-                                    id="confirmEmail"
-                                    name="confirmEmail"
-                                    value={formData.confirmEmail}
-                                    onChange={handleChange}
-                                    placeholder="tu@correo.com"
-                                    className={inputClass}
-                                    required
-                                />
-                            </div>
+                        <div>
+                            <FieldLabel htmlFor="email">Correo electrónico *</FieldLabel>
+                            <input
+                                type="email"
+                                id="email"
+                                name="email"
+                                value={formData.email}
+                                onChange={handleChange}
+                                placeholder="tu@correo.com"
+                                className={inputClass}
+                                required
+                            />
                         </div>
 
                         {/* Error de correos */}
@@ -308,68 +289,34 @@ const PaymentForm = ({ selectedPlan }: { selectedPlan: PlanType }) => {
                                 <div>
                                     <p className="text-xs font-semibold text-falu-red-900">Importante sobre el inicio</p>
                                     <p className="mt-0.5 text-xs text-falu-red-700">
-                                        Accede hoy a la plataforma. Las clases en vivo inician en la fecha seleccionada en el formulario.
+                                        Accede hoy a la plataforma. Las clases grupales del viernes y sesiones 1:1 (si aplica) inician en la fecha seleccionada.
                                     </p>
                                 </div>
                             </div>
                         </div>
 
-                        {/* Nivel + Motivo en dos columnas */}
-                        <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
-                            <div>
-                                <FieldLabel htmlFor="englishLevel">Nivel de inglés *</FieldLabel>
-                                <div className="relative">
-                                    <select
-                                        id="englishLevel"
-                                        name="englishLevel"
-                                        value={formData.englishLevel}
-                                        onChange={handleChange}
-                                        className={selectClass}
-                                        required
-                                    >
-                                        <option value="">Selecciona tu nivel</option>
-                                        <option value="Principiante">Principiante (A1)</option>
-                                        <option value="Basico">Básico (A2)</option>
-                                        <option value="Intermedio">Intermedio (B1)</option>
-                                        <option value="Intermedio alto-gramatica">Intermedio alto (B2.1)</option>
-                                        <option value="Intermedio alto-produccion">Intermedio alto (B2.2)</option>
-                                    </select>
-                                    <div className="pointer-events-none absolute inset-y-0 right-3 flex items-center">
-                                        <svg className="h-4 w-4 text-zinc-400" viewBox="0 0 16 16" fill="none">
-                                            <path d="M4 6l4 4 4-4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                                        </svg>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div>
-                                <FieldLabel htmlFor="motive">Motivo principal *</FieldLabel>
-                                <div className="relative">
-                                    <select
-                                        id="motive"
-                                        name="motive"
-                                        value={formData.motive}
-                                        onChange={handleChange}
-                                        className={selectClass}
-                                        required
-                                    >
-                                        <option value="">Selecciona un motivo</option>
-                                        <option value="Trabajo o mejores oportunidades laborales">
-                                            Trabajo o mejores oportunidades laborales
-                                        </option>
-                                        <option value="Estudios/Universidad">Estudios / Universidad</option>
-                                        <option value="Vivir en otro país">Vivir en otro país</option>
-                                        <option value="Viajar">Viajar</option>
-                                        <option value="Crecimiento personal y confianza">
-                                            Crecimiento personal y confianza
-                                        </option>
-                                        <option value="Otros">Otros</option>
-                                    </select>
-                                    <div className="pointer-events-none absolute inset-y-0 right-3 flex items-center">
-                                        <svg className="h-4 w-4 text-zinc-400" viewBox="0 0 16 16" fill="none">
-                                            <path d="M4 6l4 4 4-4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                                        </svg>
-                                    </div>
+                        <div>
+                            <FieldLabel htmlFor="englishLevel">Nivel de inglés *</FieldLabel>
+                            <div className="relative">
+                                <select
+                                    id="englishLevel"
+                                    name="englishLevel"
+                                    value={formData.englishLevel}
+                                    onChange={handleChange}
+                                    className={selectClass}
+                                    required
+                                >
+                                    <option value="">Selecciona tu nivel</option>
+                                    <option value="Principiante">Principiante (A1)</option>
+                                    <option value="Basico">Básico (A2)</option>
+                                    <option value="Intermedio">Intermedio (B1)</option>
+                                    <option value="Intermedio alto-gramatica">Intermedio alto (B2.1)</option>
+                                    <option value="Intermedio alto-produccion">Intermedio alto (B2.2)</option>
+                                </select>
+                                <div className="pointer-events-none absolute inset-y-0 right-3 flex items-center">
+                                    <svg className="h-4 w-4 text-zinc-400" viewBox="0 0 16 16" fill="none">
+                                        <path d="M4 6l4 4 4-4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                                    </svg>
                                 </div>
                             </div>
                         </div>
@@ -392,7 +339,7 @@ const PaymentForm = ({ selectedPlan }: { selectedPlan: PlanType }) => {
                                 </>
                             ) : (
                                 <>
-                                    Adquirir acceso
+                                    {plan === "Essential" ? "Comenzar Essential — $10/mes" : "Comenzar Personalizado — $100/mes"}
                                     <svg className="h-4 w-4" viewBox="0 0 16 16" fill="none">
                                         <path stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
                                     </svg>

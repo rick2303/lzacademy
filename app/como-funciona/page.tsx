@@ -1,8 +1,21 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { Container } from "../components/Container";
 import Card from "../components/Card";
 import Pill from "../components/Pill";
-import SEO from "../components/SEO";
+
+export const metadata: Metadata = {
+  title: "Cómo funciona el Método 590 | LZ English Academy",
+  description:
+    "Descubre cómo funciona el Método 590: cinco sesiones diarias estructuradas para aprender inglés de forma natural y eficiente en 90 días.",
+  alternates: { canonical: "https://lz-englishacademy.com/como-funciona" },
+  openGraph: {
+    title: "Cómo funciona el Método 590 | LZ English Academy",
+    description:
+      "Descubre cómo funciona el Método 590: cinco sesiones diarias estructuradas para aprender inglés de forma natural y eficiente en 90 días.",
+    url: "https://lz-englishacademy.com/como-funciona",
+  },
+};
 
 
 function PrimaryButton({ children }: { children: React.ReactNode }) {
@@ -70,12 +83,6 @@ const sesiones = [
 export default function ComoFuncionaPage() {
   return (
     <>
-      <SEO
-        title="Cómo funciona el Método 590 | LZ English Academy"
-        description="Descubre cómo funciona el Método 590 de LZ English Academy. Cinco sesiones diarias estructuradas para aprender inglés de forma natural y eficiente. También apoyado por la metodología de QALI-T."
-        url="https://lz-englishacademy.com/como-funciona"
-        image="/images/como-funciona-hero.jpg"
-      />
       <main className="bg-white text-zinc-900">
         {/* HERO */}
         <section className="relative overflow-hidden">

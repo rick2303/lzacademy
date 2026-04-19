@@ -1,18 +1,25 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { Container } from "../components/Container";
 import Card from "../components/Card";
 import Pill from "../components/Pill";
-import SEO from "../components/SEO";
+
+export const metadata: Metadata = {
+  title: "Ciencia detrás del Método 590 | LZ English Academy",
+  description:
+    "Descubre la ciencia cognitiva detrás del Método 590: ritmo, repetición y consistencia para construir fluidez real en inglés.",
+  alternates: { canonical: "https://lz-englishacademy.com/ciencia" },
+  openGraph: {
+    title: "Ciencia detrás del Método 590 | LZ English Academy",
+    description:
+      "Descubre la ciencia cognitiva detrás del Método 590: ritmo, repetición y consistencia para construir fluidez real en inglés.",
+    url: "https://lz-englishacademy.com/ciencia",
+  },
+};
 
 export default function CienciaPage() {
   return (
     <>
-      <SEO
-        title="Ciencia detrás del Método 590 | LZ English Academy"
-        description="Descubre la ciencia cognitiva detrás del Método 590 de LZ English Academy. Aprende inglés con ritmo, repetición y consistencia. También respaldado por la metodología de QALI-T."
-        url="https://lz-englishacademy.com/ciencia"
-        image="/images/ciencia-hero.jpg"
-      />
       <main className="bg-white text-zinc-900">
         {/* HERO */}
         <section className="relative overflow-hidden">

@@ -1,8 +1,21 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { Container } from "../components/Container";
 import Card from "../components/Card";
 import Pill from "../components/Pill";
-import SEO from "../components/SEO";
+
+export const metadata: Metadata = {
+  title: "Método 590 | Aprende inglés en 90 días",
+  description:
+    "Descubre el Método 590: un sistema estructurado para aprender inglés en 90 días mediante 5 sesiones diarias que convierten el idioma en una rutina real y efectiva.",
+  alternates: { canonical: "https://lz-englishacademy.com/metodo" },
+  openGraph: {
+    title: "Método 590 | Aprende inglés en 90 días",
+    description:
+      "Descubre el Método 590: un sistema estructurado para aprender inglés en 90 días mediante 5 sesiones diarias que convierten el idioma en una rutina real y efectiva.",
+    url: "https://lz-englishacademy.com/metodo",
+  },
+};
 
 function PrimaryButton({ children }: { children: React.ReactNode }) {
   return (
@@ -43,12 +56,6 @@ const sesionesPreview = [
 export default function MetodoPage() {
   return (
     <>
-      <SEO
-        title="Método 590 | Aprende inglés en 90 días"
-        description="Descubre el Método 590: un sistema estructurado para aprender inglés en 90 días mediante 5 sesiones diarias que convierten el idioma en una rutina real y efectiva."
-        url="https://lz-englishacademy.com/metodo"
-        image="/images/metodo-590-hero.jpg"
-      />
       <main className="bg-white text-zinc-900">
         {/* HERO */}
         <section className="relative overflow-hidden">
