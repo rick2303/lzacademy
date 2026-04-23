@@ -17,6 +17,8 @@ const VALID_ROUTES = new Set([
   "/admin/contenido",
   "/admin/login",
   "/admin/busqueda",
+  "/pasouno",      
+  "/pasodos", 
 ]);
 
 export default function middleware(request: NextRequest) {

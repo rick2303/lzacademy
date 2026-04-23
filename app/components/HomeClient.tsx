@@ -8,9 +8,9 @@ import Pill from "./Pill";
 import Sesiones from "./Sessions";
 import { useState } from "react";
 import PaymentForm from "./Form";
-import { useStartDates } from "../hooks/useStartDates";
 import { InfoSessionSection, InfoSessionMini } from "./Infosessionsection";
 import PlansSection from "./Plan";
+//import HeroSection from "./HeroSection";
 
 const CALENDLY_SPEAKING_URL =
   process.env.NEXT_PUBLIC_CALENDLY_SPEAKING_URL || "https://calendly.com/lzacademy590/speaking-session";
@@ -25,8 +25,6 @@ const CALENDLY_PREMIUM_BY_LEVEL: Record<string, string> = {
 export default function HomeClient() {
   const [isLevelModalOpen, setIsLevelModalOpen] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState<"Essential" | "Personalizado">("Essential");
-  const { dates: startDates } = useStartDates();
-
   const openPremiumLevelModal = () => setIsLevelModalOpen(true);
   const closePremiumLevelModal = () => setIsLevelModalOpen(false);
 
@@ -41,136 +39,8 @@ export default function HomeClient() {
   return (
     <main className="bg-white">
 
-      <section className="relative overflow-hidden">
-        <div className="absolute inset-0 bg-linear-to-b from-falu-red-100 via-white to-falu-red-50" />
-        <div className="pointer-events-none absolute -top-32 left-1/2 h-104 w-104 -translate-x-1/2 rounded-full bg-falu-red-400/20 blur-3xl" />
-        <div className="pointer-events-none absolute -bottom-40 -right-24 h-120 w-120 rounded-full bg-yellow-orange-300/20 blur-3xl" />
-        <div className="pointer-events-none absolute inset-0 opacity-[0.08] bg-[radial-gradient(circle_at_1px_1px,rgba(156,24,29,0.35)_1px,transparent_0)] bg-size-[18px_18px]" />
-        <svg className="pointer-events-none absolute -bottom-px left-0 w-full" viewBox="0 0 1440 120" fill="none" aria-hidden="true">
-          <path d="M0 80C120 70 240 55 360 52C480 48 600 64 720 72C840 80 960 78 1080 62C1200 46 1320 18 1440 10V120H0V80Z" fill="rgba(156,24,29,0.06)" />
-        </svg>
-
-        <Container>
-          <div className="relative py-16 sm:py-24">
-            <div className="grid grid-cols-1 gap-12 lg:grid-cols-12 lg:items-center">
-
-              <div className="lg:col-span-7">
-                <div className="inline-flex items-center gap-2 rounded-full bg-white/80 px-4 py-1.5 text-xs font-semibold text-zinc-700 ring-1 ring-inset ring-falu-red-200/80">
-                  <span className="h-2 w-2 rounded-full bg-green-500 animate-pulse" />
-                  Próximo inicio: {startDates[0]?.label ?? "Próximamente"}
-                </div>
-
-                <h1 className="mt-5 text-4xl font-extrabold tracking-tight text-zinc-900 sm:text-6xl">
-                  <span className="block">Con método.</span>
-                  <span className="block">Con ciencia.</span>
-                  <span className="block text-falu-red-800">Con propósito.</span>
-                </h1>
-
-                <p className="mt-5 max-w-2xl text-base text-zinc-700 sm:text-lg">
-                  El Método 590 convierte el inglés en una rutina diaria estructurada
-                  para construir fluidez real.
-                </p>
-
-                <p className="mt-3 text-sm text-zinc-500">
-                  De cero a nivel B1 conversacional en 90 días — con 5 sesiones diarias.
-                </p>
-
-                <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:items-center">
-                  <a
-                    href="#planes"
-                    className="inline-flex items-center justify-center rounded-xl px-5 py-3 text-sm font-semibold text-white bg-falu-red-700 hover:bg-falu-red-800 active:bg-falu-red-900 transition shadow-sm"
-                  >
-                    Reservar cupo
-                  </a>
-                  <Link
-                    href="/interes"
-                    className="text-sm font-medium text-zinc-500 hover:text-falu-red-800 transition text-center sm:text-left"
-                  >
-                    Solo quiero registrar interés →
-                  </Link>
-                </div>
-
-                <div className="mt-10 flex flex-wrap gap-2">
-                  {[
-                    "México", "Colombia", "Estados Unidos", "Honduras",
-                    "Ecuador", "Perú", "Venezuela", "Argentina",
-                    "Guatemala", "El Salvador", "Costa Rica", "Nicaragua",
-                    "Chile", "Bolivia", "Puerto Rico", "Rep. Dominicana",
-                    "España", "Canadá",
-                  ].map((pais) => (
-                    <span
-                      key={pais}
-                      className="inline-flex items-center gap-1.5 rounded-2xl bg-white/70 px-3 py-1.5 text-xs font-medium text-zinc-600 ring-1 ring-inset ring-zinc-200/80"
-                    >
-                      <span className="h-1.5 w-1.5 rounded-full bg-falu-red-500" />
-                      {pais}
-                    </span>
-                  ))}
-                </div>
-              </div>
-
-              <div className="lg:col-span-5 flex flex-col gap-4">
-                <Card className="relative overflow-hidden ring-falu-red-200">
-                  <div className="absolute -left-16 -top-16 h-52 w-52 rounded-full bg-falu-red-300/20 blur-3xl" />
-                  <div className="relative flex items-start gap-3">
-                    <div className="h-10 w-10 shrink-0 rounded-full bg-falu-red-100 flex items-center justify-center text-sm font-bold text-falu-red-800">
-                      LL
-                    </div>
-                    <div>
-                      <p className="text-sm font-semibold text-zinc-900">Loren Laínez</p>
-                      <p className="text-xs text-zinc-500">Fundadora · Ingeniería Biomédica, EEUU</p>
-                    </div>
-                  </div>
-                  <blockquote className="relative mt-4 text-sm text-zinc-700 leading-relaxed border-l-2 border-falu-red-200 pl-3">
-                    "Todas las academias me dijeron que era imposible aprender inglés en 3 meses.
-                    Diseñé mi propio método y pasé la entrevista. Ese método es el 590."
-                  </blockquote>
-                  <div className="relative mt-4">
-                    <Link
-                      href="/historia"
-                      className="text-xs font-semibold text-falu-red-800 hover:text-falu-red-900"
-                    >
-                      Leer la historia completa →
-                    </Link>
-                  </div>
-                </Card>
-
-                <div className="grid grid-cols-2 gap-3">
-                  {[
-                    { value: "90 días", label: "de cero a B1" },
-                    { value: "$10/mes", label: "plan Essential" },
-                    { value: "5 sesiones", label: "diarias" },
-                    { value: "19 países", label: "con alumnos activos" },
-                  ].map((stat) => (
-                    <div
-                      key={stat.label}
-                      className="rounded-xl bg-white/80 px-4 py-3 ring-1 ring-inset ring-falu-red-100 text-center"
-                    >
-                      <p className="text-lg font-extrabold text-zinc-900">{stat.value}</p>
-                      <p className="text-xs text-zinc-500 mt-0.5">{stat.label}</p>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-
-            <div className="mt-12 grid grid-cols-1 gap-4 sm:grid-cols-3">
-              <Card className="p-5 hover:ring-falu-red-200">
-                <p className="text-sm font-semibold text-falu-red-900">Estructura diaria</p>
-                <p className="mt-1 text-sm text-zinc-600">Rutina clara para avanzar sin improvisar.</p>
-              </Card>
-              <Card className="p-5 hover:ring-falu-red-200">
-                <p className="text-sm font-semibold text-falu-red-900">Ciencia cognitiva</p>
-                <p className="mt-1 text-sm text-zinc-600">Ritmo + repetición + consistencia.</p>
-              </Card>
-              <Card className="p-5 hover:ring-falu-red-200">
-                <p className="text-sm font-semibold text-falu-red-900">Producción real</p>
-                <p className="mt-1 text-sm text-zinc-600">Speaking + journaling con feedback.</p>
-              </Card>
-            </div>
-          </div>
-        </Container>
-      </section>
+    
+     
       <InfoSessionSection />
 
       <section id="planes">
