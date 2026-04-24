@@ -441,8 +441,8 @@ export default function BusquedaPage() {
                                                                 {p.payment_status}
                                                             </span>
                                                         </td>
-                                                        <td className="px-5 py-3"><CopyBadge value={p.stripe_payment_intent_id} label={p.stripe_payment_intent_id ? p.stripe_payment_intent_id.slice(0, 18) + "…" : null} /></td>
-                                                        <td className="px-5 py-3"><CopyBadge value={p.stripe_checkout_session_id} label={p.stripe_checkout_session_id ? p.stripe_checkout_session_id.slice(0, 18) + "…" : null} /></td>
+                                                        <td className="px-5 py-3"><CopyBadge value={p.stripe_payment_intent_id} label={p.stripe_payment_intent_id ? p.stripe_payment_intent_id.slice(0, 18) + "…" : undefined} /></td>
+                                                        <td className="px-5 py-3"><CopyBadge value={p.stripe_checkout_session_id} label={p.stripe_checkout_session_id ? p.stripe_checkout_session_id.slice(0, 18) + "…" : undefined} /></td>
                                                     </tr>
                                                 ))}
                                             </tbody>
