@@ -4,10 +4,12 @@ import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { usePathname } from "next/navigation";
+import { TestimonialsSection } from "../components/Testimonials";
 
 
 export default function InicioPage() {
     return (
+
         <>
             <section
                 className="relative overflow-hidden"
@@ -141,6 +143,7 @@ export default function InicioPage() {
                     </div>
                 </div>
             </section>
+            <TestimonialsSection/>
         </>
     );
 }

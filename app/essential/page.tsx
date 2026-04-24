@@ -3,7 +3,6 @@
 import Image from "next/image";
 import { Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-
 const features = [
   "Acceso completo a la plataforma",
   "Comunidad en WhatsApp",
@@ -26,7 +25,7 @@ function EssentialPlanContent() {
   }
 
   function handleMasInfo() {
-    window.open("https://wa.me/xxxxxxx", "_blank");
+    window.open("https://chat.whatsapp.com/HhAvLoPoLwf1JsX0aWtnX1", "_blank");
   }
 
   return (

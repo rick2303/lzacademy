@@ -28,7 +28,7 @@ function PremiumPlanContent() {
   }
 
   function handleMasInfo() {
-    window.open("https://wa.me/xxxxxxx", "_blank");
+    window.open("https://chat.whatsapp.com/HhAvLoPoLwf1JsX0aWtnX1", "_blank");
   }
 
   return (

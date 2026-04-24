@@ -19,6 +19,7 @@ const VALID_ROUTES = new Set([
   "/admin/busqueda",
   "/pasouno",      
   "/pasodos",
+  "/pasotres",
   "/essential",
   "/premium",
   "/personalizada", 
