@@ -17,6 +17,9 @@ const VALID_ROUTES = new Set([
   "/admin/contenido",
   "/admin/login",
   "/admin/busqueda",
+  "/admin/premium-agenda",
+  "/admin/marketing",
+  "/admin/accesos",
 ]);
 
 export default function middleware(request: NextRequest) {

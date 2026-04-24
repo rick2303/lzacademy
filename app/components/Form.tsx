@@ -8,6 +8,10 @@ const planDetails = {
         description:
             "Plan Essential, incluye: Acceso completo a la plataforma, Rutina diaria guiada, Grupo de WhatsApp, Clases prácticas los viernes",
     },
+    Premium: {
+        description:
+            "Plan Premium, incluye: Todo lo de Essential, más: 1 hora de clase diaria lunes a jueves, repasos los viernes, acompañamiento constante",
+    },
     Personalizado: {
         description:
             "Plan Personalizado, incluye: Todo lo del Plan Premium, más: Rutinas personalizadas, Sesiones Personales, Seguimiento, Correciones en tiempo real.",
@@ -49,8 +53,42 @@ const PaymentForm = ({ selectedPlan }: { selectedPlan: PlanType }) => {
         interestDate: "",
     });
     const [error, setError] = useState("");
+    const [slots, setSlots] = useState<Record<string, string[]>>({});
+    const [slotsLoading, setSlotsLoading] = useState(false);
+    const [tzLabel, setTzLabel] = useState("");
 
     useEffect(() => { setPlan(selectedPlan); }, [selectedPlan]);
+
+    useEffect(() => {
+        if (plan !== "Premium") { setSlots({}); return; }
+        setSlotsLoading(true);
+        const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+        const offset = new Intl.DateTimeFormat("es-ES", { timeZone: tz, timeZoneName: "short" })
+            .formatToParts(new Date())
+            .find(p => p.type === "timeZoneName")?.value ?? "";
+        setTzLabel(`${tz.replace(/_/g, " ")}${offset ? ` · ${offset}` : ""}`);
+        fetch(`${BACKEND_URL}/cal/slots?tz=${encodeURIComponent(tz)}`)
+            .then(r => r.json())
+            .then(data => {
+                const raw: Record<string, { time?: string; start?: string }[]> = data?.slots ?? {};
+                const formatted: Record<string, string[]> = {};
+                for (const times of Object.values(raw)) {
+                    for (const t of times) {
+                        const iso = t.start ?? t.time ?? "";
+                        if (!iso) continue;
+                        const dt = new Date(iso);
+                        // Key by local date (sv-SE gives YYYY-MM-DD)
+                        const localDate = dt.toLocaleDateString("sv-SE", { timeZone: tz });
+                        const localTime = dt.toLocaleTimeString("es-ES", { hour: "2-digit", minute: "2-digit", hour12: true, timeZone: tz });
+                        if (!formatted[localDate]) formatted[localDate] = [];
+                        formatted[localDate].push(localTime);
+                    }
+                }
+                setSlots(formatted);
+            })
+            .catch(() => setSlots({}))
+            .finally(() => setSlotsLoading(false));
+    }, [plan]);
 
     const validateForm = () => {
         if (!formData.email || !formData.fullName)
@@ -243,6 +281,7 @@ const PaymentForm = ({ selectedPlan }: { selectedPlan: PlanType }) => {
                                         required
                                     >
                                         <option value="Essential">Essential — $10/mes</option>
+                                        <option value="Premium">Premium — $50/mes</option>
                                         <option value="Personalizado">Personalizado — $100/mes</option>
                                     </select>
                                     <div className="pointer-events-none absolute inset-y-0 right-3 flex items-center">
@@ -254,70 +293,110 @@ const PaymentForm = ({ selectedPlan }: { selectedPlan: PlanType }) => {
                             </div>
                         </div>
 
-                        {/* Fecha de inicio */}
-                        <div>
-                            <FieldLabel htmlFor="interestDate">Fecha de inicio *</FieldLabel>
-                            <div className="relative">
-                                <select
-                                    id="interestDate"
-                                    name="interestDate"
-                                    value={formData.interestDate}
-                                    onChange={handleChange}
-                                    className={selectClass}
-                                    required
-                                >
-                                    <option value="">Selecciona una fecha</option>
-                                    {availableDates.map((date) => (
-                                        <option key={date.value} value={date.value}>
-                                            {date.label}
-                                        </option>
-                                    ))}
-                                </select>
-                                <div className="pointer-events-none absolute inset-y-0 right-3 flex items-center">
-                                    <svg className="h-4 w-4 text-zinc-400" viewBox="0 0 16 16" fill="none">
-                                        <path d="M4 6l4 4 4-4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                                    </svg>
+                        {/* Fecha de inicio + Nivel en dos columnas */}
+                        <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
+                            <div>
+                                <FieldLabel htmlFor="interestDate">Fecha de inicio *</FieldLabel>
+                                <div className="relative">
+                                    <select
+                                        id="interestDate"
+                                        name="interestDate"
+                                        value={formData.interestDate}
+                                        onChange={handleChange}
+                                        className={selectClass}
+                                        required
+                                    >
+                                        <option value="">Selecciona una fecha</option>
+                                        {availableDates.map((date) => (
+                                            <option key={date.value} value={date.value}>
+                                                {date.label}
+                                            </option>
+                                        ))}
+                                    </select>
+                                    <div className="pointer-events-none absolute inset-y-0 right-3 flex items-center">
+                                        <svg className="h-4 w-4 text-zinc-400" viewBox="0 0 16 16" fill="none">
+                                            <path d="M4 6l4 4 4-4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                                        </svg>
+                                    </div>
                                 </div>
                             </div>
 
-                            {/* Nota de inicio */}
-                            <div className="mt-2.5 flex items-start gap-2 rounded-xl bg-falu-red-50 border border-falu-red-100 px-4 py-3">
-                                <svg className="mt-0.5 h-4 w-4 shrink-0 text-falu-red-500" viewBox="0 0 16 16" fill="none">
-                                    <circle cx="8" cy="8" r="7" stroke="currentColor" strokeWidth="1.5" />
-                                    <path d="M8 5v3.5M8 11h.01" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-                                </svg>
-                                <div>
-                                    <p className="text-xs font-semibold text-falu-red-900">Importante sobre el inicio</p>
-                                    <p className="mt-0.5 text-xs text-falu-red-700">
-                                        Accede hoy a la plataforma. Las clases grupales del viernes y sesiones 1:1 (si aplica) inician en la fecha seleccionada.
-                                    </p>
+                            <div>
+                                <FieldLabel htmlFor="englishLevel">Nivel de inglés *</FieldLabel>
+                                <div className="relative">
+                                    <select
+                                        id="englishLevel"
+                                        name="englishLevel"
+                                        value={formData.englishLevel}
+                                        onChange={handleChange}
+                                        className={selectClass}
+                                        required
+                                    >
+                                        <option value="">Selecciona tu nivel</option>
+                                        <option value="Principiante">Principiante (A1)</option>
+                                        <option value="Basico">Básico (A2)</option>
+                                        <option value="Intermedio">Intermedio (B1)</option>
+                                        <option value="Intermedio alto-gramatica">Intermedio alto (B2.1)</option>
+                                        <option value="Intermedio alto-produccion">Intermedio alto (B2.2)</option>
+                                    </select>
+                                    <div className="pointer-events-none absolute inset-y-0 right-3 flex items-center">
+                                        <svg className="h-4 w-4 text-zinc-400" viewBox="0 0 16 16" fill="none">
+                                            <path d="M4 6l4 4 4-4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                                        </svg>
+                                    </div>
                                 </div>
                             </div>
                         </div>
 
-                        <div>
-                            <FieldLabel htmlFor="englishLevel">Nivel de inglés *</FieldLabel>
-                            <div className="relative">
-                                <select
-                                    id="englishLevel"
-                                    name="englishLevel"
-                                    value={formData.englishLevel}
-                                    onChange={handleChange}
-                                    className={selectClass}
-                                    required
-                                >
-                                    <option value="">Selecciona tu nivel</option>
-                                    <option value="Principiante">Principiante (A1)</option>
-                                    <option value="Basico">Básico (A2)</option>
-                                    <option value="Intermedio">Intermedio (B1)</option>
-                                    <option value="Intermedio alto-gramatica">Intermedio alto (B2.1)</option>
-                                    <option value="Intermedio alto-produccion">Intermedio alto (B2.2)</option>
-                                </select>
-                                <div className="pointer-events-none absolute inset-y-0 right-3 flex items-center">
-                                    <svg className="h-4 w-4 text-zinc-400" viewBox="0 0 16 16" fill="none">
-                                        <path d="M4 6l4 4 4-4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                                    </svg>
+                        {/* Horarios disponibles — solo Premium, filtrado por fecha seleccionada */}
+                        {plan === "Premium" && (
+                            <div className="rounded-xl overflow-hidden border border-falu-red-200">
+                                <div className="flex items-center justify-between px-4 py-2.5 bg-falu-red-50 border-b border-falu-red-100">
+                                    <p className="text-sm font-semibold text-falu-red-900">Horarios disponibles</p>
+                                    <span className="text-xs text-zinc-400 bg-white border border-zinc-200 px-2 py-0.5 rounded-full">Solo vista previa</span>
                                 </div>
+                                <div className="px-4 py-3 space-y-2.5 max-h-52 overflow-y-auto">
+                                    {(() => {
+                                        const month = formData.interestDate?.slice(0, 7);
+                                        const monthSlots = month
+                                            ? Object.entries(slots).filter(([d]) => d.startsWith(month))
+                                            : [];
+                                        if (slotsLoading) return <p className="text-sm text-zinc-400 py-2">Cargando horarios...</p>;
+                                        if (!formData.interestDate) return <p className="text-sm text-zinc-400 py-2">Selecciona una fecha de inicio para ver los horarios disponibles.</p>;
+                                        if (monthSlots.length === 0) return <p className="text-sm text-zinc-400 py-2">No hay horarios disponibles para ese mes.</p>;
+                                        return <>{monthSlots.map(([date, times]) => (
+                                            <div key={date} className="flex items-start gap-3">
+                                                <span className="text-xs font-semibold text-zinc-500 w-28 shrink-0 pt-1 capitalize">
+                                                    {new Date(date + "T12:00:00").toLocaleDateString("es-ES", { weekday: "short", day: "numeric", month: "short" })}
+                                                </span>
+                                                <div className="flex flex-wrap gap-1.5">
+                                                    {times.map(t => (
+                                                        <span key={t} className="text-xs text-zinc-700 bg-zinc-100 rounded-lg px-2.5 py-1 font-medium">{t}</span>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        ))}</>;
+                                    })()}
+                                </div>
+                                <div className="px-4 py-2 bg-zinc-50 border-t border-zinc-100">
+                                    <p className="text-xs text-zinc-400">
+                                        Podrás agendar tu clase después del pago · {tzLabel || "Horarios en tu zona horaria"}
+                                    </p>
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Nota de inicio */}
+                        <div className="flex items-start gap-2 rounded-xl bg-falu-red-50 border border-falu-red-100 px-4 py-3">
+                            <svg className="mt-0.5 h-4 w-4 shrink-0 text-falu-red-500" viewBox="0 0 16 16" fill="none">
+                                <circle cx="8" cy="8" r="7" stroke="currentColor" strokeWidth="1.5" />
+                                <path d="M8 5v3.5M8 11h.01" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+                            </svg>
+                            <div>
+                                <p className="text-xs font-semibold text-falu-red-900">Importante sobre el inicio</p>
+                                <p className="mt-0.5 text-xs text-falu-red-700">
+                                    Accede hoy a la plataforma. Las clases grupales del viernes y sesiones 1:1 (si aplica) inician en la fecha seleccionada.
+                                </p>
                             </div>
                         </div>
 
@@ -339,7 +418,7 @@ const PaymentForm = ({ selectedPlan }: { selectedPlan: PlanType }) => {
                                 </>
                             ) : (
                                 <>
-                                    {plan === "Essential" ? "Comenzar Essential — $10/mes" : "Comenzar Personalizado — $100/mes"}
+                                    {{ Essential: "Comenzar Essential — $10/mes", Premium: "Comenzar Premium — $50/mes", Personalizado: "Comenzar Personalizado — $100/mes" }[plan]}
                                     <svg className="h-4 w-4" viewBox="0 0 16 16" fill="none">
                                         <path stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
                                     </svg>

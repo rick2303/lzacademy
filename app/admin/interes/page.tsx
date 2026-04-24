@@ -7,7 +7,11 @@ import * as XLSX from "xlsx";
 import { saveAs } from "file-saver";
 import dayjs from "dayjs";
 import utc from "dayjs/plugin/utc";
+import timezone from "dayjs/plugin/timezone";
 dayjs.extend(utc);
+dayjs.extend(timezone);
+
+const PT = "America/Los_Angeles";
 
 interface InterestSubmission {
     id: string;
@@ -107,7 +111,7 @@ function TextModal({
 }
 
 const TABLE_HEADERS = [
-    { label: "Fecha", key: "created_at" },
+    { label: "Fecha (PT)", key: "created_at" },
     { label: "Nombre", key: "full_name" },
     { label: "Email", key: "email" },
     { label: "País", key: "country" },
@@ -237,7 +241,7 @@ export default function InterestDashboard() {
 
     const handleExportExcel = () => {
         const exportData = filtered.map((s) => ({
-            Fecha: dayjs.utc(s.created_at).format("DD/MM/YYYY HH:mm"),
+            "Fecha (PT)": dayjs.utc(s.created_at).tz(PT).format("DD/MM/YYYY h:mm a"),
             Nombre: s.full_name,
             Email: s.email,
             País: s.country,
@@ -453,7 +457,7 @@ export default function InterestDashboard() {
                             paginated.map((s) => (
                                 <tr key={s.id} className="hover:bg-gray-50 transition-colors">
                                     <td className="px-3 py-2 whitespace-nowrap text-xs text-gray-400">
-                                        {dayjs.utc(s.created_at).format("DD/MM/YY HH:mm")}
+                                        {dayjs.utc(s.created_at).tz(PT).format("DD/MM/YY h:mm a")}
                                     </td>
                                     <td className="px-3 py-2 whitespace-nowrap font-semibold text-gray-800">{s.full_name}</td>
                                     <td className="px-3 py-2 whitespace-nowrap text-gray-500">{s.email}</td>

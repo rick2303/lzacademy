@@ -1,14 +1,13 @@
 "use client";
 
 import { Container } from "@/app/components/Container";
-import PremiumButton from "./PremiumButton";
 import { useStartDates } from "../hooks/useStartDates";
 
 const CALENDLY_SPEAKING_URL =
     process.env.NEXT_PUBLIC_CALENDLY_SPEAKING_URL || "https://calendly.com/lzacademy590/speaking-session";
 
 interface PlansSectionProps {
-    onSelectPlan?: (plan: "Essential" | "Personalizado") => void;
+    onSelectPlan?: (plan: "Essential" | "Premium" | "Personalizado") => void;
 }
 
 export default function PlansSection({ onSelectPlan }: PlansSectionProps) {
@@ -141,9 +140,12 @@ export default function PlansSection({ onSelectPlan }: PlansSectionProps) {
                             </ul>
                             <p className="mt-4 text-xs text-white/40 italic">Horario fijo lunes a jueves.</p>
                         </div>
-                        <div className="mt-6">
-                            <PremiumButton />
-                        </div>
+                        <button
+                            onClick={() => onSelectPlan?.("Premium")}
+                            className="mt-6 w-full inline-flex items-center justify-center rounded-xl px-4 py-3 text-sm font-semibold text-falu-red-900 bg-white hover:bg-zinc-50 transition"
+                        >
+                            Seleccionar Premium
+                        </button>
                     </div>
 
                     {/* ── 3. Personalizado ── */}

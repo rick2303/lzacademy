@@ -62,6 +62,25 @@ interface DashboardData {
 const PAGE_SIZE = 15;
 const STATUSES = ["active", "inactive", "cancelled"];
 
+function CopyEmail({ email }: { email: string }) {
+    const [copied, setCopied] = useState(false);
+    return (
+        <span className="inline-flex items-center gap-1.5 group max-w-[180px]">
+            <span className="truncate text-sm text-gray-600">{email}</span>
+            <button
+                onClick={() => { navigator.clipboard.writeText(email); setCopied(true); setTimeout(() => setCopied(false), 1500); }}
+                className="flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity p-0.5 rounded text-gray-300 hover:text-gray-600 cursor-pointer"
+                title="Copiar correo"
+            >
+                {copied
+                    ? <svg className="w-3.5 h-3.5 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
+                    : <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-4 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg>
+                }
+            </button>
+        </span>
+    );
+}
+
 function StatCard({ label, value, sub, icon, accent = "text-falu-red-600", bg = "bg-falu-red-50" }: {
     label: string; value: string | number; sub?: string;
     icon: React.ReactNode; accent?: string; bg?: string;
@@ -80,7 +99,7 @@ function StatCard({ label, value, sub, icon, accent = "text-falu-red-600", bg = 
 
 export default function Dashboard() {
     const [data, setData] = useState<DashboardData | null>(null);
-    const [filters, setFilters] = useState({ country: "", status: "", inscriptionDate: "", paymentDate: "" });
+    const [filters, setFilters] = useState({ country: "", status: "", plan: "", inscriptionDate: "", paymentDate: "" });
     const [search, setSearch] = useState("");
     const [sortBy, setSortBy] = useState<"last_payment_date" | "id">("last_payment_date");
     const [showAtRisk, setShowAtRisk] = useState(false);
@@ -148,6 +167,7 @@ export default function Dashboard() {
     const filteredUsers = data.users.filter((u) => {
         if (filters.country && u.country !== filters.country) return false;
         if (filters.status && u.status !== filters.status) return false;
+        if (filters.plan && u.plan !== filters.plan) return false;
         if (filters.inscriptionDate && !u.inscription_date?.startsWith(filters.inscriptionDate)) return false;
         if (filters.paymentDate && !u.last_payment_date?.startsWith(filters.paymentDate)) return false;
         if (showAtRisk && !atRiskUsers.find((r) => r.id === u.id)) return false;
@@ -305,6 +325,69 @@ export default function Dashboard() {
                 )}
             </div>
 
+            {/* Level distribution */}
+            {(() => {
+                const LEVEL_LABEL: Record<string, string> = {
+                    "Principiante":              "Principiante · A1",
+                    "Basico":                    "Básico · A2",
+                    "Intermedio":                "Intermedio · B1",
+                    "Intermedio alto-gramatica": "Intermedio alto · B2.1",
+                    "Intermedio alto-produccion":"Intermedio alto · B2.2",
+                };
+                const levelMap: Record<string, Record<string, number>> = {};
+                for (const u of data.users) {
+                    const lvl = u.level || "Sin nivel";
+                    const plan = u.plan || "Sin plan";
+                    if (!levelMap[lvl]) levelMap[lvl] = {};
+                    levelMap[lvl][plan] = (levelMap[lvl][plan] ?? 0) + 1;
+                }
+                const levels = Object.entries(levelMap)
+                    .map(([level, plans]) => ({ level, total: Object.values(plans).reduce((a, b) => a + b, 0), plans }))
+                    .sort((a, b) => {
+                        const ORDER = ["Principiante", "Basico", "Intermedio", "Intermedio alto-gramatica", "Intermedio alto-produccion"];
+                        const ai = ORDER.indexOf(a.level), bi = ORDER.indexOf(b.level);
+                        if (ai !== -1 && bi !== -1) return ai - bi;
+                        if (ai !== -1) return -1;
+                        if (bi !== -1) return 1;
+                        return b.total - a.total;
+                    });
+                const maxTotal = levels[0]?.total ?? 1;
+                if (levels.length === 0) return null;
+                return (
+                    <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 mb-7">
+                        <h3 className="text-sm font-semibold text-gray-700 mb-4">Distribución por nivel</h3>
+                        <div className="flex flex-col gap-3.5">
+                            {levels.map(({ level, total, plans }) => (
+                                <div key={level}>
+                                    <div className="flex items-center justify-between mb-1.5">
+                                        <span className="text-sm font-medium text-gray-700 w-48 flex-shrink-0">
+                                            {LEVEL_LABEL[level] ?? level}
+                                        </span>
+                                        <div className="flex items-center gap-2 flex-1 mx-3">
+                                            <div className="flex-1 h-2 bg-gray-100 rounded-full overflow-hidden">
+                                                <div
+                                                    className="h-full rounded-full bg-gradient-to-r from-falu-red-500 to-yellow-orange-400 transition-all duration-500"
+                                                    style={{ width: `${Math.round((total / maxTotal) * 100)}%` }}
+                                                />
+                                            </div>
+                                        </div>
+                                        <span className="text-sm font-semibold text-gray-700 w-6 text-right">{total}</span>
+                                    </div>
+                                    <div className="ml-20 flex flex-wrap gap-1.5">
+                                        {Object.entries(plans).sort((a,b) => b[1]-a[1]).map(([plan, count]) => (
+                                            <span key={plan} className="inline-flex items-center gap-1 text-xs text-gray-500 bg-gray-50 border border-gray-100 px-2 py-0.5 rounded-md">
+                                                <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${planColor(plan)}`} />
+                                                {plan} · {count}
+                                            </span>
+                                        ))}
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                );
+            })()}
+
             {/* Filters */}
             <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 mb-5">
                 {/* Search */}
@@ -338,6 +421,16 @@ export default function Dashboard() {
                         </select>
                     </div>
                     <div className="flex flex-col gap-1">
+                        <label className="text-xs text-gray-400 font-medium">Plan</label>
+                        <select className="p-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-orange-300 bg-gray-50"
+                            value={filters.plan} onChange={(e) => setFilters({ ...filters, plan: e.target.value })}>
+                            <option value="">Todos</option>
+                            {Array.from(new Set(data.users.map((u) => u.plan))).sort().map((p) => (
+                                <option key={p} value={p}>{p}</option>
+                            ))}
+                        </select>
+                    </div>
+                    <div className="flex flex-col gap-1">
                         <label className="text-xs text-gray-400 font-medium">Fecha de inicio</label>
                         <select className="p-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-orange-300 bg-gray-50"
                             value={filters.inscriptionDate} onChange={(e) => setFilters({ ...filters, inscriptionDate: e.target.value })}>
@@ -353,7 +446,7 @@ export default function Dashboard() {
                             value={filters.paymentDate} onChange={(e) => setFilters({ ...filters, paymentDate: e.target.value })} />
                     </div>
                     {hasActiveFilters && (
-                        <button onClick={() => { setFilters({ country: "", status: "", inscriptionDate: "", paymentDate: "" }); setSearch(""); setShowAtRisk(false); }}
+                        <button onClick={() => { setFilters({ country: "", status: "", plan: "", inscriptionDate: "", paymentDate: "" }); setSearch(""); setShowAtRisk(false); }}
                             className="px-3 py-2 text-xs text-gray-400 hover:text-gray-700 border border-gray-200 rounded-lg hover:bg-gray-50 transition">
                             Limpiar
                         </button>
@@ -406,7 +499,7 @@ export default function Dashboard() {
                                 return (
                                     <tr key={u.id} className={`transition-colors ${isAtRisk ? "bg-amber-50 hover:bg-amber-100" : "hover:bg-gray-50"}`}>
                                         <td className="px-4 py-3 text-xs text-gray-400">{u.id}</td>
-                                        <td className="px-4 py-3 text-sm text-gray-600 max-w-[160px] truncate">{u.email}</td>
+                                        <td className="px-4 py-3"><CopyEmail email={u.email} /></td>
                                         <td className="px-4 py-3 text-sm font-semibold text-gray-800 whitespace-nowrap">
                                             {isAtRisk && <span className="inline-block w-1.5 h-1.5 rounded-full bg-amber-400 mr-1.5 mb-0.5" />}
                                             {u.full_name}
@@ -467,7 +560,7 @@ export default function Dashboard() {
                                         {isAtRisk && <span className="inline-block w-1.5 h-1.5 rounded-full bg-amber-400 mr-1.5 mb-0.5" />}
                                         {u.full_name}
                                     </p>
-                                    <p className="text-xs text-gray-400 mt-0.5">{u.email}</p>
+                                    <CopyEmail email={u.email} />
                                 </div>
                                 <select
                                     value={u.status}
