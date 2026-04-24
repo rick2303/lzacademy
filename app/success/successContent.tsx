@@ -1,7 +1,9 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+
+const CAL_LINK = "loren-lainez-hvhvq3/daily-classes";
 
 type UiState = "loading" | "success" | "error";
 
@@ -16,8 +18,10 @@ const SuccessContent = () => {
     const [message, setMessage] = useState<string>("Verificando el estado de tu pago...");
     const [detail, setDetail] = useState<string>("");
     const [userData, setUserData] = useState<any>(null);
+    const [schedulingStatus, setSchedulingStatus] = useState<string | null>(null);
     const [visible, setVisible] = useState(false);
     const [contactMessage, setContactMessage] = useState("En las próximas 24 horas nuestro equipo te contactará con todos los detalles.");
+    const calInitialized = useRef(false);
 
     useEffect(() => {
         if (!session_id || !session_id.startsWith("cs_")) {
@@ -44,6 +48,7 @@ const SuccessContent = () => {
                 if (!data?.paid) throw new Error("El pago aún no está confirmado.");
 
                 setUserData(data.user || null);
+                setSchedulingStatus(data.scheduling_status ?? null);
                 setState("success");
                 setMessage("¡Gracias por inscribirte!");
                 setDetail(data?.message || "Tu pago se registró correctamente. Nuestro equipo te contactará en breve.");
@@ -67,6 +72,48 @@ const SuccessContent = () => {
     useEffect(() => {
         if (state !== "loading") setTimeout(() => setVisible(true), 100);
     }, [state]);
+
+    const isPremiumPending = state === "success" && userData?.plan === "Premium" && schedulingStatus === "pending";
+
+    useEffect(() => {
+        if (!isPremiumPending || calInitialized.current) return;
+        calInitialized.current = true;
+
+        const script = document.createElement("script");
+        script.innerHTML = `
+            (function (C, A, L) {
+                let p = function (a, ar) { a.q.push(ar); };
+                let d = C.document;
+                C.Cal = C.Cal || function () {
+                    let cal = C.Cal; let ar = arguments;
+                    if (!cal.loaded) {
+                        cal.ns = {}; cal.q = cal.q || [];
+                        d.head.appendChild(d.createElement("script")).src = A;
+                        cal.loaded = true;
+                    }
+                    if (ar[0] === L) {
+                        const api = function () { p(api, arguments); };
+                        const ns = ar[1]; api.q = api.q || [];
+                        typeof ns === "string" ? (cal.ns[ns] = api) && p(api, ar) : p(cal, ar);
+                        return;
+                    }
+                    p(cal, ar);
+                };
+            })(window, "https://app.cal.com/embed/embed.js", "init");
+            Cal("init", { origin: "https://cal.com" });
+            Cal("inline", {
+                elementOrSelector: "#cal-booking-embed",
+                config: { layout: "month_view" },
+                calLink: "${CAL_LINK}",
+            });
+            Cal("ui", {
+                styles: { branding: { brandColor: "#9c181d" } },
+                hideEventTypeDetails: false,
+                layout: "month_view",
+            });
+        `;
+        document.head.appendChild(script);
+    }, [isPremiumPending]);
 
     const formattedStartDate = userData?.inscription_date
         ? new Date(userData.inscription_date + "T00:00:00Z").toLocaleDateString("es-ES", {
@@ -435,6 +482,54 @@ const SuccessContent = () => {
                     line-height: 1.6;
                 }
 
+                /* Cal.com booking section */
+                .sc-cal-wrap {
+                    margin: 0 0 28px;
+                    border-radius: 16px;
+                    overflow: hidden;
+                    border: 1px solid rgba(156,24,29,0.2);
+                }
+                .sc-cal-header {
+                    background: linear-gradient(135deg, #fef2f2 0%, #fff7ed 100%);
+                    padding: 20px 24px 16px;
+                    border-bottom: 1px solid rgba(156,24,29,0.12);
+                }
+                .sc-cal-title {
+                    margin: 0 0 4px;
+                    font-size: 15px;
+                    font-weight: 700;
+                    color: #18181b;
+                }
+                .sc-cal-subtitle {
+                    margin: 0;
+                    font-size: 13px;
+                    color: #71717a;
+                    line-height: 1.5;
+                }
+                .sc-cal-embed-wrap {
+                    min-height: 580px;
+                    background: #fff;
+                }
+                .sc-booked-banner {
+                    background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
+                    border: 1px solid rgba(134,239,172,0.5);
+                    border-radius: 16px;
+                    padding: 20px 24px;
+                    margin-bottom: 28px;
+                    text-align: center;
+                }
+                .sc-booked-title {
+                    margin: 0 0 4px;
+                    font-size: 15px;
+                    font-weight: 700;
+                    color: #166534;
+                }
+                .sc-booked-sub {
+                    margin: 0;
+                    font-size: 13px;
+                    color: #15803d;
+                }
+
                 /* Watermark logo */
                 .sc-logo {
                     text-align: center;
@@ -571,6 +666,29 @@ const SuccessContent = () => {
                                             <span className="sc-step-desc">Acceso en tu fecha oficial de grupo</span>
                                         </div>
                                     </div>
+                                </div>
+                            )}
+
+                            {/* Cal.com booking — Premium pendiente */}
+                            {isPremiumPending && (
+                                <div className="sc-cal-wrap">
+                                    <div className="sc-cal-header">
+                                        <p className="sc-cal-title">Agenda tu primera clase</p>
+                                        <p className="sc-cal-subtitle">
+                                            Elige el horario que más te convenga. Los horarios se muestran en tu zona horaria.
+                                        </p>
+                                    </div>
+                                    <div className="sc-cal-embed-wrap">
+                                        <div id="cal-booking-embed" style={{ width: "100%", height: "580px" }} />
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Premium ya agendada */}
+                            {state === "success" && userData?.plan === "Premium" && schedulingStatus === "completed" && (
+                                <div className="sc-booked-banner">
+                                    <p className="sc-booked-title">¡Tu clase ya está agendada!</p>
+                                    <p className="sc-booked-sub">Recibirás un recordatorio por correo antes de tu sesión.</p>
                                 </div>
                             )}
 
