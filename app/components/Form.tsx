@@ -5,12 +5,13 @@ import { useStartDates } from "../hooks/useStartDates";
 
 const planDetails = {
     Essential: {
-        description:
-            "Plan Essential, incluye: Acceso completo a la plataforma, Rutina diaria guiada, Grupo de WhatsApp, Clases prácticas los viernes",
+        description: "Plan Essential, incluye: Acceso completo a la plataforma, Rutina diaria guiada, Grupo de WhatsApp, Clases prácticas los viernes",
+    },
+    Premium: {
+        description: "Plan Premium, incluye: 1 hora de clase diaria lunes a jueves, Repasos los viernes, Explicación de teoría, Práctica guiada, Seguimiento y motivación constante",
     },
     Personalizado: {
-        description:
-            "Plan Personalizado, incluye: Todo lo del Plan Premium, más: Rutinas personalizadas, Sesiones Personales, Seguimiento, Correciones en tiempo real.",
+        description: "Plan Personalizado, incluye: Todo lo del Plan Premium, más: Rutinas personalizadas, Sesiones Personales, Seguimiento, Correcciones en tiempo real.",
     },
 };
 
@@ -37,7 +38,7 @@ const selectClass =
 
 // ─── Componente principal ─────────────────────────────────────────────────────
 
-const PaymentForm = ({ selectedPlan }: { selectedPlan: PlanType }) => {
+const PaymentForm = ({ selectedPlan, selectedNivel = "" }: { selectedPlan: PlanType; selectedNivel?: string }) => {
     const [plan, setPlan] = useState<PlanType>(selectedPlan);
     const [loading, setLoading] = useState(false);
     const { dates: availableDates } = useStartDates();
@@ -45,12 +46,15 @@ const PaymentForm = ({ selectedPlan }: { selectedPlan: PlanType }) => {
         email: "",
         fullName: "",
         country: "",
-        englishLevel: "",
+        englishLevel: selectedNivel,
         interestDate: "",
     });
     const [error, setError] = useState("");
 
     useEffect(() => { setPlan(selectedPlan); }, [selectedPlan]);
+    useEffect(() => {
+        setFormData(prev => ({ ...prev, englishLevel: selectedNivel }));
+    }, [selectedNivel]);
 
     const validateForm = () => {
         if (!formData.email || !formData.fullName)
@@ -243,6 +247,7 @@ const PaymentForm = ({ selectedPlan }: { selectedPlan: PlanType }) => {
                                         required
                                     >
                                         <option value="Essential">Essential — $10/mes</option>
+                                        <option value="Premium">Premium — $50/mes</option>
                                         <option value="Personalizado">Personalizado — $100/mes</option>
                                     </select>
                                     <div className="pointer-events-none absolute inset-y-0 right-3 flex items-center">
@@ -339,7 +344,9 @@ const PaymentForm = ({ selectedPlan }: { selectedPlan: PlanType }) => {
                                 </>
                             ) : (
                                 <>
-                                    {plan === "Essential" ? "Comenzar Essential — $10/mes" : "Comenzar Personalizado — $100/mes"}
+                                    {plan === "Essential" ? "Comenzar Essential — $10/mes" :
+                                        plan === "Premium" ? "Comenzar Premium — $50/mes" :
+                                            "Comenzar Personalizado — $100/mes"}
                                     <svg className="h-4 w-4" viewBox="0 0 16 16" fill="none">
                                         <path stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
                                     </svg>

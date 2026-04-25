@@ -20,8 +20,8 @@ function PersonalizadoPlanContent() {
   const nivel = searchParams.get("nivel") ?? "";
 
   function handleComenzar() {
-    router.push(`/pasotres?nivel=${encodeURIComponent(nivel)}&plan=personalizado`);
-  }
+  router.push(`/pasocuatro?nivel=${encodeURIComponent(nivel)}&plan=personalizado`);
+}
 
   function handleCambiarPlan() {
     router.back();

@@ -102,26 +102,43 @@ export default function InicioPage() {
                                         }}
                                     >
                                         en{" "}
-                                        <span style={{ color: "#bd181e" , fontSize: "1.4em", lineHeight: 1 }}>90</span>{" "}
+                                        <span style={{ color: "#bd181e", fontSize: "1.4em", lineHeight: 1 }}>90</span>{" "}
                                         dias
                                     </p>
                                 </div>
                             </div>
 
                             {/* CTA */}
-                            <Link
-                                href="/pasouno"
-                                className="mt-10 inline-flex items-center gap-3 rounded-2xl px-8 py-4 text-base font-extrabold text-white shadow-lg transition hover:opacity-90 active:scale-95"
-                                style={{
-                                    backgroundColor: "#bd181e",
-                                    fontFamily: "var(--font-barlow), 'Arial Black', sans-serif",
-                                    fontWeight: 700,
-                                    letterSpacing: "0.02em",
-                                }}
-                            >
-                                Empezar Proceso
-                                <span className="text-xl leading-none">›</span>
-                            </Link>
+                            <div className="mt-10 flex flex-col items-center gap-3 lg:items-start">
+                                <Link
+                                    href="/pasouno"
+                                    className="inline-flex items-center gap-3 rounded-2xl px-8 py-4 text-base font-extrabold text-white shadow-lg transition hover:opacity-90 active:scale-95"
+                                    style={{
+                                        backgroundColor: "#bd181e",
+                                        fontFamily: "var(--font-barlow), 'Arial Black', sans-serif",
+                                        fontWeight: 700,
+                                        letterSpacing: "0.02em",
+                                    }}
+                                >
+                                    Empezar Proceso
+                                    <span className="text-xl leading-none">›</span>
+                                </Link>
+                                <Link
+                                    href="/pasotres"
+                                    className="inline-flex items-center gap-3 rounded-2xl px-8 py-4 text-base font-extrabold transition hover:opacity-80 active:scale-95"
+                                    style={{
+                                        backgroundColor: "transparent",
+                                        border: "2px solid #bd181e",
+                                        color: "#bd181e",
+                                        fontFamily: "var(--font-barlow), 'Arial Black', sans-serif",
+                                        fontWeight: 700,
+                                        letterSpacing: "0.02em",
+                                    }}
+                                >
+                                    Ya soy estudiante
+                                    <span className="text-xl leading-none">›</span>
+                                </Link>
+                            </div>
                         </div>
 
                         {/* ── Columna derecha: ilustración */}
@@ -143,7 +160,7 @@ export default function InicioPage() {
                     </div>
                 </div>
             </section>
-            <TestimonialsSection/>
+            <TestimonialsSection />
         </>
     );
 }

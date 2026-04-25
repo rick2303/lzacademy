@@ -17,8 +17,8 @@ function EssentialPlanContent() {
   const nivel = searchParams.get("nivel") ?? "";
 
   function handleComenzar() {
-    router.push(`/pasotres?nivel=${encodeURIComponent(nivel)}&plan=essential`);
-  }
+  router.push(`/pasocuatro?nivel=${encodeURIComponent(nivel)}&plan=essential`);
+}
 
   function handleCambiarPlan() {
     router.back();
