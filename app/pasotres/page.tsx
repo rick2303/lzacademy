@@ -112,6 +112,17 @@ function PasosTresContent() {
 
       {/* Título */}
       <div className="relative z-10 w-full flex flex-col items-center pt-8 pb-6 px-4">
+        
+        <div className="w-full flex justify-end mb-2">
+          <button
+            type="button"
+            onClick={handleVolver}
+            className="inline-flex items-center rounded-2xl px-6 py-2.5 text-[14px] font-bold text-zinc-700 bg-white shadow-sm transition hover:shadow-md active:scale-95"
+            style={{ border: "1.5px solid #d4d4d4" }}
+          >
+            Volver
+          </button>
+        </div>
         <h1 className="text-4xl sm:text-5xl font-extrabold text-white tracking-tight text-center">
           Elige tu experiencia
         </h1>
@@ -282,17 +293,7 @@ function PasosTresContent() {
         </div>
       </div>
 
-      {/* Botón Volver */}
-      <div className="absolute top-4 right-6 z-20">
-        <button
-          type="button"
-          onClick={handleVolver}
-          className="inline-flex items-center rounded-2xl px-6 py-2.5 text-[14px] font-bold text-zinc-700 bg-white shadow-sm transition hover:shadow-md active:scale-95"
-          style={{ border: "1.5px solid #d4d4d4" }}
-        >
-          Volver
-        </button>
-      </div>
+
     </main>
   );
 }
