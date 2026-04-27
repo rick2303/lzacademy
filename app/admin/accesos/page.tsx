@@ -278,7 +278,7 @@ export default function AccesosPage() {
                                                         type="text"
                                                         className="flex-1 text-sm border border-gray-200 rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-yellow-orange-300 bg-gray-50"
                                                         placeholder={placeholder}
-                                                        value={(draft as Record<string, string>)[key] ?? ""}
+                                                        value={(draft as unknown as Record<string, string>)[key] ?? ""}
                                                         onChange={e => setConfigDraft(prev => ({
                                                             ...prev,
                                                             [configPlan]: {
