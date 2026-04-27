@@ -99,7 +99,7 @@ function StatCard({ label, value, sub, icon, accent = "text-falu-red-600", bg = 
 
 export default function Dashboard() {
     const [data, setData] = useState<DashboardData | null>(null);
-    const [filters, setFilters] = useState({ country: "", status: "", plan: "", inscriptionDate: "", paymentDate: "" });
+    const [filters, setFilters] = useState({ country: "", status: "", plan: "", inscriptionDate: "", paymentDateFrom: "", paymentDateTo: "" });
     const [search, setSearch] = useState("");
     const [sortBy, setSortBy] = useState<"last_payment_date" | "id">("last_payment_date");
     const [showAtRisk, setShowAtRisk] = useState(false);
@@ -169,7 +169,8 @@ export default function Dashboard() {
         if (filters.status && u.status !== filters.status) return false;
         if (filters.plan && u.plan !== filters.plan) return false;
         if (filters.inscriptionDate && !u.inscription_date?.startsWith(filters.inscriptionDate)) return false;
-        if (filters.paymentDate && !u.last_payment_date?.startsWith(filters.paymentDate)) return false;
+        if (filters.paymentDateFrom && (!u.last_payment_date || dayjs.utc(u.last_payment_date).tz(PT).format("YYYY-MM-DD") < filters.paymentDateFrom)) return false;
+        if (filters.paymentDateTo && (!u.last_payment_date || dayjs.utc(u.last_payment_date).tz(PT).format("YYYY-MM-DD") > filters.paymentDateTo)) return false;
         if (showAtRisk && !atRiskUsers.find((r) => r.id === u.id)) return false;
         if (search) {
             const q = search.toLowerCase();
@@ -199,6 +200,7 @@ export default function Dashboard() {
     const planRows = Object.entries(data.paymentsByPlan ?? {}).sort((a, b) => b[1].count - a[1].count);
     const maxPlanCount = planRows[0]?.[1]?.count ?? 1;
 
+    const displayUsers = filteredUsers.length;
     const ticketPromedio = data.totalPayments > 0 ? data.totalRevenue / data.totalPayments : 0;
     const hasActiveFilters = Object.values(filters).some(Boolean) || !!search || showAtRisk;
 
@@ -213,13 +215,16 @@ export default function Dashboard() {
 
             {/* Summary Cards */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-5">
-                <StatCard label="Total usuarios" value={data.totalUsers}
+                <StatCard label="Total usuarios" value={displayUsers}
+                    sub={hasActiveFilters ? "filtrado" : undefined}
                     icon={<svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}><path strokeLinecap="round" strokeLinejoin="round" d="M17 20h5v-2a4 4 0 00-5-3.87M9 20H4v-2a4 4 0 015-3.87m6-4a4 4 0 11-8 0 4 4 0 018 0z" /></svg>}
                 />
                 <StatCard label="Total pagos" value={data.totalPayments}
+                    sub="histórico"
                     icon={<svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}><path strokeLinecap="round" strokeLinejoin="round" d="M3 10h18M7 15h1m4 0h1m-7 4h12a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>}
                 />
                 <StatCard label="Total revenue" value={`$${(data.totalRevenue / 100).toFixed(2)}`}
+                    sub="histórico"
                     icon={<svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}><path strokeLinecap="round" strokeLinejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" /></svg>}
                 />
                 <StatCard label="Ticket promedio" value={`$${(ticketPromedio / 100).toFixed(2)}`}
@@ -441,12 +446,17 @@ export default function Dashboard() {
                         </select>
                     </div>
                     <div className="flex flex-col gap-1 min-w-0">
-                        <label className="text-xs text-gray-400 font-medium">Último pago</label>
+                        <label className="text-xs text-gray-400 font-medium">Pagos desde</label>
                         <input type="date" className="p-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-orange-300 bg-gray-50 max-w-full"
-                            value={filters.paymentDate} onChange={(e) => setFilters({ ...filters, paymentDate: e.target.value })} />
+                            value={filters.paymentDateFrom} onChange={(e) => setFilters({ ...filters, paymentDateFrom: e.target.value })} />
+                    </div>
+                    <div className="flex flex-col gap-1 min-w-0">
+                        <label className="text-xs text-gray-400 font-medium">Pagos hasta</label>
+                        <input type="date" className="p-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-orange-300 bg-gray-50 max-w-full"
+                            value={filters.paymentDateTo} onChange={(e) => setFilters({ ...filters, paymentDateTo: e.target.value })} />
                     </div>
                     {hasActiveFilters && (
-                        <button onClick={() => { setFilters({ country: "", status: "", plan: "", inscriptionDate: "", paymentDate: "" }); setSearch(""); setShowAtRisk(false); }}
+                        <button onClick={() => { setFilters({ country: "", status: "", plan: "", inscriptionDate: "", paymentDateFrom: "", paymentDateTo: "" }); setSearch(""); setShowAtRisk(false); }}
                             className="px-3 py-2 text-xs text-gray-400 hover:text-gray-700 border border-gray-200 rounded-lg hover:bg-gray-50 transition">
                             Limpiar
                         </button>

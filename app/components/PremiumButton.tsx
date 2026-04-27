@@ -1,8 +1,48 @@
 "use client";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useStartDates } from "../hooks/useStartDates";
 
 const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL!;
+
+interface PremiumSlot { id: string; datetime_pt: string; start_date: string; enabled: boolean; }
+
+function ptStringToDate(datetimePt: string): Date {
+  const [datePart, timePart] = datetimePt.split("T");
+  const [y, mo, d] = datePart.split("-").map(Number);
+  const [h, m, s = 0] = timePart.split(":").map(Number);
+  const probe = new Date(Date.UTC(y, mo - 1, d, h, m, s));
+  const fmt = new Intl.DateTimeFormat("en-US", {
+    timeZone: "America/Los_Angeles",
+    year: "numeric", month: "numeric", day: "numeric",
+    hour: "2-digit", minute: "2-digit", second: "2-digit",
+    hour12: false,
+  }).formatToParts(probe);
+  const g = (t: string) => parseInt(fmt.find(p => p.type === t)!.value);
+  const ptProbe = Date.UTC(g("year"), g("month") - 1, g("day"), g("hour") % 24, g("minute"), g("second"));
+  return new Date(probe.getTime() + (probe.getTime() - ptProbe));
+}
+
+function buildSlotDisplay(datetimePt: string) {
+  const date = ptStringToDate(datetimePt);
+  const userTz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+  const weekdayMap: Record<string, string> = { Sun:"Dom", Mon:"Lun", Tue:"Mar", Wed:"Mié", Thu:"Jue", Fri:"Vie", Sat:"Sáb" };
+  const monthNames = ["ene","feb","mar","abr","may","jun","jul","ago","sep","oct","nov","dic"];
+  const parts = new Intl.DateTimeFormat("en-US", {
+    timeZone: userTz,
+    weekday: "short", month: "numeric", day: "numeric",
+    hour: "numeric", minute: "2-digit", hour12: true,
+  }).formatToParts(date);
+  const g = (t: string) => parts.find(p => p.type === t)?.value ?? "";
+  const tzAbbr = new Intl.DateTimeFormat("en-US", { timeZone: userTz, timeZoneName: "short" })
+    .formatToParts(date).find(p => p.type === "timeZoneName")?.value ?? "";
+  return {
+    dayName: weekdayMap[g("weekday")] ?? g("weekday"),
+    day: parseInt(g("day")),
+    monthName: monthNames[parseInt(g("month")) - 1],
+    timeStr: `${g("hour")}:${g("minute")} ${g("dayPeriod")}`,
+    tzAbbr,
+  };
+}
 
 const LEVELS = [
   { key: "A1", label: "A1 — Principiante", value: "Principiante (A1)" },
@@ -29,7 +69,19 @@ export default function PremiumButton() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [form, setForm] = useState({ email: "", fullName: "", country: "", interestDate: "" });
+  const [premiumSlots, setPremiumSlots] = useState<PremiumSlot[]>([]);
+  const [slotsLoading, setSlotsLoading] = useState(false);
   const { dates } = useStartDates();
+
+  useEffect(() => {
+    if (!form.interestDate) return;
+    setSlotsLoading(true);
+    fetch(`${BACKEND_URL}/config/premium-slots`)
+      .then(r => r.json())
+      .then(data => setPremiumSlots(Array.isArray(data) ? data : []))
+      .catch(() => setPremiumSlots([]))
+      .finally(() => setSlotsLoading(false));
+  }, [form.interestDate]);
 
   const close = () => {
     setStep(0);
@@ -207,6 +259,41 @@ export default function PremiumButton() {
                     </div>
                   </div>
                 </div>
+
+                {form.interestDate && !slotsLoading && (() => {
+                  const dateSlots = premiumSlots.filter(s => s.start_date === form.interestDate);
+                  if (dateSlots.length === 0) return (
+                    <div className="flex items-center gap-2 rounded-xl border border-zinc-200 bg-zinc-50 px-4 py-3 text-sm text-zinc-500">
+                      <svg className="h-4 w-4 shrink-0 text-zinc-400" viewBox="0 0 16 16" fill="none">
+                        <rect x="2" y="3" width="12" height="11" rx="1.5" stroke="currentColor" strokeWidth="1.5" />
+                        <path d="M5 2v2M11 2v2M2 7h12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+                      </svg>
+                      Los horarios para esta fecha se publicarán próximamente
+                    </div>
+                  );
+                  return (
+                    <div className="rounded-xl overflow-hidden border border-falu-red-200">
+                      <div className="flex items-center justify-between px-4 py-2.5 bg-falu-red-50 border-b border-falu-red-100">
+                        <p className="text-sm font-semibold text-falu-red-900">Horarios de primera clase</p>
+                        <span className="text-xs text-zinc-400 bg-white border border-zinc-200 px-2 py-0.5 rounded-full">{dateSlots.length} disponibles</span>
+                      </div>
+                      <div className="px-4 py-3 flex flex-wrap gap-2">
+                        {dateSlots.map(slot => {
+                          const { dayName, day, monthName, timeStr, tzAbbr } = buildSlotDisplay(slot.datetime_pt);
+                          return (
+                            <span key={slot.id} className="inline-flex flex-col items-center text-center bg-zinc-50 border border-zinc-200 rounded-xl px-3 py-2 min-w-[90px]">
+                              <span className="text-[10px] font-bold uppercase tracking-wide text-falu-red-600">{dayName} {day} {monthName}</span>
+                              <span className="text-sm font-semibold text-zinc-800 mt-0.5">{timeStr} <span className="text-[10px] text-zinc-400 font-normal">{tzAbbr}</span></span>
+                            </span>
+                          );
+                        })}
+                      </div>
+                      <div className="px-4 py-2 bg-zinc-50 border-t border-zinc-100">
+                        <p className="text-xs text-zinc-400">Seleccionarás tu horario después de confirmar el pago</p>
+                      </div>
+                    </div>
+                  );
+                })()}
 
                 {error && (
                   <p className="rounded-xl bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-700">{error}</p>

@@ -21,11 +21,16 @@ export function useStartDates() {
       .catch(() => setLoading(false));
   }, []);
 
-  // Misma lógica que antes: filtra fechas pasadas según timezone del usuario
   const today = new Date();
   today.setDate(today.getDate() - 1);
   const yesterday = today.toISOString().split("T")[0];
   const availableDates = dates.filter((d) => d.value > yesterday);
 
-  return { dates: availableDates, loading };
+  // Current calendar month in PT — used by form date pickers
+  const currentMonthPT = new Intl.DateTimeFormat("sv-SE", { timeZone: "America/Los_Angeles" })
+    .format(new Date())
+    .slice(0, 7); // "YYYY-MM"
+  const datesCurrentMonth = availableDates.filter((d) => d.value.startsWith(currentMonthPT));
+
+  return { dates: availableDates, datesCurrentMonth, loading };
 }

@@ -3,6 +3,49 @@
 import { useEffect, useState } from "react";
 import { useStartDates } from "../hooks/useStartDates";
 
+interface PremiumSlot { id: string; datetime_pt: string; start_date: string; enabled: boolean; }
+
+function ptStringToDate(datetimePt: string): Date {
+    // datetime_pt is PT (America/Los_Angeles) local time without timezone info.
+    // Interpret it as PT and return the correct UTC Date.
+    const [datePart, timePart] = datetimePt.split("T");
+    const [y, mo, d] = datePart.split("-").map(Number);
+    const [h, m, s = 0] = timePart.split(":").map(Number);
+    const probe = new Date(Date.UTC(y, mo - 1, d, h, m, s));
+    const fmt = new Intl.DateTimeFormat("en-US", {
+        timeZone: "America/Los_Angeles",
+        year: "numeric", month: "numeric", day: "numeric",
+        hour: "2-digit", minute: "2-digit", second: "2-digit",
+        hour12: false,
+    }).formatToParts(probe);
+    const g = (t: string) => parseInt(fmt.find(p => p.type === t)!.value);
+    const ptProbe = Date.UTC(g("year"), g("month") - 1, g("day"), g("hour") % 24, g("minute"), g("second"));
+    return new Date(probe.getTime() + (probe.getTime() - ptProbe));
+}
+
+function buildSlotDisplay(datetimePt: string) {
+    const date = ptStringToDate(datetimePt);
+    const userTz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    const weekdayMap: Record<string, string> = { Sun:"Dom", Mon:"Lun", Tue:"Mar", Wed:"Mié", Thu:"Jue", Fri:"Vie", Sat:"Sáb" };
+    const monthNames = ["ene","feb","mar","abr","may","jun","jul","ago","sep","oct","nov","dic"];
+    const parts = new Intl.DateTimeFormat("en-US", {
+        timeZone: userTz,
+        weekday: "short", month: "numeric", day: "numeric",
+        hour: "numeric", minute: "2-digit", hour12: true,
+    }).formatToParts(date);
+    const g = (t: string) => parts.find(p => p.type === t)?.value ?? "";
+    const timeStr = `${g("hour")}:${g("minute")} ${g("dayPeriod")}`;
+    const tzAbbr = new Intl.DateTimeFormat("en-US", { timeZone: userTz, timeZoneName: "short" })
+        .formatToParts(date).find(p => p.type === "timeZoneName")?.value ?? "";
+    return {
+        dayName: weekdayMap[g("weekday")] ?? g("weekday"),
+        day: parseInt(g("day")),
+        monthName: monthNames[parseInt(g("month")) - 1],
+        timeStr,
+        tzAbbr,
+    };
+}
+
 const planDetails = {
     Essential: {
         description:
@@ -53,41 +96,19 @@ const PaymentForm = ({ selectedPlan }: { selectedPlan: PlanType }) => {
         interestDate: "",
     });
     const [error, setError] = useState("");
-    const [slots, setSlots] = useState<Record<string, string[]>>({});
-    const [slotsLoading, setSlotsLoading] = useState(false);
-    const [tzLabel, setTzLabel] = useState("");
+    const [premiumSlots, setPremiumSlots] = useState<PremiumSlot[]>([]);
+    const [premiumSlotsLoading, setPremiumSlotsLoading] = useState(false);
 
     useEffect(() => { setPlan(selectedPlan); }, [selectedPlan]);
 
     useEffect(() => {
-        if (plan !== "Premium") { setSlots({}); return; }
-        setSlotsLoading(true);
-        const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
-        const offset = new Intl.DateTimeFormat("es-ES", { timeZone: tz, timeZoneName: "short" })
-            .formatToParts(new Date())
-            .find(p => p.type === "timeZoneName")?.value ?? "";
-        setTzLabel(`${tz.replace(/_/g, " ")}${offset ? ` · ${offset}` : ""}`);
-        fetch(`${BACKEND_URL}/cal/slots?tz=${encodeURIComponent(tz)}`)
+        if (plan !== "Premium") { setPremiumSlots([]); return; }
+        setPremiumSlotsLoading(true);
+        fetch(`${BACKEND_URL}/config/premium-slots`)
             .then(r => r.json())
-            .then(data => {
-                const raw: Record<string, { time?: string; start?: string }[]> = data?.slots ?? {};
-                const formatted: Record<string, string[]> = {};
-                for (const times of Object.values(raw)) {
-                    for (const t of times) {
-                        const iso = t.start ?? t.time ?? "";
-                        if (!iso) continue;
-                        const dt = new Date(iso);
-                        // Key by local date (sv-SE gives YYYY-MM-DD)
-                        const localDate = dt.toLocaleDateString("sv-SE", { timeZone: tz });
-                        const localTime = dt.toLocaleTimeString("es-ES", { hour: "2-digit", minute: "2-digit", hour12: true, timeZone: tz });
-                        if (!formatted[localDate]) formatted[localDate] = [];
-                        formatted[localDate].push(localTime);
-                    }
-                }
-                setSlots(formatted);
-            })
-            .catch(() => setSlots({}))
-            .finally(() => setSlotsLoading(false));
+            .then(data => setPremiumSlots(Array.isArray(data) ? data : []))
+            .catch(() => setPremiumSlots([]))
+            .finally(() => setPremiumSlotsLoading(false));
     }, [plan]);
 
     const validateForm = () => {
@@ -348,43 +369,42 @@ const PaymentForm = ({ selectedPlan }: { selectedPlan: PlanType }) => {
                             </div>
                         </div>
 
-                        {/* Horarios disponibles — solo Premium, filtrado por fecha seleccionada */}
-                        {plan === "Premium" && (
-                            <div className="rounded-xl overflow-hidden border border-falu-red-200">
-                                <div className="flex items-center justify-between px-4 py-2.5 bg-falu-red-50 border-b border-falu-red-100">
-                                    <p className="text-sm font-semibold text-falu-red-900">Horarios disponibles</p>
-                                    <span className="text-xs text-zinc-400 bg-white border border-zinc-200 px-2 py-0.5 rounded-full">Solo vista previa</span>
+                        {/* Horarios disponibles — solo Premium con fecha seleccionada */}
+                        {plan === "Premium" && formData.interestDate && (() => {
+                            const dateSlots = premiumSlots.filter(s => s.start_date === formData.interestDate);
+                            if (premiumSlotsLoading) return null;
+                            if (dateSlots.length === 0) return (
+                                <div className="flex items-center gap-2 rounded-xl border border-zinc-200 bg-zinc-50 px-4 py-3 text-sm text-zinc-500">
+                                    <svg className="h-4 w-4 shrink-0 text-zinc-400" viewBox="0 0 16 16" fill="none">
+                                        <rect x="2" y="3" width="12" height="11" rx="1.5" stroke="currentColor" strokeWidth="1.5" />
+                                        <path d="M5 2v2M11 2v2M2 7h12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+                                    </svg>
+                                    Los horarios para esta fecha se publicarán próximamente
                                 </div>
-                                <div className="px-4 py-3 space-y-2.5 max-h-52 overflow-y-auto">
-                                    {(() => {
-                                        const month = formData.interestDate?.slice(0, 7);
-                                        const monthSlots = month
-                                            ? Object.entries(slots).filter(([d]) => d.startsWith(month))
-                                            : [];
-                                        if (slotsLoading) return <p className="text-sm text-zinc-400 py-2">Cargando horarios...</p>;
-                                        if (!formData.interestDate) return <p className="text-sm text-zinc-400 py-2">Selecciona una fecha de inicio para ver los horarios disponibles.</p>;
-                                        if (monthSlots.length === 0) return <p className="text-sm text-zinc-400 py-2">No hay horarios disponibles para ese mes.</p>;
-                                        return <>{monthSlots.map(([date, times]) => (
-                                            <div key={date} className="flex items-start gap-3">
-                                                <span className="text-xs font-semibold text-zinc-500 w-28 shrink-0 pt-1 capitalize">
-                                                    {new Date(date + "T12:00:00").toLocaleDateString("es-ES", { weekday: "short", day: "numeric", month: "short" })}
+                            );
+                            return (
+                                <div className="rounded-xl overflow-hidden border border-falu-red-200">
+                                    <div className="flex items-center justify-between px-4 py-2.5 bg-falu-red-50 border-b border-falu-red-100">
+                                        <p className="text-sm font-semibold text-falu-red-900">Horarios de primera clase</p>
+                                        <span className="text-xs text-zinc-400 bg-white border border-zinc-200 px-2 py-0.5 rounded-full">{dateSlots.length} disponibles</span>
+                                    </div>
+                                    <div className="px-4 py-3 flex flex-wrap gap-2">
+                                        {dateSlots.map(slot => {
+                                            const { dayName, day, monthName, timeStr, tzAbbr } = buildSlotDisplay(slot.datetime_pt);
+                                            return (
+                                                <span key={slot.id} className="inline-flex flex-col items-center text-center bg-zinc-50 border border-zinc-200 rounded-xl px-3 py-2 min-w-[90px]">
+                                                    <span className="text-[10px] font-bold uppercase tracking-wide text-falu-red-600">{dayName} {day} {monthName}</span>
+                                                    <span className="text-sm font-semibold text-zinc-800 mt-0.5">{timeStr} <span className="text-[10px] text-zinc-400 font-normal">{tzAbbr}</span></span>
                                                 </span>
-                                                <div className="flex flex-wrap gap-1.5">
-                                                    {times.map(t => (
-                                                        <span key={t} className="text-xs text-zinc-700 bg-zinc-100 rounded-lg px-2.5 py-1 font-medium">{t}</span>
-                                                    ))}
-                                                </div>
-                                            </div>
-                                        ))}</>;
-                                    })()}
+                                            );
+                                        })}
+                                    </div>
+                                    <div className="px-4 py-2 bg-zinc-50 border-t border-zinc-100">
+                                        <p className="text-xs text-zinc-400">Seleccionarás tu horario después de confirmar el pago</p>
+                                    </div>
                                 </div>
-                                <div className="px-4 py-2 bg-zinc-50 border-t border-zinc-100">
-                                    <p className="text-xs text-zinc-400">
-                                        Podrás agendar tu clase después del pago · {tzLabel || "Horarios en tu zona horaria"}
-                                    </p>
-                                </div>
-                            </div>
-                        )}
+                            );
+                        })()}
 
                         {/* Nota de inicio */}
                         <div className="flex items-start gap-2 rounded-xl bg-falu-red-50 border border-falu-red-100 px-4 py-3">

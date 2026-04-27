@@ -1,9 +1,62 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 
-const CAL_LINK = process.env.NEXT_PUBLIC_CAL_LINK ?? "loren-lainez-hvhvq3/daily-classes";
+interface PremiumSlot { id: string; datetime_pt: string; enabled: boolean; }
+
+function ptStringToDate(datetimePt: string): Date {
+    const [datePart, timePart] = datetimePt.split("T");
+    const [y, mo, d] = datePart.split("-").map(Number);
+    const [h, m, s = 0] = timePart.split(":").map(Number);
+    const probe = new Date(Date.UTC(y, mo - 1, d, h, m, s));
+    const fmt = new Intl.DateTimeFormat("en-US", {
+        timeZone: "America/Los_Angeles",
+        year: "numeric", month: "numeric", day: "numeric",
+        hour: "2-digit", minute: "2-digit", second: "2-digit",
+        hour12: false,
+    }).formatToParts(probe);
+    const g = (t: string) => parseInt(fmt.find(p => p.type === t)!.value);
+    const ptProbe = Date.UTC(g("year"), g("month") - 1, g("day"), g("hour") % 24, g("minute"), g("second"));
+    return new Date(probe.getTime() + (probe.getTime() - ptProbe));
+}
+
+function buildSlotDisplay(datetimePt: string) {
+    const date = ptStringToDate(datetimePt);
+    const userTz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    const weekdayMap: Record<string, string> = { Sun:"Domingo", Mon:"Lunes", Tue:"Martes", Wed:"Miércoles", Thu:"Jueves", Fri:"Viernes", Sat:"Sábado" };
+    const monthNames = ["enero","febrero","marzo","abril","mayo","junio","julio","agosto","septiembre","octubre","noviembre","diciembre"];
+    const parts = new Intl.DateTimeFormat("en-US", {
+        timeZone: userTz,
+        weekday: "short", month: "numeric", day: "numeric",
+        hour: "numeric", minute: "2-digit", hour12: true,
+    }).formatToParts(date);
+    const g = (t: string) => parts.find(p => p.type === t)?.value ?? "";
+    const tzAbbr = new Intl.DateTimeFormat("en-US", { timeZone: userTz, timeZoneName: "short" })
+        .formatToParts(date).find(p => p.type === "timeZoneName")?.value ?? "";
+    return {
+        dayName: weekdayMap[g("weekday")] ?? g("weekday"),
+        day: parseInt(g("day")),
+        monthName: monthNames[parseInt(g("month")) - 1],
+        timeStr: `${g("hour")}:${g("minute")} ${g("dayPeriod")}`,
+        tzAbbr,
+    };
+}
+
+function ptDatetimeToISO(datetimePt: string): string {
+    const datePart = datetimePt.split("T")[0];
+    const testDate = new Date(`${datePart}T12:00:00Z`);
+    const parts = new Intl.DateTimeFormat("en-US", {
+        timeZone: "America/Los_Angeles",
+        timeZoneName: "shortOffset",
+    } as Intl.DateTimeFormatOptions).formatToParts(testDate);
+    const tzName = parts.find(p => p.type === "timeZoneName")?.value ?? "GMT-7";
+    const match  = tzName.match(/GMT([+-]\d+)/);
+    const offsetHours = match ? parseInt(match[1]) : -7;
+    const sign = offsetHours >= 0 ? "+" : "-";
+    const absOffset = Math.abs(offsetHours);
+    return `${datetimePt}:00${sign}${String(absOffset).padStart(2, "0")}:00`;
+}
 
 const PLAN_META: Record<string, { color: string; bg: string; border: string }> = {
     Essential:     { color: "#0369a1", bg: "#f0f9ff", border: "#bae6fd" },
@@ -26,8 +79,11 @@ const SuccessContent = () => {
     const [errorMsg, setErrorMsg] = useState("");
     const [visible, setVisible] = useState(false);
     const [contactMessage, setContactMessage] = useState("En las próximas 24 horas nuestro equipo te contactará con todos los detalles.");
-    const [skipCal, setSkipCal] = useState(false);
-    const calInitialized = useRef(false);
+    const [skipSlot, setSkipSlot]       = useState(false);
+    const [slots, setSlots]             = useState<PremiumSlot[]>([]);
+    const [slotsLoading, setSlotsLoading] = useState(false);
+    const [selectedSlot, setSelectedSlot] = useState<string | null>(null);
+    const [bookingSlot, setBookingSlot] = useState(false);
 
     useEffect(() => {
         if (!session_id || !session_id.startsWith("cs_")) {
@@ -73,54 +129,33 @@ const SuccessContent = () => {
           })
         : null;
 
-    // "2026-05-10" → "2026-05" for Cal.com month restriction
-    const inscriptionMonth = userData?.inscription_date?.slice(0, 7) ?? "";
-
     useEffect(() => {
-        if (!isPremiumPending || calInitialized.current) return;
-        calInitialized.current = true;
-        const month = userData?.inscription_date?.slice(0, 7) ?? "";
-        const prefillEmail = userData?.email ?? "";
-        const prefillName  = userData?.full_name ?? "";
-        const s = document.createElement("script");
-        s.innerHTML = `
-            (function(C,A,L){let p=function(a,ar){a.q.push(ar)};let d=C.document;
-            C.Cal=C.Cal||function(){let cal=C.Cal;let ar=arguments;if(!cal.loaded){cal.ns={};cal.q=cal.q||[];d.head.appendChild(d.createElement("script")).src=A;cal.loaded=true}
-            if(ar[0]===L){const api=function(){p(api,arguments)};const ns=ar[1];api.q=api.q||[];typeof ns==="string"?(cal.ns[ns]=api)&&p(api,ar):p(cal,ar);return}p(cal,ar)}
-            })(window,"https://app.cal.com/embed/embed.js","init");
-            Cal("init",{origin:"https://cal.com"});
-            Cal("inline",{
-                elementOrSelector:"#cal-booking-embed",
-                config:{
-                    layout:"month_view"${month ? `,"month":"${month}"` : ""},
-                    "email":"${prefillEmail}",
-                    "name":"${prefillName}"
-                },
-                calLink:"${CAL_LINK}"
-            });
-            Cal("ui",{styles:{branding:{brandColor:"#9c181d"}},hideEventTypeDetails:false,layout:"month_view"});
-            Cal("on",{action:"bookingSuccessful",callback:function(e){
-                var uid = e && e.data && e.data.booking && e.data.booking.uid ? e.data.booking.uid : "";
-                var start = e && e.data && e.data.booking && e.data.booking.startTime ? e.data.booking.startTime : "";
-                window.__calBookingDone && window.__calBookingDone(uid, start);
-            }});
-        `;
-        document.head.appendChild(s);
+        if (state !== "success" || userData?.plan !== "Premium" || schedulingStatus !== "pending") return;
+        const inscriptionDate = userData?.inscription_date ?? null;
+        setSlotsLoading(true);
+        fetch(`${BACKEND_URL}/config/premium-slots`)
+            .then(r => r.json())
+            .then(data => {
+                const all: PremiumSlot[] = Array.isArray(data) ? data : [];
+                setSlots(inscriptionDate ? all.filter(s => (s as any).start_date === inscriptionDate) : all);
+            })
+            .catch(() => setSlots([]))
+            .finally(() => setSlotsLoading(false));
+    }, [state, userData?.plan, schedulingStatus]);
 
-        (window as any).__calBookingDone = async (calUid: string, startTime: string) => {
-            try {
-                await fetch(`${BACKEND_URL}/mark-scheduled`, {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({
-                        session_id,
-                        ...(calUid && startTime ? { cal_booking_uid: calUid, session_datetime: startTime } : {}),
-                    }),
-                });
-            } catch (_) {}
+    const handleConfirmSlot = async () => {
+        if (!selectedSlot) return;
+        setBookingSlot(true);
+        try {
+            await fetch(`${BACKEND_URL}/mark-scheduled`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ session_id, session_datetime: ptDatetimeToISO(selectedSlot) }),
+            });
             setSchedulingStatus("completed");
-        };
-    }, [isPremiumPending]);
+        } catch (_) {}
+        setBookingSlot(false);
+    };
 
     const steps = [
         {
@@ -138,11 +173,11 @@ const SuccessContent = () => {
     ];
 
     const premiumSteps = [
-        { title: "Agenda tu clase", desc: "Elige tu horario en el calendario de arriba." },
+        { title: "Selecciona tu horario", desc: "Elige entre los horarios disponibles para tu primera clase Premium." },
         ...steps,
     ];
 
-    const displaySteps = (isPremiumPending && !skipCal) ? premiumSteps : steps;
+    const displaySteps = (isPremiumPending && !skipSlot) ? premiumSteps : steps;
 
     return (
         <>
@@ -480,6 +515,47 @@ const SuccessContent = () => {
                 }
                 .sc-skip-undo:hover { background: rgba(156,24,29,0.06); }
 
+                /* ── Slot picker ── */
+                .sc-slots-section { margin-bottom: 24px; }
+                .sc-slots-grid {
+                    display: grid;
+                    grid-template-columns: repeat(auto-fill, minmax(138px, 1fr));
+                    gap: 10px;
+                    margin-top: 4px;
+                }
+                .sc-slot-card {
+                    position: relative;
+                    background: #fafafa;
+                    border: 1.5px solid #e4e4e7;
+                    border-radius: 14px;
+                    padding: 14px 10px 12px;
+                    text-align: center;
+                    cursor: pointer;
+                    transition: all 0.15s ease;
+                    font-family: 'DM Sans', sans-serif;
+                }
+                .sc-slot-card:hover {
+                    border-color: #9c181d;
+                    background: #fff8f8;
+                    transform: translateY(-1px);
+                    box-shadow: 0 4px 12px rgba(156,24,29,0.08);
+                }
+                .sc-slot-card.selected {
+                    border-color: #9c181d;
+                    background: linear-gradient(135deg, #fef2f2 0%, #fff8eb 100%);
+                    box-shadow: 0 4px 16px rgba(156,24,29,0.12);
+                }
+                .sc-slot-day   { font-size: 0.625rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em; color: #9c181d; margin-bottom: 5px; }
+                .sc-slot-date  { font-size: 0.875rem; font-weight: 700; color: #18181b; margin-bottom: 6px; line-height: 1.2; }
+                .sc-slot-time  { font-size: 0.8125rem; font-weight: 600; color: #52525b; }
+                .sc-slot-tz    { font-size: 0.625rem; color: #a1a1aa; font-weight: 500; }
+                .sc-slot-check {
+                    position: absolute; top: 7px; right: 7px;
+                    width: 18px; height: 18px; border-radius: 50%;
+                    background: #9c181d; color: white;
+                    display: flex; align-items: center; justify-content: center;
+                }
+
                 @media (max-width: 520px) {
                     .sc-root { padding: 24px 12px 56px; }
                     .sc-hero { padding: 28px 20px 24px; }
@@ -597,26 +673,66 @@ const SuccessContent = () => {
 
                             {state === "success" && (
                                 <>
-                                    {/* Cal embed — Premium pending (siempre en DOM para no perder el embed) */}
-                                    {isPremiumPending && (
-                                        <div className="sc-cal-section" style={{ display: skipCal ? "none" : "block" }}>
+                                    {/* Slot picker — Premium pending */}
+                                    {isPremiumPending && !skipSlot && (
+                                        <div className="sc-slots-section">
                                             <div className="sc-section-head">
                                                 <span className="sc-section-badge">1</span>
                                                 <div>
-                                                    <p className="sc-section-title">Agenda tu primera clase</p>
-                                                    <p className="sc-section-sub">
-                                                        Elige un horario en {inscriptionMonth
-                                                            ? new Date(inscriptionMonth + "-02").toLocaleDateString("es-ES", { month: "long", year: "numeric" })
-                                                            : "tu mes de inicio"
-                                                        } · en tu zona horaria
-                                                    </p>
+                                                    <p className="sc-section-title">Selecciona tu horario</p>
+                                                    <p className="sc-section-sub">Primera clase Premium · en tu zona horaria</p>
                                                 </div>
                                             </div>
-                                            <div className="sc-cal-frame">
-                                                <div id="cal-booking-embed" style={{ width: "100%", minHeight: "560px" }} />
-                                            </div>
+
+                                            {slotsLoading ? (
+                                                <div style={{ padding: "20px", textAlign: "center", color: "#a1a1aa", fontSize: "0.875rem" }}>
+                                                    Cargando horarios disponibles…
+                                                </div>
+                                            ) : slots.length === 0 ? (
+                                                <div style={{ padding: "18px 20px", background: "#fafafa", border: "1px solid #f0f0f0", borderRadius: "14px", color: "#71717a", fontSize: "0.875rem" }}>
+                                                    No hay horarios disponibles en este momento. Nuestro equipo te contactará para coordinar tu horario.
+                                                </div>
+                                            ) : (
+                                                <>
+                                                    <div className="sc-slots-grid">
+                                                        {slots.map(slot => {
+                                                            const { dayName, day, monthName, timeStr, tzAbbr } = buildSlotDisplay(slot.datetime_pt);
+                                                            const isSelected = selectedSlot === slot.datetime_pt;
+                                                            return (
+                                                                <button
+                                                                    key={slot.id}
+                                                                    onClick={() => setSelectedSlot(isSelected ? null : slot.datetime_pt)}
+                                                                    className={`sc-slot-card${isSelected ? " selected" : ""}`}
+                                                                >
+                                                                    <div className="sc-slot-day">{dayName}</div>
+                                                                    <div className="sc-slot-date">{day} de {monthName}</div>
+                                                                    <div className="sc-slot-time">{timeStr} <span className="sc-slot-tz">{tzAbbr}</span></div>
+                                                                    {isSelected && (
+                                                                        <div className="sc-slot-check">
+                                                                            <svg viewBox="0 0 12 12" width="10" height="10" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                                                                                <path d="M10 3L5 9 2 6" />
+                                                                            </svg>
+                                                                        </div>
+                                                                    )}
+                                                                </button>
+                                                            );
+                                                        })}
+                                                    </div>
+                                                    {selectedSlot && (
+                                                        <button
+                                                            onClick={handleConfirmSlot}
+                                                            disabled={bookingSlot}
+                                                            className="sc-btn sc-btn-primary"
+                                                            style={{ marginTop: "14px" }}
+                                                        >
+                                                            {bookingSlot ? "Confirmando…" : "Confirmar horario"}
+                                                        </button>
+                                                    )}
+                                                </>
+                                            )}
+
                                             <div className="sc-skip-row">
-                                                <button onClick={() => setSkipCal(true)} className="sc-skip-btn">
+                                                <button onClick={() => setSkipSlot(true)} className="sc-skip-btn">
                                                     No puedo agendar ahora
                                                 </button>
                                             </div>
@@ -624,7 +740,7 @@ const SuccessContent = () => {
                                     )}
 
                                     {/* Fallback: no agendó */}
-                                    {isPremiumPending && skipCal && (
+                                    {isPremiumPending && skipSlot && (
                                         <div className="sc-skip-card">
                                             <div className="sc-skip-icon">
                                                 <svg viewBox="0 0 20 20" width="18" height="18" fill="none" stroke="#9c181d" strokeWidth="1.5">
@@ -635,15 +751,15 @@ const SuccessContent = () => {
                                             <div>
                                                 <p className="sc-skip-title">Sin problema, puedes agendarlo después</p>
                                                 <p className="sc-skip-desc">
-                                                    El enlace para agendar tu clase estará incluido en el comprobante de pago que te enviamos al correo.
-                                                    Si necesitas ayuda para coordinar tu horario, escríbenos a{" "}
+                                                    Nuestro equipo te contactará para coordinar el horario de tu primera clase.
+                                                    Si necesitas ayuda, escríbenos a{" "}
                                                     <a href="mailto:info@lz-englishacademy.com" style={{ color: "#9c181d", fontWeight: 600 }}>
                                                         info@lz-englishacademy.com
                                                     </a>{" "}
                                                     con tu referencia de pago.
                                                 </p>
-                                                <button onClick={() => setSkipCal(false)} className="sc-skip-undo">
-                                                    Volver al calendario
+                                                <button onClick={() => setSkipSlot(false)} className="sc-skip-undo">
+                                                    Volver a horarios
                                                 </button>
                                             </div>
                                         </div>
@@ -683,7 +799,7 @@ const SuccessContent = () => {
                                     {/* Timeline */}
                                     <div className="sc-steps-wrap">
                                         <p className="sc-steps-head">
-                                            {isPremiumPending ? "Después de agendar" : "¿Qué sigue?"}
+                                            {isPremiumPending ? "Después de confirmar" : "¿Qué sigue?"}
                                         </p>
                                         <div className="sc-timeline">
                                             {displaySteps.map((step, i) => (
