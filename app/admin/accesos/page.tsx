@@ -1,6 +1,6 @@
 "use client";
 
-const ACCESOS_ENABLED = false;
+const ACCESOS_ENABLED = true;
 
 import { useEffect, useState } from "react";
 import { supabase } from "../../lib/supabaseClient";
@@ -53,6 +53,14 @@ const LEVEL_LABELS: Record<string, string> = {
 };
 
 const PLANS = ["Essential", "Premium", "Personalizado"];
+
+const LEVEL_BADGE: Record<string, { bg: string; text: string; label: string }> = {
+    "Principiante":               { bg: "bg-emerald-100", text: "text-emerald-700", label: "A1" },
+    "Basico":                     { bg: "bg-blue-100",    text: "text-blue-700",    label: "A2" },
+    "Intermedio":                 { bg: "bg-violet-100",  text: "text-violet-700",  label: "B1" },
+    "Intermedio alto-gramatica":  { bg: "bg-amber-100",   text: "text-amber-700",   label: "B2.1" },
+    "Intermedio alto-produccion": { bg: "bg-orange-100",  text: "text-orange-700",  label: "B2.2" },
+};
 
 function initials(name: string) {
     return name.split(" ").filter(Boolean).slice(0, 2).map(w => w[0]).join("").toUpperCase();
@@ -241,66 +249,147 @@ export default function AccesosPage() {
 
             {/* Config modal */}
             {showConfig && (
-                <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/40 px-4" onClick={() => setShowConfig(false)}>
-                    <div className="bg-white rounded-2xl shadow-xl max-w-2xl w-full p-6 max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
-                        <div className="flex items-center justify-between mb-5">
-                            <h3 className="font-semibold text-gray-800 text-base">Links de acceso por nivel</h3>
-                            <button onClick={() => setShowConfig(false)} className="text-gray-400 hover:text-gray-600">
-                                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+                <div className="fixed inset-0 z-40 flex items-end sm:items-center justify-center bg-black/50 backdrop-blur-sm px-0 sm:px-4" onClick={() => setShowConfig(false)}>
+                    <div className="bg-white rounded-t-3xl sm:rounded-2xl shadow-2xl max-w-2xl w-full sm:p-0 max-h-[92vh] flex flex-col" onClick={e => e.stopPropagation()}>
+
+                        {/* Modal header */}
+                        <div className="flex items-center justify-between px-6 pt-5 pb-4 border-b border-gray-100 flex-shrink-0">
+                            <div className="flex items-center gap-3">
+                                <div className="w-8 h-8 rounded-lg bg-gray-100 flex items-center justify-center">
+                                    <svg className="w-4 h-4 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                        <path strokeLinecap="round" strokeLinejoin="round" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
+                                    </svg>
+                                </div>
+                                <div>
+                                    <h3 className="font-semibold text-gray-800 text-sm leading-tight">Links de acceso</h3>
+                                    <p className="text-xs text-gray-400">Por nivel y plan de estudio</p>
+                                </div>
+                            </div>
+                            <button onClick={() => setShowConfig(false)} className="w-8 h-8 flex items-center justify-center rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors cursor-pointer">
+                                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
                             </button>
                         </div>
+
                         {/* Plan tabs */}
-                        <div className="flex gap-1 bg-gray-100 rounded-xl p-1 mb-5">
-                            {PLANS.map(p => (
-                                <button key={p} onClick={() => setConfigPlan(p)}
-                                    className={`flex-1 py-1.5 rounded-lg text-sm font-medium transition-all ${configPlan === p ? "bg-white text-gray-800 shadow-sm" : "text-gray-500 hover:text-gray-700"}`}>
-                                    {p}
-                                </button>
-                            ))}
+                        <div className="px-6 pt-4 pb-3 flex-shrink-0">
+                            <div className="flex gap-1 bg-gray-100 rounded-xl p-1">
+                                {PLANS.map(p => {
+                                    const planLevels = configDraft[p] ?? {};
+                                    const configured = LEVELS.filter(l => planLevels[l]?.whatsapp_link || planLevels[l]?.classroom_link).length;
+                                    return (
+                                        <button key={p} onClick={() => setConfigPlan(p)}
+                                            className={`flex-1 py-2 rounded-lg text-xs font-semibold transition-all relative ${configPlan === p ? "bg-white text-gray-800 shadow-sm" : "text-gray-500 hover:text-gray-700"}`}>
+                                            {p}
+                                            <span className={`block text-[10px] font-normal mt-0.5 ${configPlan === p ? (configured === LEVELS.length ? "text-emerald-500" : "text-amber-500") : "text-gray-400"}`}>
+                                                {configured}/{LEVELS.length}
+                                            </span>
+                                        </button>
+                                    );
+                                })}
+                            </div>
                         </div>
 
-                        <div className="flex flex-col gap-4">
-                            {LEVELS.map(level => {
-                                const draft = configDraft[configPlan]?.[level] ?? { whatsapp_link: "", classroom_link: "", classroom_code: "" };
-                                const levelLabel = LEVEL_LABELS[level] ?? level;
-                                return (
-                                    <div key={level} className="border border-gray-100 rounded-xl p-4">
-                                        <p className="text-sm font-semibold text-gray-700 mb-3">{LEVEL_LABEL[level] ?? level} <span className="text-xs font-normal text-gray-400 ml-1">({levelLabel})</span></p>
-                                        <div className="flex flex-col gap-2">
-                                            {[
-                                                { key: "whatsapp_link", placeholder: `WhatsApp link ${configPlan} ${levelLabel}`, label: "WhatsApp" },
-                                                { key: "classroom_link", placeholder: "Google Classroom link", label: "Classroom link" },
-                                                { key: "classroom_code", placeholder: "Código (ej: jp42tnpb)", label: "Código" },
-                                            ].map(({ key, placeholder, label: inputLabel }) => (
-                                                <div key={key} className="flex items-center gap-2">
-                                                    <span className="text-xs text-gray-400 w-28 flex-shrink-0">{inputLabel}</span>
+                        {/* Levels */}
+                        <div className="overflow-y-auto flex-1 min-h-0 px-6 pb-2 overscroll-y-contain">
+                            <div className="flex flex-col gap-3">
+                                {LEVELS.map(level => {
+                                    const draft = configDraft[configPlan]?.[level] ?? { whatsapp_link: "", classroom_link: "", classroom_code: "" };
+                                    const badge = LEVEL_BADGE[level];
+                                    const hasWa = !!draft.whatsapp_link;
+                                    const hasClassroom = !!draft.classroom_link;
+                                    const hasCode = !!draft.classroom_code;
+                                    const filledCount = [hasWa, hasClassroom, hasCode].filter(Boolean).length;
+                                    const statusColor = filledCount === 3 ? "bg-emerald-400" : filledCount > 0 ? "bg-amber-400" : "bg-gray-300";
+                                    const statusLabel = filledCount === 3 ? "Completo" : filledCount > 0 ? "Parcial" : "Vacío";
+                                    const statusText = filledCount === 3 ? "text-emerald-600" : filledCount > 0 ? "text-amber-600" : "text-gray-400";
+                                    return (
+                                        <div key={level} className="border border-gray-100 rounded-xl overflow-hidden">
+                                            <div className="flex items-center justify-between px-4 py-2.5 bg-gray-50 border-b border-gray-100">
+                                                <div className="flex items-center gap-2">
+                                                    <span className={`text-xs font-bold px-2 py-0.5 rounded-md ${badge?.bg ?? "bg-gray-100"} ${badge?.text ?? "text-gray-600"}`}>
+                                                        {badge?.label ?? level}
+                                                    </span>
+                                                    <span className="text-sm font-medium text-gray-700">{LEVEL_LABEL[level] ?? level}</span>
+                                                </div>
+                                                <div className="flex items-center gap-1.5">
+                                                    <span className={`w-1.5 h-1.5 rounded-full ${statusColor}`} />
+                                                    <span className={`text-xs font-medium ${statusText}`}>{statusLabel}</span>
+                                                </div>
+                                            </div>
+                                            <div className="p-3 flex flex-col gap-2">
+                                                {/* WhatsApp */}
+                                                <div className="flex items-center gap-2">
+                                                    <div className="w-7 h-7 rounded-lg bg-emerald-50 flex items-center justify-center flex-shrink-0">
+                                                        <svg className="w-3.5 h-3.5 text-emerald-500" fill="currentColor" viewBox="0 0 24 24">
+                                                            <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z" />
+                                                            <path d="M12 0C5.373 0 0 5.373 0 12c0 2.127.558 4.122 1.532 5.856L.078 23.467a.5.5 0 00.63.61l5.765-1.519A11.943 11.943 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.882a9.876 9.876 0 01-5.017-1.369l-.36-.214-3.724.981.996-3.635-.234-.374A9.847 9.847 0 012.118 12C2.118 6.525 6.525 2.118 12 2.118S21.882 6.525 21.882 12 17.475 21.882 12 21.882z" />
+                                                        </svg>
+                                                    </div>
                                                     <input
                                                         type="text"
-                                                        className="flex-1 text-sm border border-gray-200 rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-yellow-orange-300 bg-gray-50"
-                                                        placeholder={placeholder}
-                                                        value={(draft as unknown as Record<string, string>)[key] ?? ""}
+                                                        className="flex-1 text-xs border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-emerald-300 bg-white placeholder:text-gray-300 transition-shadow"
+                                                        placeholder="https://chat.whatsapp.com/…"
+                                                        value={draft.whatsapp_link}
                                                         onChange={e => setConfigDraft(prev => ({
                                                             ...prev,
-                                                            [configPlan]: {
-                                                                ...prev[configPlan],
-                                                                [level]: { ...draft, [key]: e.target.value },
-                                                            },
+                                                            [configPlan]: { ...prev[configPlan], [level]: { ...draft, whatsapp_link: e.target.value } },
                                                         }))}
                                                     />
                                                 </div>
-                                            ))}
+                                                {/* Classroom link + code in one row */}
+                                                <div className="flex items-center gap-2">
+                                                    <div className="w-7 h-7 rounded-lg bg-blue-50 flex items-center justify-center flex-shrink-0">
+                                                        <svg className="w-3.5 h-3.5 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                                            <path strokeLinecap="round" strokeLinejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                                                        </svg>
+                                                    </div>
+                                                    <input
+                                                        type="text"
+                                                        className="flex-1 text-xs border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-300 bg-white placeholder:text-gray-300 transition-shadow"
+                                                        placeholder="https://classroom.google.com/…"
+                                                        value={draft.classroom_link}
+                                                        onChange={e => setConfigDraft(prev => ({
+                                                            ...prev,
+                                                            [configPlan]: { ...prev[configPlan], [level]: { ...draft, classroom_link: e.target.value } },
+                                                        }))}
+                                                    />
+                                                    <div className="w-7 h-7 rounded-lg bg-gray-100 flex items-center justify-center flex-shrink-0">
+                                                        <svg className="w-3.5 h-3.5 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                                            <path strokeLinecap="round" strokeLinejoin="round" d="M7 20l4-16m2 16l4-16M6 9h14M4 15h14" />
+                                                        </svg>
+                                                    </div>
+                                                    <input
+                                                        type="text"
+                                                        className="w-28 text-xs border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-gray-300 bg-white placeholder:text-gray-300 transition-shadow font-mono"
+                                                        placeholder="ej: jp42tnpb"
+                                                        value={draft.classroom_code}
+                                                        onChange={e => setConfigDraft(prev => ({
+                                                            ...prev,
+                                                            [configPlan]: { ...prev[configPlan], [level]: { ...draft, classroom_code: e.target.value } },
+                                                        }))}
+                                                    />
+                                                </div>
+                                            </div>
                                         </div>
-                                    </div>
-                                );
-                            })}
+                                    );
+                                })}
+                            </div>
                         </div>
-                        <div className="flex justify-end gap-3 mt-5">
-                            <button onClick={() => setShowConfig(false)} className="px-4 py-2 text-sm text-gray-500 hover:text-gray-700 border border-gray-200 rounded-lg hover:bg-gray-50 transition">
-                                Cancelar
-                            </button>
-                            <button onClick={handleSaveConfig} disabled={savingConfig} className="px-4 py-2 text-sm font-medium bg-yellow-orange-500 text-white rounded-lg hover:bg-yellow-orange-600 transition disabled:opacity-60">
-                                {savingConfig ? "Guardando…" : "Guardar"}
-                            </button>
+
+                        {/* Footer */}
+                        <div className="flex items-center justify-between px-6 py-4 border-t border-gray-100 bg-gray-50 rounded-b-2xl flex-shrink-0 mt-2">
+                            <p className="text-xs text-gray-400">Los cambios se aplican al instante al guardar.</p>
+                            <div className="flex gap-2">
+                                <button onClick={() => setShowConfig(false)} className="px-4 py-2 text-xs text-gray-500 hover:text-gray-700 border border-gray-200 rounded-lg hover:bg-white transition cursor-pointer">
+                                    Cancelar
+                                </button>
+                                <button onClick={handleSaveConfig} disabled={savingConfig} className="px-4 py-2 text-xs font-semibold bg-gray-800 text-white rounded-lg hover:bg-gray-700 transition disabled:opacity-50 cursor-pointer flex items-center gap-2">
+                                    {savingConfig
+                                        ? <><svg className="w-3.5 h-3.5 animate-spin" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"/></svg>Guardando…</>
+                                        : <><svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7"/></svg>Guardar cambios</>
+                                    }
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -420,89 +509,83 @@ export default function AccesosPage() {
                                 const configReady = levelConfigOk(u.plan, u.level);
                                 const isSending = sending === u.id;
                                 return (
-                                    <tr key={u.id} className="hover:bg-gray-50 transition-colors">
-                                        <td className="px-5 py-3.5">
-                                            <div className="flex items-center gap-3">
-                                                <Avatar name={u.full_name} />
-                                                <div className="min-w-0">
-                                                    <p className="text-sm font-semibold text-gray-800 truncate">{u.full_name}</p>
-                                                    <p className="text-xs text-gray-400 truncate">{u.email}</p>
-                                                </div>
+                                <tr key={u.id} className="hover:bg-gray-50 transition-colors">
+                                    <td className="px-5 py-3.5">
+                                        <div className="flex items-center gap-3">
+                                            <Avatar name={u.full_name} />
+                                            <div className="min-w-0">
+                                                <p className="text-sm font-semibold text-gray-800 truncate">{u.full_name}</p>
+                                                <p className="text-xs text-gray-400 truncate">{u.email}</p>
                                             </div>
-                                        </td>
-                                        <td className="px-5 py-3.5">
-                                            <span className="inline-flex items-center gap-1.5 text-sm text-gray-700">
-                                                <span className={`w-2 h-2 rounded-full flex-shrink-0 ${PLAN_DOT[u.plan] ?? "bg-gray-300"}`} />
-                                                {u.plan}
-                                            </span>
-                                        </td>
-                                        <td className="px-5 py-3.5 text-sm text-gray-600 whitespace-nowrap">
-                                            {LEVEL_LABEL[u.level] ?? u.level}
-                                        </td>
-                                        <td className="px-5 py-3.5 text-sm text-gray-500">{u.country}</td>
-                                        <td className="px-5 py-3.5 text-xs text-gray-500 whitespace-nowrap">
-                                            {u.inscription_date ? dayjs.utc(u.inscription_date).format("DD/MM/YYYY") : "—"}
-                                        </td>
-                                        <td className="px-5 py-3.5">
-                                            {u.access_sent_at ? (
-                                                <div>
-                                                    <span className="inline-flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700">
-                                                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
-                                                        Enviado
-                                                    </span>
-                                                    <p className="text-xs text-gray-400 mt-1">{dayjs.utc(u.access_sent_at).format("DD/MM/YY")}</p>
-                                                </div>
-                                            ) : (
-                                                <span className="inline-flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-full bg-amber-50 text-amber-700">
-                                                    <span className="w-1.5 h-1.5 rounded-full bg-amber-400" />
-                                                    Pendiente
+                                        </div>
+                                    </td>
+                                    <td className="px-5 py-3.5">
+                                        <span className="inline-flex items-center gap-1.5 text-sm text-gray-700">
+                                            <span className={`w-2 h-2 rounded-full flex-shrink-0 ${PLAN_DOT[u.plan] ?? "bg-gray-300"}`} />
+                                            {u.plan}
+                                        </span>
+                                    </td>
+                                    <td className="px-5 py-3.5 text-sm text-gray-600 whitespace-nowrap">
+                                        {LEVEL_LABEL[u.level] ?? u.level}
+                                    </td>
+                                    <td className="px-5 py-3.5 text-sm text-gray-500">{u.country}</td>
+                                    <td className="px-5 py-3.5 text-xs text-gray-500 whitespace-nowrap">
+                                        {u.inscription_date ? dayjs.utc(u.inscription_date).format("DD/MM/YYYY") : "—"}
+                                    </td>
+                                    <td className="px-5 py-3.5">
+                                        {u.access_sent_at ? (
+                                            <div>
+                                                <span className="inline-flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700">
+                                                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+                                                    Enviado
                                                 </span>
-                                            )}
-                                        </td>
-                                        <td className="px-5 py-3.5">
+                                                <p className="text-xs text-gray-400 mt-1">{dayjs.utc(u.access_sent_at).format("DD/MM/YY")}</p>
+                                            </div>
+                                        ) : (
+                                            <span className="inline-flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-full bg-amber-50 text-amber-700">
+                                                <span className="w-1.5 h-1.5 rounded-full bg-amber-400" />
+                                                Pendiente
+                                            </span>
+                                        )}
+                                    </td>
+                                    <td className="px-5 py-3.5">
+                                        <div className="flex flex-col gap-1.5">
                                             {u.access_sent_at ? (
-                                                <div className="flex flex-col gap-1.5">
-                                                    <button
-                                                        onClick={() => handleSend(u)}
-                                                        disabled={isSending || !configReady}
-                                                        className="inline-flex items-center gap-2 text-xs font-medium px-3 py-1.5 rounded-lg border border-gray-200 text-gray-500 hover:bg-gray-50 transition disabled:opacity-40 disabled:cursor-not-allowed"
-                                                    >
-                                                        {isSending ? <svg className="w-3.5 h-3.5 animate-spin" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"/></svg>
-                                                            : <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>
-                                                        }
-                                                        Reenviar
-                                                    </button>
-                                                    <button
-                                                        onClick={() => handleToggleMark(u, false)}
-                                                        className="text-xs text-gray-400 hover:text-red-500 transition text-left px-1"
-                                                    >
-                                                        Marcar como pendiente
-                                                    </button>
-                                                </div>
+                                                <button
+                                                    onClick={() => handleSend(u)}
+                                                    disabled={isSending || !configReady}
+                                                    className="inline-flex items-center gap-2 text-xs font-medium px-3 py-1.5 rounded-lg border border-gray-200 text-gray-500 hover:bg-gray-50 transition disabled:opacity-40 disabled:cursor-not-allowed"
+                                                    title={!configReady ? "Configura los links de este nivel primero" : ""}
+                                                >
+                                                    {isSending
+                                                        ? <svg className="w-3.5 h-3.5 animate-spin" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"/></svg>
+                                                        : <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>
+                                                    }
+                                                    Reenviar
+                                                </button>
                                             ) : (
-                                                <div className="flex flex-col gap-1.5">
-                                                    <button
-                                                        onClick={() => handleSend(u)}
-                                                        disabled={isSending || !configReady}
-                                                        className="inline-flex items-center gap-2 text-xs font-semibold px-3.5 py-2 rounded-xl bg-falu-red-600 text-white hover:bg-falu-red-700 transition disabled:opacity-40 disabled:cursor-not-allowed"
-                                                        title={!configReady ? "Configura los links de este nivel primero" : ""}
-                                                    >
-                                                        {isSending
-                                                            ? <svg className="w-3.5 h-3.5 animate-spin" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"/></svg>
-                                                            : <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" /></svg>
-                                                        }
-                                                        {isSending ? "Enviando…" : "Enviar acceso"}
-                                                    </button>
-                                                    <button
-                                                        onClick={() => handleToggleMark(u, true)}
-                                                        className="text-xs text-gray-400 hover:text-emerald-600 transition text-left px-1"
-                                                    >
-                                                        Marcar como enviado
-                                                    </button>
-                                                </div>
+                                                <button
+                                                    onClick={() => handleSend(u)}
+                                                    disabled={isSending || !configReady}
+                                                    className="inline-flex items-center gap-2 text-xs font-semibold px-3.5 py-2 rounded-xl bg-falu-red-600 text-white hover:bg-falu-red-700 transition disabled:opacity-40 disabled:cursor-not-allowed"
+                                                    title={!configReady ? "Configura los links de este nivel primero" : ""}
+                                                >
+                                                    {isSending
+                                                        ? <svg className="w-3.5 h-3.5 animate-spin" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"/></svg>
+                                                        : <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" /></svg>
+                                                    }
+                                                    {isSending ? "Enviando…" : "Enviar acceso"}
+                                                </button>
                                             )}
-                                        </td>
-                                    </tr>
+                                            <button
+                                                onClick={() => handleToggleMark(u, !u.access_sent_at)}
+                                                className={`text-xs transition text-left px-1 ${u.access_sent_at ? "text-gray-400 hover:text-red-500" : "text-gray-400 hover:text-emerald-600"}`}
+                                            >
+                                                {u.access_sent_at ? "Marcar como pendiente" : "Marcar como enviado"}
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
                                 );
                             })}
                         </tbody>
@@ -529,34 +612,36 @@ export default function AccesosPage() {
                         const configReady = levelConfigOk(u.plan, u.level);
                         const isSending = sending === u.id;
                         return (
-                            <div key={u.id} className="p-4 flex items-start gap-3">
-                                <Avatar name={u.full_name} />
-                                <div className="flex-1 min-w-0">
-                                    <div className="flex items-start justify-between gap-2">
-                                        <div className="min-w-0">
-                                            <p className="text-sm font-semibold text-gray-800 truncate">{u.full_name}</p>
-                                            <p className="text-xs text-gray-400 truncate">{u.email}</p>
-                                        </div>
-                                        {u.access_sent_at ? (
-                                            <span className="flex-shrink-0 inline-flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700">
-                                                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />Enviado
-                                            </span>
-                                        ) : (
-                                            <span className="flex-shrink-0 inline-flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-full bg-amber-50 text-amber-700">
-                                                <span className="w-1.5 h-1.5 rounded-full bg-amber-400" />Pendiente
-                                            </span>
-                                        )}
+                        <div key={u.id} className="p-4 flex items-start gap-3">
+                            <Avatar name={u.full_name} />
+                            <div className="flex-1 min-w-0">
+                                <div className="flex items-start justify-between gap-2">
+                                    <div className="min-w-0">
+                                        <p className="text-sm font-semibold text-gray-800 truncate">{u.full_name}</p>
+                                        <p className="text-xs text-gray-400 truncate">{u.email}</p>
                                     </div>
-                                    <div className="flex flex-wrap gap-1.5 mt-2">
-                                        <span className="inline-flex items-center gap-1 text-xs text-gray-600 bg-gray-50 border border-gray-100 px-2 py-0.5 rounded-md">
-                                            <span className={`w-1.5 h-1.5 rounded-full ${PLAN_DOT[u.plan] ?? "bg-gray-300"}`} />{u.plan}
+                                    {u.access_sent_at ? (
+                                        <span className="flex-shrink-0 inline-flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700">
+                                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />Enviado
                                         </span>
-                                        <span className="text-xs text-gray-500 bg-gray-50 border border-gray-100 px-2 py-0.5 rounded-md">{LEVEL_LABEL[u.level] ?? u.level}</span>
-                                    </div>
+                                    ) : (
+                                        <span className="flex-shrink-0 inline-flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-full bg-amber-50 text-amber-700">
+                                            <span className="w-1.5 h-1.5 rounded-full bg-amber-400" />Pendiente
+                                        </span>
+                                    )}
+                                </div>
+                                <div className="flex flex-wrap gap-1.5 mt-2">
+                                    <span className="inline-flex items-center gap-1 text-xs text-gray-600 bg-gray-50 border border-gray-100 px-2 py-0.5 rounded-md">
+                                        <span className={`w-1.5 h-1.5 rounded-full ${PLAN_DOT[u.plan] ?? "bg-gray-300"}`} />{u.plan}
+                                    </span>
+                                    <span className="text-xs text-gray-500 bg-gray-50 border border-gray-100 px-2 py-0.5 rounded-md">{LEVEL_LABEL[u.level] ?? u.level}</span>
+                                </div>
+                                <div className="flex flex-col gap-1.5 mt-3">
                                     <button
                                         onClick={() => handleSend(u)}
                                         disabled={isSending || !configReady}
-                                        className={`mt-3 inline-flex items-center gap-2 text-xs font-semibold px-3 py-1.5 rounded-xl transition disabled:opacity-40 disabled:cursor-not-allowed ${u.access_sent_at ? "border border-gray-200 text-gray-500 hover:bg-gray-50" : "bg-falu-red-600 text-white hover:bg-falu-red-700"}`}
+                                        className={`inline-flex items-center gap-2 text-xs font-semibold px-3 py-1.5 rounded-xl transition disabled:opacity-40 disabled:cursor-not-allowed ${u.access_sent_at ? "border border-gray-200 text-gray-500 hover:bg-gray-50" : "bg-falu-red-600 text-white hover:bg-falu-red-700"}`}
+                                        title={!configReady ? "Configura los links de este nivel primero" : ""}
                                     >
                                         {isSending
                                             ? <svg className="w-3.5 h-3.5 animate-spin" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"/></svg>
@@ -564,8 +649,15 @@ export default function AccesosPage() {
                                         }
                                         {isSending ? "Enviando…" : u.access_sent_at ? "Reenviar" : "Enviar acceso"}
                                     </button>
+                                    <button
+                                        onClick={() => handleToggleMark(u, !u.access_sent_at)}
+                                        className={`text-xs transition text-left px-1 ${u.access_sent_at ? "text-gray-400 hover:text-red-500" : "text-gray-400 hover:text-emerald-600"}`}
+                                    >
+                                        {u.access_sent_at ? "Marcar como pendiente" : "Marcar como enviado"}
+                                    </button>
                                 </div>
                             </div>
+                        </div>
                         );
                     })}
                 </div>

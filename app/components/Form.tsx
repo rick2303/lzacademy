@@ -82,11 +82,21 @@ const inputClass =
 const selectClass =
     "w-full rounded-xl border border-zinc-200 bg-zinc-50 px-4 py-3 text-sm text-zinc-900 transition focus:outline-none focus:ring-2 focus:ring-falu-red-400 focus:border-transparent focus:bg-white hover:border-zinc-300 appearance-none cursor-pointer";
 
+function getEmailSuggestion(email: string): string | null {
+    const TYPOS: Record<string, string> = { ".con": ".com", ".cmo": ".com", ".ocm": ".com", ".vom": ".com", ".coml": ".com" };
+    const lower = email.toLowerCase();
+    for (const [typo, fix] of Object.entries(TYPOS)) {
+        if (lower.endsWith(typo)) return email.slice(0, email.length - typo.length) + fix;
+    }
+    return null;
+}
+
 // ─── Componente principal ─────────────────────────────────────────────────────
 
 const PaymentForm = ({ selectedPlan }: { selectedPlan: PlanType }) => {
     const [plan, setPlan] = useState<PlanType>(selectedPlan);
     const [loading, setLoading] = useState(false);
+    const [emailSuggestion, setEmailSuggestion] = useState<string | null>(null);
     const { dates: availableDates } = useStartDates();
     const [formData, setFormData] = useState({
         email: "",
@@ -121,8 +131,15 @@ const PaymentForm = ({ selectedPlan }: { selectedPlan: PlanType }) => {
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
         const { name, value } = e.target;
-        if (name === "plan") { setPlan(value as PlanType); return; }
+        if (name === "plan") {
+            setPlan(value as PlanType);
+            if (value === "Personalizado" && (formData.englishLevel === "Intermedio alto-gramatica" || formData.englishLevel === "Intermedio alto-produccion")) {
+                setFormData(prev => ({ ...prev, englishLevel: "" }));
+            }
+            return;
+        }
         setFormData((prev) => ({ ...prev, [name]: value }));
+        if (name === "email") setEmailSuggestion(null);
         setError("");
     };
 
@@ -196,10 +213,29 @@ const PaymentForm = ({ selectedPlan }: { selectedPlan: PlanType }) => {
                                 name="email"
                                 value={formData.email}
                                 onChange={handleChange}
+                                onBlur={() => setEmailSuggestion(getEmailSuggestion(formData.email))}
                                 placeholder="tu@correo.com"
                                 className={inputClass}
                                 required
                             />
+                            {emailSuggestion && (
+                                <div className="mt-2 flex items-center gap-2 rounded-xl bg-amber-50 border border-amber-200 px-3 py-2.5">
+                                    <svg className="h-4 w-4 shrink-0 text-amber-500" viewBox="0 0 16 16" fill="none">
+                                        <circle cx="8" cy="8" r="7" stroke="currentColor" strokeWidth="1.5" />
+                                        <path d="M8 5v3.5M8 11h.01" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+                                    </svg>
+                                    <p className="text-xs text-amber-800 flex-1">
+                                        ¿Quisiste escribir <strong>{emailSuggestion}</strong>?
+                                    </p>
+                                    <button
+                                        type="button"
+                                        onClick={() => { setFormData(prev => ({ ...prev, email: emailSuggestion })); setEmailSuggestion(null); }}
+                                        className="text-xs font-semibold text-amber-700 hover:text-amber-900 underline underline-offset-2 shrink-0"
+                                    >
+                                        Corregir
+                                    </button>
+                                </div>
+                            )}
                         </div>
 
                         {/* Error de correos */}
@@ -357,8 +393,8 @@ const PaymentForm = ({ selectedPlan }: { selectedPlan: PlanType }) => {
                                         <option value="Principiante">Principiante (A1)</option>
                                         <option value="Basico">Básico (A2)</option>
                                         <option value="Intermedio">Intermedio (B1)</option>
-                                        <option value="Intermedio alto-gramatica">Intermedio alto (B2.1)</option>
-                                        <option value="Intermedio alto-produccion">Intermedio alto (B2.2)</option>
+                                        {plan !== "Personalizado" && <option value="Intermedio alto-gramatica">Intermedio alto (B2.1)</option>}
+                                        {plan !== "Personalizado" && <option value="Intermedio alto-produccion">Intermedio alto (B2.2)</option>}
                                     </select>
                                     <div className="pointer-events-none absolute inset-y-0 right-3 flex items-center">
                                         <svg className="h-4 w-4 text-zinc-400" viewBox="0 0 16 16" fill="none">
