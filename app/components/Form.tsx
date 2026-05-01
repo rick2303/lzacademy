@@ -100,6 +100,7 @@ const PaymentForm = ({ selectedPlan }: { selectedPlan: PlanType }) => {
     const { dates: availableDates } = useStartDates();
     const [formData, setFormData] = useState({
         email: "",
+        emailConfirm: "",
         fullName: "",
         country: "",
         englishLevel: "",
@@ -124,6 +125,8 @@ const PaymentForm = ({ selectedPlan }: { selectedPlan: PlanType }) => {
     const validateForm = () => {
         if (!formData.email || !formData.fullName)
             return "Completa tu correo y nombre";
+        if (formData.email !== formData.emailConfirm)
+            return "Los correos electrónicos no coinciden";
         if (!formData.country || !formData.englishLevel)
             return "Selecciona tu país y nivel de inglés";
         return null;
@@ -229,12 +232,30 @@ const PaymentForm = ({ selectedPlan }: { selectedPlan: PlanType }) => {
                                     </p>
                                     <button
                                         type="button"
-                                        onClick={() => { setFormData(prev => ({ ...prev, email: emailSuggestion })); setEmailSuggestion(null); }}
+                                        onClick={() => { setFormData(prev => ({ ...prev, email: emailSuggestion!, emailConfirm: emailSuggestion! })); setEmailSuggestion(null); }}
                                         className="text-xs font-semibold text-amber-700 hover:text-amber-900 underline underline-offset-2 shrink-0"
                                     >
                                         Corregir
                                     </button>
                                 </div>
+                            )}
+                        </div>
+
+                        <div>
+                            <FieldLabel htmlFor="emailConfirm">Confirmar correo *</FieldLabel>
+                            <input
+                                type="email"
+                                id="emailConfirm"
+                                name="emailConfirm"
+                                value={formData.emailConfirm}
+                                onChange={handleChange}
+                                onPaste={e => e.preventDefault()}
+                                placeholder="Repite tu correo"
+                                className={inputClass}
+                                required
+                            />
+                            {formData.emailConfirm && formData.email !== formData.emailConfirm && (
+                                <p className="mt-1.5 text-xs text-red-500">Los correos no coinciden</p>
                             )}
                         </div>
 
