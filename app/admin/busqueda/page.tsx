@@ -124,7 +124,7 @@ export default function BusquedaPage() {
     const [loading, setLoading] = useState(false);
     const [selected, setSelected] = useState<UserResult | null>(null);
     const [editing, setEditing] = useState(false);
-    const [editForm, setEditForm] = useState({ plan: "", level: "", inscription_date: "" });
+    const [editForm, setEditForm] = useState({ plan: "", level: "", inscription_date: "", email: "" });
     const [saving, setSaving]   = useState(false);
     const [saved, setSaved]     = useState(false);
     const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -165,7 +165,7 @@ export default function BusquedaPage() {
 
     function openUser(user: UserResult) {
         setSelected(user);
-        setEditForm({ plan: user.plan, level: user.level, inscription_date: user.inscription_date ?? "" });
+        setEditForm({ plan: user.plan, level: user.level, inscription_date: user.inscription_date ?? "", email: user.email });
         setEditing(false);
         setSaved(false);
     }
@@ -177,6 +177,7 @@ export default function BusquedaPage() {
         if (!session) return;
         const body: Record<string, string> = { plan: editForm.plan, level: editForm.level };
         if (editForm.inscription_date) body.inscription_date = editForm.inscription_date;
+        if (editForm.email && editForm.email !== selected.email) body.email = editForm.email;
         await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/admin/users/${selected.id}/fields`, {
             method: "PATCH",
             headers: { Authorization: `Bearer ${session.access_token}`, "Content-Type": "application/json" },
@@ -288,7 +289,17 @@ export default function BusquedaPage() {
                                             <div className="flex items-start justify-between gap-3 flex-wrap">
                                                 <div>
                                                     <h2 className="text-lg font-bold text-gray-900 leading-tight">{selected.full_name}</h2>
-                                                    <p className="text-sm text-gray-400 mt-0.5">{selected.email}</p>
+                                                    {editing ? (
+                                                        <input
+                                                            type="email"
+                                                            value={editForm.email}
+                                                            onChange={e => setEditForm({ ...editForm, email: e.target.value })}
+                                                            className="mt-1 text-sm border border-yellow-300 rounded-lg px-2.5 py-1 focus:outline-none focus:ring-2 focus:ring-yellow-orange-300 bg-yellow-50 w-full max-w-xs"
+                                                            placeholder="correo@ejemplo.com"
+                                                        />
+                                                    ) : (
+                                                        <p className="text-sm text-gray-400 mt-0.5">{selected.email}</p>
+                                                    )}
                                                 </div>
                                                 <div className="flex items-center gap-2 flex-shrink-0">
                                                     <StatusChip status={selected.status} />
