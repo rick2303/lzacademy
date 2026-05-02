@@ -6,6 +6,8 @@ export interface StartDate {
   value: string;
   label: string;
   enabled: boolean;
+  special?: boolean;
+  excludedPlans?: string[];
 }
 
 const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL!;

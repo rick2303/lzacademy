@@ -10,6 +10,7 @@ const VALID_ROUTES = new Set([
   "/sesiones",
   "/fundacion",
   "/success",
+  "/pago-estudiantes",
   "/admin/dashboard",
   "/admin/interes",
   "/admin/recurrentes",

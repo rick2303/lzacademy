@@ -8,6 +8,8 @@ interface StartDate {
     value: string;
     label: string;
     enabled: boolean;
+    special?: boolean;
+    excludedPlans?: string[];
 }
 
 interface PremiumSlot {
@@ -264,6 +266,48 @@ export default function FechasPage() {
                                             <span className={`text-xs font-medium w-16 ${date.enabled ? "text-emerald-600" : "text-gray-400"}`}>
                                                 {date.enabled ? "Activa" : "Inactiva"}
                                             </span>
+
+                                            {/* Toggle: Especial (para /pago-estudiantes) */}
+                                            <button
+                                                onClick={() => saveDates(dates.map((d, idx) => idx === i ? { ...d, special: !d.special } : d))}
+                                                disabled={saving}
+                                                title="Habilitar en /pago-estudiantes"
+                                                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none disabled:opacity-50 ${
+                                                    date.special ? "bg-violet-500" : "bg-gray-200"
+                                                }`}
+                                            >
+                                                <span className={`inline-block h-4 w-4 rounded-full bg-white shadow transition-transform ${
+                                                    date.special ? "translate-x-6" : "translate-x-1"
+                                                }`} />
+                                            </button>
+                                            <span className={`text-xs font-medium w-16 ${date.special ? "text-violet-600" : "text-gray-400"}`}>
+                                                {date.special ? "Especial" : "Normal"}
+                                            </span>
+
+                                            {/* Toggles: excluir planes del form normal */}
+                                            <div className="flex items-center gap-1">
+                                                {["Essential", "Premium", "Personalizado"].map((p) => {
+                                                    const excluded = date.excludedPlans?.includes(p) ?? false;
+                                                    return (
+                                                        <button
+                                                            key={p}
+                                                            disabled={saving}
+                                                            title={excluded ? `Habilitar ${p}` : `Deshabilitar ${p}`}
+                                                            onClick={() => {
+                                                                const current = date.excludedPlans ?? [];
+                                                                const next = excluded
+                                                                    ? current.filter((x) => x !== p)
+                                                                    : [...current, p];
+                                                                saveDates(dates.map((d, idx) => idx === i ? { ...d, excludedPlans: next } : d));
+                                                            }}
+                                                            className={`text-[10px] font-bold px-1.5 py-0.5 rounded transition disabled:opacity-50 ${excluded ? "bg-red-100 text-red-500 line-through" : "bg-gray-100 text-gray-500 hover:bg-gray-200"}`}
+                                                        >
+                                                            {p === "Essential" ? "E" : p === "Premium" ? "P" : "C"}
+                                                        </button>
+                                                    );
+                                                })}
+                                            </div>
+
                                             <button
                                                 onClick={() => handleDelete(i)}
                                                 disabled={saving}
@@ -281,7 +325,7 @@ export default function FechasPage() {
                     )}
                 </div>
                 <p className="text-xs text-gray-400 mt-3 px-1">
-                    Las fechas <strong>activas</strong> aparecen en el formulario de inscripción. Las <strong>inactivas</strong> quedan guardadas pero no se muestran. Las fechas pasadas se ocultan automáticamente al usuario.
+                    Las fechas <strong>activas</strong> aparecen en el formulario público de inscripción. Las marcadas como <strong className="text-violet-500">Especial</strong> se muestran en <code>/pago-estudiantes</code> para pagos especiales de estudiantes actuales. Las fechas pasadas se ocultan automáticamente.
                 </p>
             </div>
 

@@ -97,7 +97,8 @@ const PaymentForm = ({ selectedPlan }: { selectedPlan: PlanType }) => {
     const [plan, setPlan] = useState<PlanType>(selectedPlan);
     const [loading, setLoading] = useState(false);
     const [emailSuggestion, setEmailSuggestion] = useState<string | null>(null);
-    const { dates: availableDates } = useStartDates();
+    const { dates: allDates } = useStartDates();
+    const availableDates = allDates.filter(d => !d.excludedPlans?.includes(plan));
     const [formData, setFormData] = useState({
         email: "",
         emailConfirm: "",
@@ -136,9 +137,14 @@ const PaymentForm = ({ selectedPlan }: { selectedPlan: PlanType }) => {
         const { name, value } = e.target;
         if (name === "plan") {
             setPlan(value as PlanType);
+            const updates: Partial<typeof formData> = {};
             if (value === "Personalizado" && (formData.englishLevel === "Intermedio alto-gramatica" || formData.englishLevel === "Intermedio alto-produccion")) {
-                setFormData(prev => ({ ...prev, englishLevel: "" }));
+                updates.englishLevel = "";
             }
+            if (formData.interestDate && allDates.find(d => d.value === formData.interestDate)?.excludedPlans?.includes(value)) {
+                updates.interestDate = "";
+            }
+            if (Object.keys(updates).length) setFormData(prev => ({ ...prev, ...updates }));
             return;
         }
         setFormData((prev) => ({ ...prev, [name]: value }));
