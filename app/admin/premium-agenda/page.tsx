@@ -284,7 +284,7 @@ export default function PremiumAgenda() {
                                     <table className="min-w-full divide-y divide-gray-100">
                                         <thead className="bg-gray-50">
                                             <tr>
-                                                {["Nombre", "Email", "Nivel", "Inicio", "Clase agendada", "Cal UID", "Monto"].map((h) => (
+                                                {["Nombre", "Email", "Nivel", "Inicio", "Clase agendada", "Monto"].map((h) => (
                                                     <th key={h} className="px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider whitespace-nowrap">{h}</th>
                                                 ))}
                                             </tr>
@@ -306,7 +306,6 @@ export default function PremiumAgenda() {
                                                             <span className="text-xs text-gray-300">Sin datos</span>
                                                         )}
                                                     </td>
-                                                    <td className="px-4 py-3 text-xs text-gray-400 font-mono max-w-[120px] truncate">{row.cal_booking_uid || "—"}</td>
                                                     <td className="px-4 py-3 text-xs font-semibold text-gray-700">${(row.amount / 100).toFixed(0)}</td>
                                                 </tr>
                                             ))}

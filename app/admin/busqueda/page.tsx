@@ -104,6 +104,7 @@ interface UserResult {
     plan: string; level: string; motive: string; status: string;
     inscription_date: string | null; last_payment_date: string | null;
     customer_stripe_id: string | null; created_at: string;
+    notes: string | null;
     payments: Payment[]; interest: Interest[];
 }
 
@@ -127,6 +128,10 @@ export default function BusquedaPage() {
     const [editForm, setEditForm] = useState({ plan: "", level: "", inscription_date: "", email: "" });
     const [saving, setSaving]   = useState(false);
     const [saved, setSaved]     = useState(false);
+    const [notesDraft, setNotesDraft] = useState("");
+    const [notesSaving, setNotesSaving] = useState(false);
+    const [notesSaved, setNotesSaved] = useState(false);
+    const [statusSaving, setStatusSaving] = useState(false);
     const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
     const inputRef    = useRef<HTMLInputElement>(null);
     const router = useRouter();
@@ -166,8 +171,42 @@ export default function BusquedaPage() {
     function openUser(user: UserResult) {
         setSelected(user);
         setEditForm({ plan: user.plan, level: user.level, inscription_date: user.inscription_date ?? "", email: user.email });
+        setNotesDraft(user.notes ?? "");
         setEditing(false);
         setSaved(false);
+        setNotesSaved(false);
+    }
+
+    async function handleStatusChange(newStatus: string) {
+        if (!selected || selected.status === newStatus) return;
+        setStatusSaving(true);
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session) return;
+        await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/admin/users/${selected.id}/status`, {
+            method: "PATCH",
+            headers: { Authorization: `Bearer ${session.access_token}`, "Content-Type": "application/json" },
+            body: JSON.stringify({ status: newStatus }),
+        });
+        setSelected(prev => prev ? { ...prev, status: newStatus } : prev);
+        setResults(prev => prev.map(u => u.id === selected.id ? { ...u, status: newStatus } : u));
+        setStatusSaving(false);
+    }
+
+    async function handleSaveNotes() {
+        if (!selected) return;
+        setNotesSaving(true);
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session) return;
+        await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/admin/users/${selected.id}/fields`, {
+            method: "PATCH",
+            headers: { Authorization: `Bearer ${session.access_token}`, "Content-Type": "application/json" },
+            body: JSON.stringify({ notes: notesDraft }),
+        });
+        setSelected(prev => prev ? { ...prev, notes: notesDraft } : prev);
+        setResults(prev => prev.map(u => u.id === selected.id ? { ...u, notes: notesDraft } : u));
+        setNotesSaving(false);
+        setNotesSaved(true);
+        setTimeout(() => setNotesSaved(false), 3000);
     }
 
     async function handleSave() {
@@ -266,6 +305,14 @@ export default function BusquedaPage() {
                                     <div className="flex items-center gap-2 mt-2.5 ml-11">
                                         <PlanChip plan={u.plan} />
                                         <span className="text-xs text-gray-400 truncate">{u.country}</span>
+                                        {u.notes && (
+                                            <span title="Tiene notas internas" className="flex-shrink-0 w-4 h-4 rounded-full bg-amber-100 flex items-center justify-center">
+                                                <svg className="w-2.5 h-2.5 text-amber-500" fill="currentColor" viewBox="0 0 20 20">
+                                                    <path d="M17.414 2.586a2 2 0 00-2.828 0L7 10.172V13h2.828l7.586-7.586a2 2 0 000-2.828z" />
+                                                    <path fillRule="evenodd" d="M2 16a2 2 0 002 2h12a2 2 0 002-2v-5a1 1 0 10-2 0v5H4V8a1 1 0 00-1-1H3a1 1 0 00-1 1v8z" clipRule="evenodd" />
+                                                </svg>
+                                            </span>
+                                        )}
                                     </div>
                                 </button>
                             );
@@ -301,15 +348,34 @@ export default function BusquedaPage() {
                                                         <p className="text-sm text-gray-400 mt-0.5">{selected.email}</p>
                                                     )}
                                                 </div>
-                                                <div className="flex items-center gap-2 flex-shrink-0">
-                                                    <StatusChip status={selected.status} />
+                                                <div className="flex flex-col items-end gap-2 flex-shrink-0">
+                                                    {/* Status buttons */}
+                                                    <div className="flex items-center gap-1">
+                                                        {statusSaving && <svg className="w-3 h-3 animate-spin text-gray-400" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"/></svg>}
+                                                        {(["active", "inactive", "cancelled"] as const).map((s) => {
+                                                            const isActive = selected.status === s;
+                                                            const styles: Record<string, string> = {
+                                                                active:    isActive ? "bg-emerald-500 text-white border-emerald-500" : "text-emerald-600 border-emerald-200 hover:bg-emerald-50",
+                                                                inactive:  isActive ? "bg-gray-400 text-white border-gray-400"    : "text-gray-500 border-gray-200 hover:bg-gray-50",
+                                                                cancelled: isActive ? "bg-red-500 text-white border-red-500"      : "text-red-500 border-red-200 hover:bg-red-50",
+                                                            };
+                                                            const labels: Record<string, string> = { active: "Activo", inactive: "Inactivo", cancelled: "Cancelado" };
+                                                            return (
+                                                                <button key={s} onClick={() => handleStatusChange(s)} disabled={statusSaving}
+                                                                    className={`text-xs font-semibold px-2.5 py-1 rounded-lg border transition-all cursor-pointer disabled:opacity-50 ${styles[s]}`}>
+                                                                    {labels[s]}
+                                                                </button>
+                                                            );
+                                                        })}
+                                                    </div>
+                                                    {/* Edit / Save */}
                                                     {!editing ? (
                                                         <button
                                                             onClick={() => setEditing(true)}
                                                             className="inline-flex items-center gap-1.5 text-xs font-medium text-gray-600 border border-gray-200 rounded-lg px-3 py-1.5 hover:bg-gray-50 hover:border-gray-300 transition-all cursor-pointer"
                                                         >
                                                             <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
-                                                            Editar
+                                                            Editar campos
                                                         </button>
                                                     ) : (
                                                         <div className="flex gap-2">
@@ -482,6 +548,47 @@ export default function BusquedaPage() {
                                     </div>
                                 </div>
                             )}
+
+                            {/* ── Internal notes ── */}
+                            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+                                <div className="flex items-center justify-between px-6 py-4 border-b border-gray-50">
+                                    <div className="flex items-center gap-2">
+                                        <svg className="w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+                                            <path strokeLinecap="round" strokeLinejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                                        </svg>
+                                        <h3 className="text-sm font-semibold text-gray-700">Notas internas</h3>
+                                    </div>
+                                    {notesSaved && (
+                                        <span className="flex items-center gap-1 text-xs text-emerald-600 font-medium">
+                                            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
+                                            Guardado
+                                        </span>
+                                    )}
+                                </div>
+                                <div className="p-6">
+                                    <textarea
+                                        value={notesDraft}
+                                        onChange={e => setNotesDraft(e.target.value)}
+                                        onBlur={handleSaveNotes}
+                                        rows={4}
+                                        placeholder="Agrega notas sobre este usuario (visible solo para el equipo)…"
+                                        className="w-full text-sm text-gray-700 placeholder:text-gray-300 border border-gray-200 rounded-xl px-4 py-3 resize-none focus:outline-none focus:ring-2 focus:ring-yellow-orange-300 focus:border-yellow-orange-300 transition-all"
+                                    />
+                                    <div className="flex items-center justify-between mt-2.5">
+                                        <p className="text-xs text-gray-300">Se guarda al perder el foco</p>
+                                        <button
+                                            onClick={handleSaveNotes}
+                                            disabled={notesSaving}
+                                            className="inline-flex items-center gap-1.5 text-xs font-semibold text-white bg-gradient-to-r from-falu-red-600 to-red-500 rounded-lg px-3.5 py-1.5 hover:opacity-90 transition disabled:opacity-50 shadow-sm cursor-pointer"
+                                        >
+                                            {notesSaving
+                                                ? <><svg className="w-3 h-3 animate-spin" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" /><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" /></svg>Guardando…</>
+                                                : <><svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>Guardar</>
+                                            }
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     )}
                 </div>

@@ -29,11 +29,15 @@ function planColor(plan: string) {
 }
 
 const PAGE_SIZE = 15;
+const PLANS = ["Essential", "Premium", "Personalizado", "Speaking"];
 
 export default function RecurrentesPage() {
     const [users, setUsers] = useState<RecurringUser[]>([]);
     const [loading, setLoading] = useState(true);
     const [currentPage, setCurrentPage] = useState(1);
+    const [search, setSearch] = useState("");
+    const [planFilter, setPlanFilter] = useState("all");
+    const [sortBy, setSortBy] = useState<"payment_count" | "total_paid" | "last_payment">("payment_count");
     const router = useRouter();
 
     useEffect(() => {
@@ -64,15 +68,66 @@ export default function RecurrentesPage() {
 
     const totalRevenue = users.reduce((sum, u) => sum + u.total_paid, 0);
     const totalPayments = users.reduce((sum, u) => sum + u.payment_count, 0);
-    const totalPages = Math.ceil(users.length / PAGE_SIZE);
-    const paginated = users.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
+
+    const filtered = users
+        .filter((u) => {
+            const q = search.toLowerCase();
+            const matchSearch = !q || u.full_name.toLowerCase().includes(q) || u.email.toLowerCase().includes(q);
+            const matchPlan = planFilter === "all" || u.plan === planFilter;
+            return matchSearch && matchPlan;
+        })
+        .sort((a, b) => {
+            if (sortBy === "total_paid") return b.total_paid - a.total_paid;
+            if (sortBy === "last_payment") return new Date(b.last_payment).getTime() - new Date(a.last_payment).getTime();
+            return b.payment_count - a.payment_count;
+        });
+
+    const totalPages = Math.ceil(filtered.length / PAGE_SIZE);
+    const paginated = filtered.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
+
+    function resetPage() { setCurrentPage(1); }
+
+    function exportCSV() {
+        const headers = ["Nombre", "Email", "País", "Plan", "Pagos", "Total pagado (USD)", "Primer pago", "Último pago"];
+        const rows = filtered.map((u) => [
+            u.full_name,
+            u.email,
+            u.country,
+            u.plan,
+            u.payment_count,
+            (u.total_paid / 100).toFixed(2),
+            dayjs.utc(u.first_payment).format("YYYY-MM-DD"),
+            dayjs.utc(u.last_payment).format("YYYY-MM-DD"),
+        ]);
+        const csv = [headers, ...rows].map((r) => r.map((v) => `"${String(v).replace(/"/g, '""')}"`).join(",")).join("\n");
+        const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `recurrentes_${dayjs().format("YYYY-MM-DD")}.csv`;
+        a.click();
+        URL.revokeObjectURL(url);
+    }
 
     return (
         <div className="p-4 md:p-8 max-w-screen-xl mx-auto">
             {/* Header */}
-            <div className="mb-7">
-                <h1 className="text-2xl md:text-3xl font-bold text-gray-800">Usuarios Recurrentes</h1>
-                <p className="text-sm text-gray-400 mt-1">Usuarios con más de un pago registrado</p>
+            <div className="flex items-start justify-between mb-7 gap-4">
+                <div>
+                    <h1 className="text-2xl md:text-3xl font-bold text-gray-800">Usuarios Recurrentes</h1>
+                    <p className="text-sm text-gray-400 mt-1">Usuarios con más de un pago registrado</p>
+                </div>
+                {filtered.length > 0 && (
+                    <button
+                        onClick={exportCSV}
+                        className="flex-shrink-0 inline-flex items-center gap-2 text-xs font-semibold text-gray-600 border border-gray-200 bg-white rounded-xl px-4 py-2.5 hover:bg-gray-50 hover:border-gray-300 transition-all shadow-sm"
+                    >
+                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                        </svg>
+                        Exportar CSV
+                    </button>
+                )}
             </div>
 
             {/* Summary Cards */}
@@ -112,20 +167,65 @@ export default function RecurrentesPage() {
                 </div>
             </div>
 
-            {users.length > 0 && (
+            {/* Filters */}
+            <div className="flex flex-col sm:flex-row gap-3 mb-5">
+                {/* Search */}
+                <div className="relative flex-1 max-w-xs">
+                    <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-4.35-4.35M17 11A6 6 0 115 11a6 6 0 0112 0z" />
+                    </svg>
+                    <input
+                        type="text"
+                        placeholder="Nombre o email…"
+                        value={search}
+                        onChange={(e) => { setSearch(e.target.value); resetPage(); }}
+                        className="w-full pl-9 pr-3 py-2 text-sm bg-white border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-yellow-orange-300 focus:border-yellow-orange-300 transition-all"
+                    />
+                </div>
+
+                {/* Plan pills */}
+                <div className="flex items-center gap-1.5 flex-wrap">
+                    <button onClick={() => { setPlanFilter("all"); resetPage(); }}
+                        className={`text-xs font-semibold px-3 py-1.5 rounded-lg border transition-all ${planFilter === "all" ? "bg-gray-800 text-white border-gray-800" : "bg-white text-gray-500 border-gray-200 hover:border-gray-300"}`}>
+                        Todos
+                    </button>
+                    {PLANS.map((p) => (
+                        <button key={p} onClick={() => { setPlanFilter(p); resetPage(); }}
+                            className={`text-xs font-semibold px-3 py-1.5 rounded-lg border transition-all ${planFilter === p ? "bg-gray-800 text-white border-gray-800" : "bg-white text-gray-500 border-gray-200 hover:border-gray-300"}`}>
+                            {p}
+                        </button>
+                    ))}
+                </div>
+
+                {/* Sort */}
+                <select
+                    value={sortBy}
+                    onChange={(e) => { setSortBy(e.target.value as typeof sortBy); resetPage(); }}
+                    className="text-sm bg-white border border-gray-200 rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-yellow-orange-300 text-gray-600"
+                >
+                    <option value="payment_count">Más pagos</option>
+                    <option value="total_paid">Mayor LTV</option>
+                    <option value="last_payment">Último pago</option>
+                </select>
+            </div>
+
+            {filtered.length > 0 && (
                 <p className="text-xs text-gray-400 mb-3 px-1">
-                    <strong className="text-gray-600">{(currentPage - 1) * PAGE_SIZE + 1}–{Math.min(currentPage * PAGE_SIZE, users.length)}</strong> de <strong className="text-gray-600">{users.length}</strong> registros
+                    <strong className="text-gray-600">{(currentPage - 1) * PAGE_SIZE + 1}–{Math.min(currentPage * PAGE_SIZE, filtered.length)}</strong> de <strong className="text-gray-600">{filtered.length}</strong> registros
+                    {(search || planFilter !== "all") && <span className="ml-1 text-yellow-orange-500">(filtrado)</span>}
                 </p>
             )}
 
-            {users.length === 0 ? (
+            {filtered.length === 0 ? (
                 <div className="bg-white rounded-2xl border border-gray-100 p-12 text-center">
                     <div className="w-12 h-12 rounded-2xl bg-gray-50 flex items-center justify-center mx-auto mb-3">
                         <svg className="w-6 h-6 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
                             <path strokeLinecap="round" strokeLinejoin="round" d="M17 20h5v-2a4 4 0 00-5-3.87M9 20H4v-2a4 4 0 015-3.87m6-4a4 4 0 11-8 0 4 4 0 018 0z" />
                         </svg>
                     </div>
-                    <p className="text-sm text-gray-400">No hay usuarios con más de un pago registrado aún.</p>
+                    <p className="text-sm text-gray-400">
+                        {users.length === 0 ? "No hay usuarios con más de un pago registrado aún." : "Sin resultados para los filtros aplicados."}
+                    </p>
                 </div>
             ) : (
                 <>
