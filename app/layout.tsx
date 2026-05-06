@@ -38,6 +38,7 @@ export const metadata: Metadata = {
     siteName: "LZ English Academy",
     type: "website",
     locale: "es_ES",
+    images: [{ url: "/og-image.png", width: 1200, height: 630 }],
   },
   twitter: {
     card: "summary_large_image",
@@ -53,7 +54,7 @@ export const metadata: Metadata = {
 function OrganizationSchema() {
   const schema = {
     "@context": "https://schema.org",
-    "@type": "Organization",
+    "@type": "EducationalOrganization",
     name: "LZ English Academy",
     alternateName: "Método 590",
     url: BASE_URL,
@@ -80,12 +81,33 @@ function OrganizationSchema() {
       contactType: "customer support",
       availableLanguage: "Spanish",
     },
-    offers: {
-      "@type": "Offer",
-      name: "Plan Essential",
-      price: "10",
-      priceCurrency: "USD",
-      availability: "https://schema.org/InStock",
+    hasOfferCatalog: {
+      "@type": "OfferCatalog",
+      name: "Planes LZ English Academy",
+      itemListElement: [
+        {
+          "@type": "Offer",
+          name: "Plan Essential",
+          price: "10",
+          priceCurrency: "USD",
+          availability: "https://schema.org/InStock",
+          url: `${BASE_URL}/essential`,
+        },
+        {
+          "@type": "Offer",
+          name: "Plan Premium",
+          priceCurrency: "USD",
+          availability: "https://schema.org/InStock",
+          url: `${BASE_URL}/premium`,
+        },
+        {
+          "@type": "Offer",
+          name: "Plan Personalizado",
+          priceCurrency: "USD",
+          availability: "https://schema.org/InStock",
+          url: `${BASE_URL}/personalizado`,
+        },
+      ],
     },
   };
 

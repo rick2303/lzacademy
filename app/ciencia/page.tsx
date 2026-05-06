@@ -14,6 +14,7 @@ export const metadata: Metadata = {
     description:
       "Descubre la ciencia cognitiva detrás del Método 590: ritmo, repetición y consistencia para construir fluidez real en inglés.",
     url: "https://lz-englishacademy.com/ciencia",
+    images: [{ url: "https://lz-englishacademy.com/og-image.png", width: 1200, height: 630 }],
   },
 };
 

@@ -15,6 +15,7 @@ export const metadata: Metadata = {
     description:
       "Explora las 5 sesiones diarias del Método 590: Teoría, Escuchar, Memorización, Lectura y Práctica. Una rutina estructurada para aprender inglés en 90 días.",
     url: "https://lz-englishacademy.com/sesiones",
+    images: [{ url: "https://lz-englishacademy.com/og-image.png", width: 1200, height: 630 }],
   },
 };
 

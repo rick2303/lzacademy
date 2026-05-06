@@ -4,6 +4,14 @@ export const metadata = {
     title: "Da el primer paso — LZ English Academy",
     description:
         "Regístrate y recibe información detallada sobre el Método 590. Sin costo, sin compromiso.",
+    alternates: { canonical: "https://lz-englishacademy.com/interes" },
+    openGraph: {
+        title: "Da el primer paso — LZ English Academy",
+        description:
+            "Regístrate y recibe información detallada sobre el Método 590. Sin costo, sin compromiso.",
+        url: "https://lz-englishacademy.com/interes",
+        images: [{ url: "https://lz-englishacademy.com/og-image.png", width: 1200, height: 630 }],
+    },
 };
 
 export default function InterestPage() {

@@ -7,6 +7,14 @@ export const metadata = {
     title: "Nuestro propósito | LZ English Academy",
     description:
         "Un porcentaje de cada inscripción al Método 590 se destina a la Fundación LZ para financiar la educación de niños y niñas en situación vulnerable en Honduras.",
+    alternates: { canonical: "https://lz-englishacademy.com/fundacion" },
+    openGraph: {
+        title: "Nuestro propósito | LZ English Academy",
+        description:
+            "Un porcentaje de cada inscripción al Método 590 se destina a la Fundación LZ para financiar la educación de niños y niñas en situación vulnerable en Honduras.",
+        url: "https://lz-englishacademy.com/fundacion",
+        images: [{ url: "https://lz-englishacademy.com/og-image.png", width: 1200, height: 630 }],
+    },
 };
 
 export default function PropositoPage() {
