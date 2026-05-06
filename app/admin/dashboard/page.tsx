@@ -54,13 +54,32 @@ interface DashboardData {
     totalUsers: number;
     totalPayments: number;
     totalRevenue: number;
-    revenueByMonth: Record<string, { amount: number; count: number }>;
+    revenueByMonth: Record<string, { amount: number; count: number; byPlan?: Record<string, { count: number; amount: number }> }>;
     paymentsByPlan: Record<string, { count: number; amount: number }>;
     users: User[];
 }
 
 const PAGE_SIZE = 15;
 const STATUSES = ["active", "inactive", "cancelled"];
+
+function CopyEmail({ email }: { email: string }) {
+    const [copied, setCopied] = useState(false);
+    return (
+        <span className="inline-flex items-center gap-1.5 group max-w-[180px]">
+            <span className="truncate text-sm text-gray-600">{email}</span>
+            <button
+                onClick={() => { navigator.clipboard.writeText(email); setCopied(true); setTimeout(() => setCopied(false), 1500); }}
+                className="flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity p-0.5 rounded text-gray-300 hover:text-gray-600 cursor-pointer"
+                title="Copiar correo"
+            >
+                {copied
+                    ? <svg className="w-3.5 h-3.5 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
+                    : <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-4 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg>
+                }
+            </button>
+        </span>
+    );
+}
 
 function StatCard({ label, value, sub, icon, accent = "text-falu-red-600", bg = "bg-falu-red-50" }: {
     label: string; value: string | number; sub?: string;
@@ -80,7 +99,7 @@ function StatCard({ label, value, sub, icon, accent = "text-falu-red-600", bg = 
 
 export default function Dashboard() {
     const [data, setData] = useState<DashboardData | null>(null);
-    const [filters, setFilters] = useState({ country: "", status: "", inscriptionDate: "", paymentDate: "" });
+    const [filters, setFilters] = useState({ country: "", status: "", plan: "", inscriptionDate: "", paymentDateFrom: "", paymentDateTo: "" });
     const [search, setSearch] = useState("");
     const [sortBy, setSortBy] = useState<"last_payment_date" | "id">("last_payment_date");
     const [showAtRisk, setShowAtRisk] = useState(false);
@@ -148,8 +167,10 @@ export default function Dashboard() {
     const filteredUsers = data.users.filter((u) => {
         if (filters.country && u.country !== filters.country) return false;
         if (filters.status && u.status !== filters.status) return false;
+        if (filters.plan && u.plan !== filters.plan) return false;
         if (filters.inscriptionDate && !u.inscription_date?.startsWith(filters.inscriptionDate)) return false;
-        if (filters.paymentDate && !u.last_payment_date?.startsWith(filters.paymentDate)) return false;
+        if (filters.paymentDateFrom && (!u.last_payment_date || dayjs.utc(u.last_payment_date).tz(PT).format("YYYY-MM-DD") < filters.paymentDateFrom)) return false;
+        if (filters.paymentDateTo && (!u.last_payment_date || dayjs.utc(u.last_payment_date).tz(PT).format("YYYY-MM-DD") > filters.paymentDateTo)) return false;
         if (showAtRisk && !atRiskUsers.find((r) => r.id === u.id)) return false;
         if (search) {
             const q = search.toLowerCase();
@@ -179,6 +200,7 @@ export default function Dashboard() {
     const planRows = Object.entries(data.paymentsByPlan ?? {}).sort((a, b) => b[1].count - a[1].count);
     const maxPlanCount = planRows[0]?.[1]?.count ?? 1;
 
+    const displayUsers = filteredUsers.length;
     const ticketPromedio = data.totalPayments > 0 ? data.totalRevenue / data.totalPayments : 0;
     const hasActiveFilters = Object.values(filters).some(Boolean) || !!search || showAtRisk;
 
@@ -193,13 +215,16 @@ export default function Dashboard() {
 
             {/* Summary Cards */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-5">
-                <StatCard label="Total usuarios" value={data.totalUsers}
+                <StatCard label="Total usuarios" value={displayUsers}
+                    sub={hasActiveFilters ? "filtrado" : undefined}
                     icon={<svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}><path strokeLinecap="round" strokeLinejoin="round" d="M17 20h5v-2a4 4 0 00-5-3.87M9 20H4v-2a4 4 0 015-3.87m6-4a4 4 0 11-8 0 4 4 0 018 0z" /></svg>}
                 />
                 <StatCard label="Total pagos" value={data.totalPayments}
+                    sub="histórico"
                     icon={<svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}><path strokeLinecap="round" strokeLinejoin="round" d="M3 10h18M7 15h1m4 0h1m-7 4h12a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>}
                 />
                 <StatCard label="Total revenue" value={`$${(data.totalRevenue / 100).toFixed(2)}`}
+                    sub="histórico"
                     icon={<svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}><path strokeLinecap="round" strokeLinejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" /></svg>}
                 />
                 <StatCard label="Ticket promedio" value={`$${(ticketPromedio / 100).toFixed(2)}`}
@@ -236,10 +261,12 @@ export default function Dashboard() {
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 mb-7">
                 {planRows.length > 0 && (
                     <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5">
-                        <h3 className="text-sm font-semibold text-gray-700 mb-4">Pagos por plan</h3>
-                        <div className="flex flex-col gap-3.5">
+                        <h3 className="text-sm font-semibold text-gray-700 mb-1">Pagos por plan</h3>
+                        <p className="text-xs text-gray-400 mb-4">Basado en el plan registrado en cada pago</p>
+                        <div className="flex flex-col gap-4">
                             {planRows.map(([plan, stats]) => {
-                                const pct = Math.round((stats.count / maxPlanCount) * 100);
+                                const pctCount = Math.round((stats.count / maxPlanCount) * 100);
+                                const revenuePct = data.totalRevenue > 0 ? ((stats.amount / data.totalRevenue) * 100).toFixed(1) : "0";
                                 return (
                                     <div key={plan}>
                                         <div className="flex items-center justify-between mb-1.5">
@@ -249,15 +276,20 @@ export default function Dashboard() {
                                             </div>
                                             <div className="flex items-center gap-3 text-xs">
                                                 <span className="font-semibold text-gray-700">{stats.count} pagos</span>
-                                                <span className="text-gray-400">${(stats.amount / 100).toFixed(0)}</span>
+                                                <span className="text-gray-500 font-medium">${(stats.amount / 100).toFixed(0)}</span>
+                                                <span className={`px-1.5 py-0.5 rounded-md font-semibold ${planColor(plan)} bg-opacity-10 text-gray-600`}>{revenuePct}%</span>
                                             </div>
                                         </div>
                                         <div className="w-full bg-gray-100 rounded-full h-2">
-                                            <div className={`h-2 rounded-full transition-all duration-500 ${planColor(plan)}`} style={{ width: `${pct}%` }} />
+                                            <div className={`h-2 rounded-full transition-all duration-500 ${planColor(plan)}`} style={{ width: `${pctCount}%` }} />
                                         </div>
                                     </div>
                                 );
                             })}
+                        </div>
+                        <div className="mt-4 pt-4 border-t border-gray-50 flex items-center justify-between">
+                            <span className="text-xs text-gray-400">Revenue total histórico</span>
+                            <span className="text-sm font-bold text-gray-700">${(data.totalRevenue / 100).toFixed(2)}</span>
                         </div>
                     </div>
                 )}
@@ -266,8 +298,9 @@ export default function Dashboard() {
                     <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
                         <div className="px-5 py-4 border-b border-gray-50">
                             <h3 className="text-sm font-semibold text-gray-700">Revenue por mes</h3>
+                            <p className="text-xs text-gray-400 mt-0.5">Desglose por plan registrado en cada pago</p>
                         </div>
-                        <div className="overflow-auto max-h-64">
+                        <div className="overflow-auto max-h-80">
                             <table className="min-w-full">
                                 <thead className="sticky top-0 bg-gray-50">
                                     <tr>
@@ -275,18 +308,21 @@ export default function Dashboard() {
                                         <th className="px-5 py-2.5 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Pagos</th>
                                         <th className="px-5 py-2.5 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Revenue</th>
                                         <th className="px-5 py-2.5 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">vs ant.</th>
+                                        <th className="px-5 py-2.5 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Por plan</th>
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-gray-50">
                                     {monthlyRows.map(([month, stats], i) => {
                                         const prev = monthlyRows[i + 1]?.[1]?.amount;
                                         const change = prev && prev > 0 ? ((stats.amount - prev) / prev) * 100 : null;
+                                        const byPlan = stats.byPlan ?? {};
+                                        const planEntries = Object.entries(byPlan).sort((a, b) => b[1].amount - a[1].amount);
                                         return (
                                             <tr key={month} className="hover:bg-gray-50 transition-colors">
-                                                <td className="px-5 py-2.5 text-sm font-medium text-gray-700">{formatMonth(month)}</td>
-                                                <td className="px-5 py-2.5 text-sm text-gray-500">{stats.count}</td>
-                                                <td className="px-5 py-2.5 text-sm font-semibold text-gray-800">${(stats.amount / 100).toFixed(2)}</td>
-                                                <td className="px-5 py-2.5">
+                                                <td className="px-5 py-3 text-sm font-medium text-gray-700 whitespace-nowrap">{formatMonth(month)}</td>
+                                                <td className="px-5 py-3 text-sm text-gray-500">{stats.count}</td>
+                                                <td className="px-5 py-3 text-sm font-semibold text-gray-800">${(stats.amount / 100).toFixed(2)}</td>
+                                                <td className="px-5 py-3">
                                                     {change !== null ? (
                                                         <span className={`text-xs font-semibold ${change >= 0 ? "text-emerald-600" : "text-red-500"}`}>
                                                             {change >= 0 ? "+" : ""}{change.toFixed(1)}%
@@ -294,6 +330,16 @@ export default function Dashboard() {
                                                     ) : (
                                                         <span className="text-xs text-gray-300">—</span>
                                                     )}
+                                                </td>
+                                                <td className="px-5 py-3">
+                                                    <div className="flex flex-wrap gap-1">
+                                                        {planEntries.map(([plan, s]) => (
+                                                            <span key={plan} className="inline-flex items-center gap-1 text-xs text-gray-600 bg-gray-50 border border-gray-100 px-2 py-0.5 rounded-md whitespace-nowrap">
+                                                                <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${planColor(plan)}`} />
+                                                                {plan} · {s.count}
+                                                            </span>
+                                                        ))}
+                                                    </div>
                                                 </td>
                                             </tr>
                                         );
@@ -304,6 +350,69 @@ export default function Dashboard() {
                     </div>
                 )}
             </div>
+
+            {/* Level distribution */}
+            {(() => {
+                const LEVEL_LABEL: Record<string, string> = {
+                    "Principiante":              "Principiante · A1",
+                    "Basico":                    "Básico · A2",
+                    "Intermedio":                "Intermedio · B1",
+                    "Intermedio alto-gramatica": "Intermedio alto · B2.1",
+                    "Intermedio alto-produccion":"Intermedio alto · B2.2",
+                };
+                const levelMap: Record<string, Record<string, number>> = {};
+                for (const u of data.users) {
+                    const lvl = u.level || "Sin nivel";
+                    const plan = u.plan || "Sin plan";
+                    if (!levelMap[lvl]) levelMap[lvl] = {};
+                    levelMap[lvl][plan] = (levelMap[lvl][plan] ?? 0) + 1;
+                }
+                const levels = Object.entries(levelMap)
+                    .map(([level, plans]) => ({ level, total: Object.values(plans).reduce((a, b) => a + b, 0), plans }))
+                    .sort((a, b) => {
+                        const ORDER = ["Principiante", "Basico", "Intermedio", "Intermedio alto-gramatica", "Intermedio alto-produccion"];
+                        const ai = ORDER.indexOf(a.level), bi = ORDER.indexOf(b.level);
+                        if (ai !== -1 && bi !== -1) return ai - bi;
+                        if (ai !== -1) return -1;
+                        if (bi !== -1) return 1;
+                        return b.total - a.total;
+                    });
+                const maxTotal = levels[0]?.total ?? 1;
+                if (levels.length === 0) return null;
+                return (
+                    <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 mb-7">
+                        <h3 className="text-sm font-semibold text-gray-700 mb-4">Distribución por nivel</h3>
+                        <div className="flex flex-col gap-3.5">
+                            {levels.map(({ level, total, plans }) => (
+                                <div key={level}>
+                                    <div className="flex items-center justify-between mb-1.5">
+                                        <span className="text-sm font-medium text-gray-700 w-48 flex-shrink-0">
+                                            {LEVEL_LABEL[level] ?? level}
+                                        </span>
+                                        <div className="flex items-center gap-2 flex-1 mx-3">
+                                            <div className="flex-1 h-2 bg-gray-100 rounded-full overflow-hidden">
+                                                <div
+                                                    className="h-full rounded-full bg-gradient-to-r from-falu-red-500 to-yellow-orange-400 transition-all duration-500"
+                                                    style={{ width: `${Math.round((total / maxTotal) * 100)}%` }}
+                                                />
+                                            </div>
+                                        </div>
+                                        <span className="text-sm font-semibold text-gray-700 w-6 text-right">{total}</span>
+                                    </div>
+                                    <div className="ml-20 flex flex-wrap gap-1.5">
+                                        {Object.entries(plans).sort((a,b) => b[1]-a[1]).map(([plan, count]) => (
+                                            <span key={plan} className="inline-flex items-center gap-1 text-xs text-gray-500 bg-gray-50 border border-gray-100 px-2 py-0.5 rounded-md">
+                                                <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${planColor(plan)}`} />
+                                                {plan} · {count}
+                                            </span>
+                                        ))}
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                );
+            })()}
 
             {/* Filters */}
             <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 mb-5">
@@ -338,6 +447,16 @@ export default function Dashboard() {
                         </select>
                     </div>
                     <div className="flex flex-col gap-1">
+                        <label className="text-xs text-gray-400 font-medium">Plan</label>
+                        <select className="p-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-orange-300 bg-gray-50"
+                            value={filters.plan} onChange={(e) => setFilters({ ...filters, plan: e.target.value })}>
+                            <option value="">Todos</option>
+                            {Array.from(new Set(data.users.map((u) => u.plan))).sort().map((p) => (
+                                <option key={p} value={p}>{p}</option>
+                            ))}
+                        </select>
+                    </div>
+                    <div className="flex flex-col gap-1">
                         <label className="text-xs text-gray-400 font-medium">Fecha de inicio</label>
                         <select className="p-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-orange-300 bg-gray-50"
                             value={filters.inscriptionDate} onChange={(e) => setFilters({ ...filters, inscriptionDate: e.target.value })}>
@@ -348,12 +467,17 @@ export default function Dashboard() {
                         </select>
                     </div>
                     <div className="flex flex-col gap-1 min-w-0">
-                        <label className="text-xs text-gray-400 font-medium">Último pago</label>
+                        <label className="text-xs text-gray-400 font-medium">Pagos desde</label>
                         <input type="date" className="p-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-orange-300 bg-gray-50 max-w-full"
-                            value={filters.paymentDate} onChange={(e) => setFilters({ ...filters, paymentDate: e.target.value })} />
+                            value={filters.paymentDateFrom} onChange={(e) => setFilters({ ...filters, paymentDateFrom: e.target.value })} />
+                    </div>
+                    <div className="flex flex-col gap-1 min-w-0">
+                        <label className="text-xs text-gray-400 font-medium">Pagos hasta</label>
+                        <input type="date" className="p-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-orange-300 bg-gray-50 max-w-full"
+                            value={filters.paymentDateTo} onChange={(e) => setFilters({ ...filters, paymentDateTo: e.target.value })} />
                     </div>
                     {hasActiveFilters && (
-                        <button onClick={() => { setFilters({ country: "", status: "", inscriptionDate: "", paymentDate: "" }); setSearch(""); setShowAtRisk(false); }}
+                        <button onClick={() => { setFilters({ country: "", status: "", plan: "", inscriptionDate: "", paymentDateFrom: "", paymentDateTo: "" }); setSearch(""); setShowAtRisk(false); }}
                             className="px-3 py-2 text-xs text-gray-400 hover:text-gray-700 border border-gray-200 rounded-lg hover:bg-gray-50 transition">
                             Limpiar
                         </button>
@@ -406,7 +530,7 @@ export default function Dashboard() {
                                 return (
                                     <tr key={u.id} className={`transition-colors ${isAtRisk ? "bg-amber-50 hover:bg-amber-100" : "hover:bg-gray-50"}`}>
                                         <td className="px-4 py-3 text-xs text-gray-400">{u.id}</td>
-                                        <td className="px-4 py-3 text-sm text-gray-600 max-w-[160px] truncate">{u.email}</td>
+                                        <td className="px-4 py-3"><CopyEmail email={u.email} /></td>
                                         <td className="px-4 py-3 text-sm font-semibold text-gray-800 whitespace-nowrap">
                                             {isAtRisk && <span className="inline-block w-1.5 h-1.5 rounded-full bg-amber-400 mr-1.5 mb-0.5" />}
                                             {u.full_name}
@@ -467,7 +591,7 @@ export default function Dashboard() {
                                         {isAtRisk && <span className="inline-block w-1.5 h-1.5 rounded-full bg-amber-400 mr-1.5 mb-0.5" />}
                                         {u.full_name}
                                     </p>
-                                    <p className="text-xs text-gray-400 mt-0.5">{u.email}</p>
+                                    <CopyEmail email={u.email} />
                                 </div>
                                 <select
                                     value={u.status}

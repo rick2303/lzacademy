@@ -21,7 +21,7 @@ export const metadata: Metadata = {
 function PrimaryButton({ children }: { children: React.ReactNode }) {
   return (
     <a
-      href="/#planes"
+      href="/paso-uno"
       rel="noreferrer"
       className="inline-flex items-center justify-center rounded-xl px-5 py-3 text-sm font-semibold text-white bg-falu-red-700 hover:bg-falu-red-800 active:bg-falu-red-900 transition shadow-sm"
     >

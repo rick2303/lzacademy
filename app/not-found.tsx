@@ -11,7 +11,7 @@ const suggestedLinks = [
     { href: "/", label: "Inicio", description: "Ver el Método 590" },
     { href: "/metodo", label: "El método", description: "Cómo funciona en 90 días" },
     { href: "/historia", label: "La historia", description: "Por qué nació la academia" },
-    { href: "/#planes", label: "Planes y precios", description: "Essential $10 · Premium $50" },
+    { href: "/paso-uno", label: "Planes y precios", description: "Essential $10 · Premium $50" },
 ];
 
 export default function NotFound() {
@@ -63,7 +63,7 @@ export default function NotFound() {
                         {/* CTA principal */}
                         <div className="mt-10 flex flex-col items-center gap-3 sm:flex-row sm:justify-center">
                             <a
-                                href="/#form"
+                                href="/paso-uno"
                                 className="inline-flex items-center justify-center rounded-xl px-6 py-3 text-sm font-semibold text-white bg-falu-red-700 hover:bg-falu-red-800 transition shadow-sm"
                             >
                                 Inscribirme al Método 590

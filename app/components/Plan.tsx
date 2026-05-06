@@ -1,14 +1,13 @@
 "use client";
 
 import { Container } from "@/app/components/Container";
-import PremiumButton from "./PremiumButton";
 import { useStartDates } from "../hooks/useStartDates";
 
 const CALENDLY_SPEAKING_URL =
     process.env.NEXT_PUBLIC_CALENDLY_SPEAKING_URL || "https://calendly.com/lzacademy590/speaking-session";
 
 interface PlansSectionProps {
-    onSelectPlan?: (plan: "Essential" | "Personalizado") => void;
+    onSelectPlan?: (plan: "Essential" | "Premium" | "Personalizado") => void;
 }
 
 export default function PlansSection({ onSelectPlan }: PlansSectionProps) {
@@ -141,9 +140,12 @@ export default function PlansSection({ onSelectPlan }: PlansSectionProps) {
                             </ul>
                             <p className="mt-4 text-xs text-white/40 italic">Horario fijo lunes a jueves.</p>
                         </div>
-                        <div className="mt-6">
-                            <PremiumButton />
-                        </div>
+                        <button
+                            onClick={() => onSelectPlan?.("Premium")}
+                            className="mt-6 w-full inline-flex items-center justify-center rounded-xl px-4 py-3 text-sm font-semibold text-falu-red-900 bg-white hover:bg-zinc-50 transition"
+                        >
+                            Seleccionar Premium
+                        </button>
                     </div>
 
                     {/* ── 3. Personalizado ── */}
@@ -158,7 +160,7 @@ export default function PlansSection({ onSelectPlan }: PlansSectionProps) {
                             <p className="text-xs font-semibold uppercase tracking-widest text-white/40 mb-1">Personalizado</p>
                             <h3 className="text-xl font-extrabold text-white">Método 590 · 1:1</h3>
                             <div className="mt-4 flex items-baseline gap-1">
-                                <span className="text-4xl font-extrabold text-white">$100</span>
+                                <span className="text-4xl font-extrabold text-white">$120</span>
                                 <span className="text-sm text-white/40">/ mes</span>
                             </div>
                             <p className="mt-3 text-sm text-white/60 leading-relaxed">

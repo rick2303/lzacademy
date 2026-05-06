@@ -62,6 +62,15 @@ function RadioGroup({ options, value, onChange }: { options: string[]; value: st
     );
 }
 
+function getEmailSuggestion(email: string): string | null {
+    const TYPOS: Record<string, string> = { ".con": ".com", ".cmo": ".com", ".ocm": ".com", ".vom": ".com", ".coml": ".com" };
+    const lower = email.toLowerCase();
+    for (const [typo, fix] of Object.entries(TYPOS)) {
+        if (lower.endsWith(typo)) return email.slice(0, email.length - typo.length) + fix;
+    }
+    return null;
+}
+
 export default function InterestForm() {
     const [step, setStep] = useState(0);
     const [visible, setVisible] = useState(true);
@@ -69,6 +78,7 @@ export default function InterestForm() {
 
     const [formData, setFormData] = useState({
         email: "",
+        emailConfirm: "",
         fullName: "",
         country: "",
         englishLevel: "",
@@ -81,10 +91,12 @@ export default function InterestForm() {
     const [error, setError] = useState("");
     const [loading, setLoading] = useState(false);
     const [submitted, setSubmitted] = useState(false);
+    const [emailSuggestion, setEmailSuggestion] = useState<string | null>(null);
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
         const { name, value } = e.target;
         setFormData((prev) => ({ ...prev, [name]: value }));
+        if (name === "email") setEmailSuggestion(null);
         setError("");
     };
 
@@ -107,6 +119,7 @@ export default function InterestForm() {
         if (step === 0) {
             if (!formData.email) return "El correo electrónico es obligatorio";
             if (!formData.email.includes("@")) return "Ingresa un correo válido";
+            if (formData.email !== formData.emailConfirm) return "Los correos electrónicos no coinciden";
             if (!formData.fullName.trim()) return "El nombre completo es obligatorio";
             if (!formData.country) return "Selecciona tu país";
         }
@@ -194,7 +207,7 @@ export default function InterestForm() {
                         </a>
 
                         <a
-                            href="/#form"
+                            href="/paso-uno"
                             className="w-full inline-flex items-center justify-center gap-2 rounded-xl px-5 py-3.5 text-sm font-semibold text-white bg-falu-red-700 hover:bg-falu-red-800 transition shadow-sm"
                         >
                             Ver planes y comenzar
@@ -280,10 +293,45 @@ export default function InterestForm() {
                                         name="email"
                                         value={formData.email}
                                         onChange={handleChange}
+                                        onBlur={() => setEmailSuggestion(getEmailSuggestion(formData.email))}
                                         placeholder="tu@correo.com"
                                         className={inputClass}
                                         autoFocus
                                     />
+                                    {emailSuggestion && (
+                                        <div className="mt-2 flex items-center gap-2 rounded-xl bg-amber-50 border border-amber-200 px-3 py-2.5">
+                                            <svg className="h-4 w-4 shrink-0 text-amber-500" viewBox="0 0 16 16" fill="none">
+                                                <circle cx="8" cy="8" r="7" stroke="currentColor" strokeWidth="1.5" />
+                                                <path d="M8 5v3.5M8 11h.01" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+                                            </svg>
+                                            <p className="text-xs text-amber-800 flex-1">
+                                                ¿Quisiste escribir <strong>{emailSuggestion}</strong>?
+                                            </p>
+                                            <button
+                                                type="button"
+                                                onClick={() => { setFormData(prev => ({ ...prev, email: emailSuggestion!, emailConfirm: emailSuggestion! })); setEmailSuggestion(null); }}
+                                                className="text-xs font-semibold text-amber-700 hover:text-amber-900 underline underline-offset-2 shrink-0"
+                                            >
+                                                Corregir
+                                            </button>
+                                        </div>
+                                    )}
+                                </div>
+                                <div>
+                                    <FieldLabel htmlFor="emailConfirm">Confirmar correo *</FieldLabel>
+                                    <input
+                                        type="email"
+                                        id="emailConfirm"
+                                        name="emailConfirm"
+                                        value={formData.emailConfirm}
+                                        onChange={handleChange}
+                                        onPaste={e => e.preventDefault()}
+                                        placeholder="Repite tu correo"
+                                        className={inputClass}
+                                    />
+                                    {formData.emailConfirm && formData.email !== formData.emailConfirm && (
+                                        <p className="mt-1.5 text-xs text-red-500">Los correos no coinciden</p>
+                                    )}
                                 </div>
                                 <div>
                                     <FieldLabel htmlFor="fullName">Nombre completo *</FieldLabel>

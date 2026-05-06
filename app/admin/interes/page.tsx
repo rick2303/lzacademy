@@ -7,7 +7,11 @@ import * as XLSX from "xlsx";
 import { saveAs } from "file-saver";
 import dayjs from "dayjs";
 import utc from "dayjs/plugin/utc";
+import timezone from "dayjs/plugin/timezone";
 dayjs.extend(utc);
+dayjs.extend(timezone);
+
+const PT = "America/Los_Angeles";
 
 interface InterestSubmission {
     id: string;
@@ -25,6 +29,8 @@ interface InterestSubmission {
     why_community: string | null;
     life_change: string | null;
     additional_info: string | null;
+    contacted: boolean;
+    contacted_at: string | null;
 }
 
 interface DashboardStats {
@@ -107,7 +113,8 @@ function TextModal({
 }
 
 const TABLE_HEADERS = [
-    { label: "Fecha", key: "created_at" },
+    { label: "Contactado", key: "contacted" },
+    { label: "Fecha (PT)", key: "created_at" },
     { label: "Nombre", key: "full_name" },
     { label: "Email", key: "email" },
     { label: "País", key: "country" },
@@ -115,10 +122,6 @@ const TABLE_HEADERS = [
     { label: "Motivo", key: "motive" },
     { label: "Dificultad", key: "main_difficulty" },
     { label: "Rutina diaria", key: "daily_routine" },
-    { label: "Tiempo/día", key: "daily_time" },
-    { label: "Comunidad", key: "community" },
-    { label: "Curso interés", key: "interested_course" },
-    { label: "¿Por qué comunidad?", key: "why_community" },
     { label: "¿Qué cambiaría?", key: "life_change" },
     { label: "Info adicional", key: "additional_info" },
 ];
@@ -140,10 +143,31 @@ export default function InterestDashboard() {
         interested_course: "",
         dateFrom: "",
         dateTo: "",
+        contacted: "",
     });
     const [modal, setModal] = useState<{ title: string; text: string } | null>(null);
     const [currentPage, setCurrentPage] = useState(1);
+    const [toggling, setToggling] = useState<string | null>(null);
     const router = useRouter();
+
+    const handleToggleContacted = async (id: string, current: boolean) => {
+        setToggling(id);
+        setSubmissions(prev => prev.map(s => s.id === id
+            ? { ...s, contacted: !current, contacted_at: !current ? new Date().toISOString() : null }
+            : s));
+        try {
+            const { data: { session } } = await supabase.auth.getSession();
+            await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/admin/marketing/${id}/contacted`, {
+                method: "PATCH",
+                headers: { Authorization: `Bearer ${session!.access_token}`, "Content-Type": "application/json" },
+                body: JSON.stringify({ contacted: !current }),
+            });
+        } catch {
+            setSubmissions(prev => prev.map(s => s.id === id ? { ...s, contacted: current } : s));
+        } finally {
+            setToggling(null);
+        }
+    };
 
     useEffect(() => {
         async function loadData() {
@@ -157,7 +181,7 @@ export default function InterestDashboard() {
             }
 
             const response = await fetch(
-                `${process.env.NEXT_PUBLIC_BACKEND_URL}/admin/interes`,
+                `${process.env.NEXT_PUBLIC_BACKEND_URL}/admin/marketing`,
                 {
                     headers: {
                         Authorization: `Bearer ${session.access_token}`,
@@ -204,6 +228,8 @@ export default function InterestDashboard() {
             return false;
         if (filters.dateTo && dayjs.utc(s.created_at).isAfter(dayjs(filters.dateTo).endOf("day")))
             return false;
+        if (filters.contacted === "yes" && !s.contacted) return false;
+        if (filters.contacted === "no" && s.contacted) return false;
         return true;
     });
 
@@ -237,7 +263,7 @@ export default function InterestDashboard() {
 
     const handleExportExcel = () => {
         const exportData = filtered.map((s) => ({
-            Fecha: dayjs.utc(s.created_at).format("DD/MM/YYYY HH:mm"),
+            "Fecha (PT)": dayjs.utc(s.created_at).tz(PT).format("DD/MM/YYYY h:mm a"),
             Nombre: s.full_name,
             Email: s.email,
             País: s.country,
@@ -301,7 +327,7 @@ export default function InterestDashboard() {
             </div>
 
             {/* Summary Cards */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 mb-7">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-7">
                 <StatCard label="Total formularios" value={stats.total} accent="border-yellow-orange-500" />
                 <StatCard label="País con más interés" value={topCountry} accent="border-yellow-orange-400" />
                 <StatCard
@@ -310,6 +336,11 @@ export default function InterestDashboard() {
                     accent="border-green-400"
                 />
                 <StatCard label="Curso más solicitado" value={topCourse} accent="border-yellow-orange-300" />
+                <StatCard
+                    label="Contactados"
+                    value={`${submissions.filter(s => s.contacted).length} / ${submissions.length}`}
+                    accent="border-teal-400"
+                />
                 {conversion && (
                     <div className="bg-white rounded-2xl shadow-sm border-l-4 border-violet-400 border border-gray-100 p-4 sm:p-5 hover:shadow-md transition-shadow col-span-2 md:col-span-1">
                         <p className="text-xs font-medium text-gray-400 uppercase tracking-wide">Tasa de conversión</p>
@@ -395,10 +426,23 @@ export default function InterestDashboard() {
                         />
                     </div>
 
+                    <div className="flex flex-col">
+                        <label className="text-xs text-gray-500 font-medium mb-1">Contactado</label>
+                        <select
+                            className="p-2 border rounded focus:outline-none focus:ring-2 focus:ring-yellow-orange-400 shadow-sm text-sm"
+                            value={filters.contacted}
+                            onChange={(e) => setFilters({ ...filters, contacted: e.target.value })}
+                        >
+                            <option value="">Todos</option>
+                            <option value="yes">Contactados</option>
+                            <option value="no">No contactados</option>
+                        </select>
+                    </div>
+
                     {Object.values(filters).some(Boolean) && (
                         <div className="flex flex-col justify-end">
                             <button
-                                onClick={() => setFilters({ country: "", english_level: "", community: "", interested_course: "", dateFrom: "", dateTo: "" })}
+                                onClick={() => setFilters({ country: "", english_level: "", community: "", interested_course: "", dateFrom: "", dateTo: "", contacted: "" })}
                                 className="p-2 text-xs text-zinc-500 hover:text-zinc-700 underline transition"
                             >
                                 Limpiar filtros
@@ -432,10 +476,10 @@ export default function InterestDashboard() {
                 <table className="min-w-full divide-y divide-gray-100 text-sm">
                     <thead className="bg-gray-50">
                         <tr>
-                            {TABLE_HEADERS.map((h) => (
+                            {TABLE_HEADERS.map((h, i) => (
                                 <th
                                     key={h.key}
-                                    className="px-3 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider whitespace-nowrap"
+                                    className={`px-3 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider whitespace-nowrap ${i === 0 ? "sticky left-0 bg-gray-50 z-10" : ""}`}
                                 >
                                     {h.label}
                                 </th>
@@ -451,9 +495,29 @@ export default function InterestDashboard() {
                             </tr>
                         ) : (
                             paginated.map((s) => (
-                                <tr key={s.id} className="hover:bg-gray-50 transition-colors">
+                                <tr key={s.id} className={`hover:bg-gray-50 transition-colors ${s.contacted ? "bg-teal-50/40" : ""}`}>
+                                    <td className="px-3 py-2 whitespace-nowrap sticky left-0 z-10 bg-white">
+                                        <button
+                                            onClick={() => handleToggleContacted(s.id, s.contacted)}
+                                            disabled={toggling === s.id}
+                                            title={s.contacted ? `Contactado el ${s.contacted_at ? dayjs.utc(s.contacted_at).tz(PT).format("DD/MM/YY") : ""}` : "Marcar como contactado"}
+                                            className={`inline-flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-full transition disabled:opacity-50 ${
+                                                s.contacted
+                                                    ? "bg-teal-100 text-teal-700 hover:bg-teal-200"
+                                                    : "bg-gray-100 text-gray-400 hover:bg-gray-200"
+                                            }`}
+                                        >
+                                            {toggling === s.id
+                                                ? <svg className="w-3 h-3 animate-spin" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"/></svg>
+                                                : s.contacted
+                                                    ? <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
+                                                    : <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><circle cx="12" cy="12" r="9"/></svg>
+                                            }
+                                            {s.contacted ? "Sí" : "No"}
+                                        </button>
+                                    </td>
                                     <td className="px-3 py-2 whitespace-nowrap text-xs text-gray-400">
-                                        {dayjs.utc(s.created_at).format("DD/MM/YY HH:mm")}
+                                        {dayjs.utc(s.created_at).tz(PT).format("DD/MM/YY h:mm a")}
                                     </td>
                                     <td className="px-3 py-2 whitespace-nowrap font-semibold text-gray-800">{s.full_name}</td>
                                     <td className="px-3 py-2 whitespace-nowrap text-gray-500">{s.email}</td>
@@ -462,12 +526,6 @@ export default function InterestDashboard() {
                                     <td className="px-3 py-2 text-xs text-gray-500 max-w-[140px] truncate" title={s.motive}>{s.motive}</td>
                                     <td className="px-3 py-2 text-xs text-gray-500 max-w-[140px] truncate" title={s.main_difficulty}>{s.main_difficulty}</td>
                                     <td className="px-3 py-2"><Badge value={s.daily_routine} /></td>
-                                    <td className="px-3 py-2 whitespace-nowrap text-xs text-gray-500">{s.daily_time}</td>
-                                    <td className="px-3 py-2"><Badge value={s.community} /></td>
-                                    <td className="px-3 py-2"><Badge value={s.interested_course} /></td>
-                                    <td className="px-3 py-2">
-                                        <LongText title="¿Por qué comunidad?" value={s.why_community} />
-                                    </td>
                                     <td className="px-3 py-2">
                                         <LongText title="¿Qué cambiaría en tu vida?" value={s.life_change} />
                                     </td>
