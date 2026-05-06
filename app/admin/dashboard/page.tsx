@@ -54,7 +54,7 @@ interface DashboardData {
     totalUsers: number;
     totalPayments: number;
     totalRevenue: number;
-    revenueByMonth: Record<string, { amount: number; count: number }>;
+    revenueByMonth: Record<string, { amount: number; count: number; byPlan?: Record<string, { count: number; amount: number }> }>;
     paymentsByPlan: Record<string, { count: number; amount: number }>;
     users: User[];
 }
@@ -261,10 +261,12 @@ export default function Dashboard() {
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 mb-7">
                 {planRows.length > 0 && (
                     <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5">
-                        <h3 className="text-sm font-semibold text-gray-700 mb-4">Pagos por plan</h3>
-                        <div className="flex flex-col gap-3.5">
+                        <h3 className="text-sm font-semibold text-gray-700 mb-1">Pagos por plan</h3>
+                        <p className="text-xs text-gray-400 mb-4">Basado en el plan registrado en cada pago</p>
+                        <div className="flex flex-col gap-4">
                             {planRows.map(([plan, stats]) => {
-                                const pct = Math.round((stats.count / maxPlanCount) * 100);
+                                const pctCount = Math.round((stats.count / maxPlanCount) * 100);
+                                const revenuePct = data.totalRevenue > 0 ? ((stats.amount / data.totalRevenue) * 100).toFixed(1) : "0";
                                 return (
                                     <div key={plan}>
                                         <div className="flex items-center justify-between mb-1.5">
@@ -274,15 +276,20 @@ export default function Dashboard() {
                                             </div>
                                             <div className="flex items-center gap-3 text-xs">
                                                 <span className="font-semibold text-gray-700">{stats.count} pagos</span>
-                                                <span className="text-gray-400">${(stats.amount / 100).toFixed(0)}</span>
+                                                <span className="text-gray-500 font-medium">${(stats.amount / 100).toFixed(0)}</span>
+                                                <span className={`px-1.5 py-0.5 rounded-md font-semibold ${planColor(plan)} bg-opacity-10 text-gray-600`}>{revenuePct}%</span>
                                             </div>
                                         </div>
                                         <div className="w-full bg-gray-100 rounded-full h-2">
-                                            <div className={`h-2 rounded-full transition-all duration-500 ${planColor(plan)}`} style={{ width: `${pct}%` }} />
+                                            <div className={`h-2 rounded-full transition-all duration-500 ${planColor(plan)}`} style={{ width: `${pctCount}%` }} />
                                         </div>
                                     </div>
                                 );
                             })}
+                        </div>
+                        <div className="mt-4 pt-4 border-t border-gray-50 flex items-center justify-between">
+                            <span className="text-xs text-gray-400">Revenue total histórico</span>
+                            <span className="text-sm font-bold text-gray-700">${(data.totalRevenue / 100).toFixed(2)}</span>
                         </div>
                     </div>
                 )}
@@ -291,8 +298,9 @@ export default function Dashboard() {
                     <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
                         <div className="px-5 py-4 border-b border-gray-50">
                             <h3 className="text-sm font-semibold text-gray-700">Revenue por mes</h3>
+                            <p className="text-xs text-gray-400 mt-0.5">Desglose por plan registrado en cada pago</p>
                         </div>
-                        <div className="overflow-auto max-h-64">
+                        <div className="overflow-auto max-h-80">
                             <table className="min-w-full">
                                 <thead className="sticky top-0 bg-gray-50">
                                     <tr>
@@ -300,18 +308,21 @@ export default function Dashboard() {
                                         <th className="px-5 py-2.5 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Pagos</th>
                                         <th className="px-5 py-2.5 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Revenue</th>
                                         <th className="px-5 py-2.5 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">vs ant.</th>
+                                        <th className="px-5 py-2.5 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Por plan</th>
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-gray-50">
                                     {monthlyRows.map(([month, stats], i) => {
                                         const prev = monthlyRows[i + 1]?.[1]?.amount;
                                         const change = prev && prev > 0 ? ((stats.amount - prev) / prev) * 100 : null;
+                                        const byPlan = stats.byPlan ?? {};
+                                        const planEntries = Object.entries(byPlan).sort((a, b) => b[1].amount - a[1].amount);
                                         return (
                                             <tr key={month} className="hover:bg-gray-50 transition-colors">
-                                                <td className="px-5 py-2.5 text-sm font-medium text-gray-700">{formatMonth(month)}</td>
-                                                <td className="px-5 py-2.5 text-sm text-gray-500">{stats.count}</td>
-                                                <td className="px-5 py-2.5 text-sm font-semibold text-gray-800">${(stats.amount / 100).toFixed(2)}</td>
-                                                <td className="px-5 py-2.5">
+                                                <td className="px-5 py-3 text-sm font-medium text-gray-700 whitespace-nowrap">{formatMonth(month)}</td>
+                                                <td className="px-5 py-3 text-sm text-gray-500">{stats.count}</td>
+                                                <td className="px-5 py-3 text-sm font-semibold text-gray-800">${(stats.amount / 100).toFixed(2)}</td>
+                                                <td className="px-5 py-3">
                                                     {change !== null ? (
                                                         <span className={`text-xs font-semibold ${change >= 0 ? "text-emerald-600" : "text-red-500"}`}>
                                                             {change >= 0 ? "+" : ""}{change.toFixed(1)}%
@@ -319,6 +330,16 @@ export default function Dashboard() {
                                                     ) : (
                                                         <span className="text-xs text-gray-300">—</span>
                                                     )}
+                                                </td>
+                                                <td className="px-5 py-3">
+                                                    <div className="flex flex-wrap gap-1">
+                                                        {planEntries.map(([plan, s]) => (
+                                                            <span key={plan} className="inline-flex items-center gap-1 text-xs text-gray-600 bg-gray-50 border border-gray-100 px-2 py-0.5 rounded-md whitespace-nowrap">
+                                                                <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${planColor(plan)}`} />
+                                                                {plan} · {s.count}
+                                                            </span>
+                                                        ))}
+                                                    </div>
                                                 </td>
                                             </tr>
                                         );

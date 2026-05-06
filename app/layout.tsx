@@ -2,6 +2,22 @@ import "./globals.css";
 import type { Metadata } from "next";
 import Script from "next/script";
 import { SiteWrapper } from "./components/SiteWrapper";
+import { Playfair_Display, Barlow_Condensed , Charmonman} from "next/font/google";
+
+const playfair = Playfair_Display({
+  subsets: ["latin"],
+  style: ["normal", "italic"],
+  weight: ["400", "900"],
+  variable: "--font-playfair",
+  display: "swap",
+});
+
+const barlow = Barlow_Condensed({
+  subsets: ["latin"],
+  weight: ["700", "900"],
+  variable: "--font-barlow",
+  display: "swap",
+});
 
 const BASE_URL = "https://lz-englishacademy.com";
 
@@ -88,7 +104,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="es">
+    <html lang="es" className={`${playfair.variable} ${barlow.variable}`}>
       <head>
         <OrganizationSchema />
       </head>

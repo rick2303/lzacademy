@@ -207,7 +207,7 @@ export default function InterestForm() {
                         </a>
 
                         <a
-                            href="/#form"
+                            href="/paso-uno"
                             className="w-full inline-flex items-center justify-center gap-2 rounded-xl px-5 py-3.5 text-sm font-semibold text-white bg-falu-red-700 hover:bg-falu-red-800 transition shadow-sm"
                         >
                             Ver planes y comenzar

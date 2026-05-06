@@ -3,7 +3,7 @@
 import { usePathname } from "next/navigation";
 import { Navbar } from "./Navbar";
 import { Footer } from "./Footer";
-
+import { TopBar } from "./Infosessionsection";
 const WHATSAPP_URL = "https://chat.whatsapp.com/HhAvLoPoLwf1JsX0aWtnX1";
 const DISCORD_URL = "https://discord.gg/uf9xSWBGUA";
 
@@ -49,6 +49,7 @@ export function SiteWrapper({ children }: { children: React.ReactNode }) {
 
   return (
     <>
+      <TopBar />
       <Navbar />
       <div className="flex-1">{children}</div>
       <Footer />

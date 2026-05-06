@@ -1,7 +1,10 @@
-import React from "react";
+"use client";
+
+import React, { useState } from "react";
 
 const CALENDLY_INFO_URL =
     process.env.NEXT_PUBLIC_CALENDLY_INFO_URL || "https://calendly.com/lzacademy590/info-session-introduction";
+
 // ─── SVG Icons ────────────────────────────────────────────────────────────
 const IconCalendar = () => (
     <svg width="15" height="15" viewBox="0 0 16 16" fill="none">
@@ -55,6 +58,56 @@ const IconPerson = () => (
     </svg>
 );
 
+// ─── TopBar (barra superior dismissible) ─────────────────────────────────
+export function TopBar() {
+    const [visible, setVisible] = useState(true);
+
+    if (!visible) return null;
+
+    return (
+        <div
+            className="w-full flex items-center justify-center gap-3 px-4 py-2.5 text-sm relative"
+            style={{ backgroundColor: "#6b0f1a" }}
+        >
+            {/* Punto pulsante */}
+            <span
+                className="shrink-0 w-1.5 h-1.5 rounded-full animate-pulse"
+                style={{ backgroundColor: "#f5a623" }}
+            />
+
+            {/* Texto */}
+            <p className="text-white/90 text-center leading-snug">
+                <span className="font-bold" style={{ color: "#f5a623" }}>
+                    Info Sessions gratuitas
+                </span>{" "}
+                — Resuelva sus dudas sobre el Método 590 antes de inscribirse.{" "}
+                <span className="text-white/50 text-xs">Cupos limitados.</span>
+            </p>
+
+            {/* Botón Reservar */}
+            <a
+                href={CALENDLY_INFO_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="shrink-0 inline-flex items-center gap-1.5 rounded-full px-4 py-1.5 text-xs font-bold transition hover:opacity-90 active:scale-95"
+                style={{ backgroundColor: "#f5a623", color: "#3a1a00" }}
+            >
+                Reservar →
+            </a>
+
+            {/* Botón cerrar */}
+            <button
+                type="button"
+                onClick={() => setVisible(false)}
+                aria-label="Cerrar"
+                className="absolute right-4 top-1/2 -translate-y-1/2 text-white/50 hover:text-white transition text-base leading-none"
+            >
+                ×
+            </button>
+        </div>
+    );
+}
+
 // ─── Componente principal ─────────────────────────────────────────────────
 export function InfoSessionSection() {
     const bullets = [
@@ -86,19 +139,16 @@ export function InfoSessionSection() {
                         <p className="text-xs font-semibold uppercase tracking-widest mb-5" style={{ color: "#9c181d" }}>
                             Info Session — Gratuita
                         </p>
-
                         <h2 className="text-3xl sm:text-4xl font-black leading-tight mb-5" style={{ color: "#111" }}>
                             ¿Tiene dudas sobre
                             <br />
                             <span style={{ color: "#9c181d" }}>el Método 590?</span>
                         </h2>
-
                         <p className="text-base leading-relaxed mb-8" style={{ color: "#555", maxWidth: "460px" }}>
                             Empezar algo nuevo puede generar incertidumbre. Por eso abrimos
                             sesiones informativas gratuitas para explicar el programa y
                             ayudar a cada persona a decidir con claridad.
                         </p>
-
                         <ul className="space-y-3 mb-10">
                             {bullets.map((item) => (
                                 <li key={item} className="flex items-start gap-3 text-sm" style={{ color: "#333" }}>
@@ -107,8 +157,6 @@ export function InfoSessionSection() {
                                 </li>
                             ))}
                         </ul>
-
-                        {/* CTA principal — único botón */}
                         <a
                             href={CALENDLY_INFO_URL}
                             target="_blank"
@@ -119,36 +167,25 @@ export function InfoSessionSection() {
                             Reservar lugar gratuito
                             <IconArrow />
                         </a>
-
-                        {/* Cupos — debajo del botón */}
                         <p className="flex items-center gap-2 mt-3 text-xs" style={{ color: "#999" }}>
                             <span className="inline-block w-1.5 h-1.5 rounded-full animate-pulse shrink-0" style={{ background: "#f47a0c" }} />
                             Cupos limitados por sesión
                         </p>
                     </div>
 
-                    {/* ── Columna derecha: detalles estilo minimal ── */}
+                    {/* ── Columna derecha ── */}
                     <div
                         className="w-full lg:w-80 shrink-0 rounded-2xl overflow-hidden"
                         style={{ border: "1px solid rgba(156,24,29,0.12)", background: "#fff" }}
                     >
-                        {/* Franja superior con título */}
                         <div className="px-7 pt-7 pb-5">
                             <p className="text-xs font-semibold uppercase tracking-widest mb-1" style={{ color: "#9c181d" }}>
                                 Info Session
                             </p>
-                            <p className="text-2xl font-black" style={{ color: "#111" }}>
-                                Gratuita
-                            </p>
-                            <p className="text-xs mt-1" style={{ color: "#aaa" }}>
-                                sin costo · sin compromiso
-                            </p>
+                            <p className="text-2xl font-black" style={{ color: "#111" }}>Gratuita</p>
+                            <p className="text-xs mt-1" style={{ color: "#aaa" }}>sin costo · sin compromiso</p>
                         </div>
-
-                        {/* Divisor */}
                         <div style={{ height: "1px", background: "rgba(156,24,29,0.08)", margin: "0 28px" }} />
-
-                        {/* Detalles */}
                         <div className="px-7 py-5 space-y-5">
                             {details.map(({ Icon, label, value }) => (
                                 <div key={label} className="flex items-center gap-3">

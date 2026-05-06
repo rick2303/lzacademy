@@ -39,7 +39,7 @@ export function Footer() {
           {/* Derecha */}
           <div className="flex justify-start sm:justify-end">
             <a
-              href="/#form"
+              href="/paso-uno"
               className="text-xs font-semibold text-falu-red-800 hover:text-falu-red-900"
             >
               Inscribirme →

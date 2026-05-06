@@ -60,7 +60,7 @@ export default function PropositoPage() {
 
                                 <div className="mt-8 flex flex-col gap-3 sm:flex-row">
                                     <Link
-                                        href="/#planes"
+                                        href="/paso-uno"
                                         className="inline-flex items-center justify-center rounded-xl px-5 py-3 text-sm font-semibold text-white bg-falu-red-700 hover:bg-falu-red-800 active:bg-falu-red-900 transition shadow-sm"
                                     >
                                         Ver planes del Método 590
@@ -117,7 +117,7 @@ export default function PropositoPage() {
 
                                     <div className="mt-6">
                                         <Link
-                                            href="/#form"
+                                            href="/paso-uno"
                                             className="text-sm font-semibold text-falu-red-800 hover:text-falu-red-900"
                                         >
                                             Comenzar mi proceso →
@@ -207,7 +207,7 @@ export default function PropositoPage() {
 
                             <div className="mt-6 flex flex-col gap-3 sm:flex-row">
                                 <Link
-                                    href="/#planes"
+                                    href="/paso-uno"
                                     className="inline-flex items-center justify-center rounded-xl px-5 py-3 text-sm font-semibold text-white bg-falu-red-700 hover:bg-falu-red-800 transition shadow-sm"
                                 >
                                     Elegir un plan
@@ -287,13 +287,13 @@ export default function PropositoPage() {
 
                             <div className="lg:col-span-4 flex flex-col gap-3 sm:flex-row lg:justify-end">
                                 <Link
-                                    href="/#planes"
+                                    href="/paso-uno"
                                     className="inline-flex items-center justify-center rounded-xl px-5 py-3 text-sm font-semibold text-white bg-falu-red-700 hover:bg-falu-red-800 transition shadow-sm"
                                 >
                                     Ver planes
                                 </Link>
                                 <Link
-                                    href="/#form"
+                                    href="/paso-uno"
                                     className="inline-flex items-center justify-center rounded-xl px-5 py-3 text-sm font-semibold text-falu-red-800 ring-1 ring-inset ring-falu-red-200 hover:bg-falu-red-50 transition"
                                 >
                                     Ir al formulario

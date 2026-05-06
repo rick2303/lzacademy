@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
-import HomeClient from "./components/HomeClient";
+//import HomeClient from "./components/HomeClient";
+import InicioPage from "./inicio/iniciopage";
 
 export const metadata: Metadata = {
   title: "LZ English Academy | Aprende inglés rápido y con propósito",
@@ -24,5 +25,6 @@ export const metadata: Metadata = {
 };
 
 export default function Page() {
-  return <HomeClient />;
+  //return <HomeClient />;
+  return <InicioPage />;
 }

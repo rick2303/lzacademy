@@ -93,7 +93,19 @@ function getEmailSuggestion(email: string): string | null {
 
 // ─── Componente principal ─────────────────────────────────────────────────────
 
-const PaymentForm = ({ selectedPlan }: { selectedPlan: PlanType }) => {
+const PaymentForm = ({
+    selectedPlan,
+    selectedNivel = "",
+    selectedDificultades = "",
+    embedded = false,
+    onPlanChange,
+}: {
+    selectedPlan: PlanType;
+    selectedNivel?: string;
+    selectedDificultades?: string;
+    embedded?: boolean;
+    onPlanChange?: (plan: PlanType) => void;
+}) => {
     const [plan, setPlan] = useState<PlanType>(selectedPlan);
     const [loading, setLoading] = useState(false);
     const [emailSuggestion, setEmailSuggestion] = useState<string | null>(null);
@@ -104,14 +116,29 @@ const PaymentForm = ({ selectedPlan }: { selectedPlan: PlanType }) => {
         emailConfirm: "",
         fullName: "",
         country: "",
-        englishLevel: "",
+        englishLevel: selectedNivel,
         interestDate: "",
     });
     const [error, setError] = useState("");
     const [premiumSlots, setPremiumSlots] = useState<PremiumSlot[]>([]);
     const [premiumSlotsLoading, setPremiumSlotsLoading] = useState(false);
 
+    const planPrice: Record<PlanType, string> = { Essential: "$10/mes", Premium: "$50/mes", Personalizado: "$120/mes" };
+
     useEffect(() => { setPlan(selectedPlan); }, [selectedPlan]);
+
+    useEffect(() => {
+        if (selectedNivel) {
+            setFormData(prev => ({ ...prev, englishLevel: selectedNivel }));
+        }
+    }, [selectedNivel]);
+
+    // Auto-select the nearest available date
+    useEffect(() => {
+        if (availableDates.length > 0 && !formData.interestDate) {
+            setFormData(prev => ({ ...prev, interestDate: availableDates[0].value }));
+        }
+    }, [availableDates]);
 
     useEffect(() => {
         if (plan !== "Premium") { setPremiumSlots([]); return; }
@@ -128,8 +155,10 @@ const PaymentForm = ({ selectedPlan }: { selectedPlan: PlanType }) => {
             return "Completa tu correo y nombre";
         if (formData.email !== formData.emailConfirm)
             return "Los correos electrónicos no coinciden";
-        if (!formData.country || !formData.englishLevel)
-            return "Selecciona tu país y nivel de inglés";
+        if (!formData.country)
+            return "Selecciona tu país";
+        if (!formData.englishLevel)
+            return "Selecciona tu nivel de inglés";
         return null;
     };
 
@@ -137,6 +166,7 @@ const PaymentForm = ({ selectedPlan }: { selectedPlan: PlanType }) => {
         const { name, value } = e.target;
         if (name === "plan") {
             setPlan(value as PlanType);
+            onPlanChange?.(value as PlanType);
             const updates: Partial<typeof formData> = {};
             if (
                 (value === "Personalizado" && (formData.englishLevel === "Intermedio alto-gramatica" || formData.englishLevel === "Intermedio alto-produccion")) ||
@@ -173,6 +203,7 @@ const PaymentForm = ({ selectedPlan }: { selectedPlan: PlanType }) => {
                     level: formData.englishLevel,
                     interestDate: formData.interestDate,
                     description: planDetails[plan].description,
+                    motive: selectedDificultades || "no especificado",
                 }),
             });
             const data = await res.json();
@@ -185,28 +216,39 @@ const PaymentForm = ({ selectedPlan }: { selectedPlan: PlanType }) => {
         }
     };
 
-    return (
-        <section className="relative py-16 sm:py-20 overflow-hidden bg-zinc-50">
-            {/* Fondos decorativos */}
-            <div className="pointer-events-none absolute -top-40 left-1/2 -translate-x-1/2 h-96 w-96 rounded-full bg-falu-red-200/20 blur-3xl" />
-            <div className="pointer-events-none absolute -bottom-20 right-0 h-72 w-72 rounded-full bg-yellow-orange-200/15 blur-3xl" />
-
-            <div className="relative mx-auto max-w-2xl px-4 sm:px-6">
+    const formContent = (
+        <div className="w-full max-w-[580px]">
 
                 {/* Encabezado */}
-                <div className="text-center mb-10">
-                    <div className="inline-flex items-center gap-2 rounded-full bg-white px-4 py-1.5 text-xs font-semibold text-zinc-600 ring-1 ring-inset ring-zinc-200 mb-4">
-                        <span className="h-2 w-2 rounded-full bg-green-500 animate-pulse" />
-                        {availableDates.length > 0
-                            ? `Próximo inicio: ${availableDates[0].label}`
-                            : "Cupos disponibles · Próximamente"}
-                    </div>
+                <div className="text-center mb-6">
+                    {embedded && (
+                        <p className="text-xs font-bold uppercase tracking-widest mb-2" style={{ color: "#C0353E" }}>
+                            Paso 4 de 4
+                        </p>
+                    )}
                     <h2 className="text-2xl font-extrabold text-zinc-900 sm:text-3xl">
-                        Comenzá tu camino en inglés
+                        {embedded ? "¡Ya casi terminas!" : "Comenzá tu camino en inglés"}
                     </h2>
-                    <p className="mt-2 text-sm text-zinc-500">
-                        Completá el formulario y te reservamos tu cupo en el Plan que elijas.
+                    <p className="mt-1.5 text-sm text-zinc-500">
+                        {embedded
+                            ? "Confirma tus datos y reservamos tu cupo."
+                            : "Completá el formulario y te reservamos tu cupo en el Plan que elijas."}
                     </p>
+                    {embedded && (
+                        <div className="mt-3 inline-flex items-center gap-2 rounded-full px-4 py-1.5 text-xs font-semibold" style={{ backgroundColor: "#fadadd", color: "#C0353E" }}>
+                            <span>Plan {plan}</span>
+                            <span className="opacity-50">·</span>
+                            <span>{planPrice[plan]}</span>
+                        </div>
+                    )}
+                    {!embedded && (
+                        <div className="mt-3 inline-flex items-center gap-2 rounded-full bg-white px-4 py-1.5 text-xs font-semibold text-zinc-600 ring-1 ring-inset ring-zinc-200">
+                            <span className="h-2 w-2 rounded-full bg-green-500 animate-pulse" />
+                            {availableDates.length > 0
+                                ? `Próximo inicio: ${availableDates[0].label}`
+                                : "Cupos disponibles · Próximamente"}
+                        </div>
+                    )}
                 </div>
 
                 {/* Card del formulario */}
@@ -227,6 +269,7 @@ const PaymentForm = ({ selectedPlan }: { selectedPlan: PlanType }) => {
                                 onChange={handleChange}
                                 onBlur={() => setEmailSuggestion(getEmailSuggestion(formData.email))}
                                 placeholder="tu@correo.com"
+                                autoComplete="email"
                                 className={inputClass}
                                 required
                             />
@@ -258,8 +301,8 @@ const PaymentForm = ({ selectedPlan }: { selectedPlan: PlanType }) => {
                                 name="emailConfirm"
                                 value={formData.emailConfirm}
                                 onChange={handleChange}
-                                onPaste={e => e.preventDefault()}
                                 placeholder="Repite tu correo"
+                                autoComplete="email"
                                 className={inputClass}
                                 required
                             />
@@ -270,7 +313,7 @@ const PaymentForm = ({ selectedPlan }: { selectedPlan: PlanType }) => {
 
                         {/* Error de correos */}
                         {error && (
-                            <div className="flex items-start gap-2 rounded-xl bg-red-50 border border-red-200 px-4 py-3">
+                            <div role="alert" className="flex items-start gap-2 rounded-xl bg-red-50 border border-red-200 px-4 py-3">
                                 <svg className="mt-0.5 h-4 w-4 shrink-0 text-red-500" viewBox="0 0 16 16" fill="none">
                                     <circle cx="8" cy="8" r="7" stroke="currentColor" strokeWidth="1.5" />
                                     <path d="M8 5v3.5M8 11h.01" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
@@ -289,6 +332,7 @@ const PaymentForm = ({ selectedPlan }: { selectedPlan: PlanType }) => {
                                 value={formData.fullName}
                                 onChange={handleChange}
                                 placeholder="Tu nombre completo"
+                                autoComplete="name"
                                 className={inputClass}
                                 required
                             />
@@ -304,6 +348,7 @@ const PaymentForm = ({ selectedPlan }: { selectedPlan: PlanType }) => {
                                         name="country"
                                         value={formData.country}
                                         onChange={handleChange}
+                                        autoComplete="country"
                                         className={selectClass}
                                         required
                                     >
@@ -369,7 +414,7 @@ const PaymentForm = ({ selectedPlan }: { selectedPlan: PlanType }) => {
                                     >
                                         <option value="Essential">Essential — $10/mes</option>
                                         <option value="Premium">Premium — $50/mes</option>
-                                        <option value="Personalizado">Personalizado — $100/mes</option>
+                                        <option value="Personalizado">Personalizado — $120/mes</option>
                                     </select>
                                     <div className="pointer-events-none absolute inset-y-0 right-3 flex items-center">
                                         <svg className="h-4 w-4 text-zinc-400" viewBox="0 0 16 16" fill="none">
@@ -380,34 +425,8 @@ const PaymentForm = ({ selectedPlan }: { selectedPlan: PlanType }) => {
                             </div>
                         </div>
 
-                        {/* Fecha de inicio + Nivel en dos columnas */}
+                        {/* Nivel + Fecha en dos columnas */}
                         <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
-                            <div>
-                                <FieldLabel htmlFor="interestDate">Fecha de inicio *</FieldLabel>
-                                <div className="relative">
-                                    <select
-                                        id="interestDate"
-                                        name="interestDate"
-                                        value={formData.interestDate}
-                                        onChange={handleChange}
-                                        className={selectClass}
-                                        required
-                                    >
-                                        <option value="">Selecciona una fecha</option>
-                                        {availableDates.map((date) => (
-                                            <option key={date.value} value={date.value}>
-                                                {date.label}
-                                            </option>
-                                        ))}
-                                    </select>
-                                    <div className="pointer-events-none absolute inset-y-0 right-3 flex items-center">
-                                        <svg className="h-4 w-4 text-zinc-400" viewBox="0 0 16 16" fill="none">
-                                            <path d="M4 6l4 4 4-4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                                        </svg>
-                                    </div>
-                                </div>
-                            </div>
-
                             <div>
                                 <FieldLabel htmlFor="englishLevel">Nivel de inglés *</FieldLabel>
                                 <div className="relative">
@@ -425,6 +444,32 @@ const PaymentForm = ({ selectedPlan }: { selectedPlan: PlanType }) => {
                                         <option value="Intermedio">Intermedio (B1)</option>
                                         {plan !== "Personalizado" && <option value="Intermedio alto-gramatica">Intermedio alto (B2.1)</option>}
                                         {plan !== "Personalizado" && plan !== "Premium" && <option value="Intermedio alto-produccion">Intermedio alto (B2.2)</option>}
+                                    </select>
+                                    <div className="pointer-events-none absolute inset-y-0 right-3 flex items-center">
+                                        <svg className="h-4 w-4 text-zinc-400" viewBox="0 0 16 16" fill="none">
+                                            <path d="M4 6l4 4 4-4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                                        </svg>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div>
+                                <FieldLabel htmlFor="interestDate">Fecha de inicio *</FieldLabel>
+                                <div className="relative">
+                                    <select
+                                        id="interestDate"
+                                        name="interestDate"
+                                        value={formData.interestDate}
+                                        onChange={handleChange}
+                                        className={selectClass}
+                                        required
+                                    >
+                                        <option value="">Selecciona una fecha</option>
+                                        {availableDates.map((date) => (
+                                            <option key={date.value} value={date.value}>
+                                                {date.label}
+                                            </option>
+                                        ))}
                                     </select>
                                     <div className="pointer-events-none absolute inset-y-0 right-3 flex items-center">
                                         <svg className="h-4 w-4 text-zinc-400" viewBox="0 0 16 16" fill="none">
@@ -504,7 +549,7 @@ const PaymentForm = ({ selectedPlan }: { selectedPlan: PlanType }) => {
                                 </>
                             ) : (
                                 <>
-                                    {{ Essential: "Comenzar Essential — $10/mes", Premium: "Comenzar Premium — $50/mes", Personalizado: "Comenzar Personalizado — $100/mes" }[plan]}
+                                    {{ Essential: "Comenzar Essential — $10/mes", Premium: "Comenzar Premium — $50/mes", Personalizado: "Comenzar Personalizado — $120/mes" }[plan]}
                                     <svg className="h-4 w-4" viewBox="0 0 16 16" fill="none">
                                         <path stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
                                     </svg>
@@ -530,6 +575,17 @@ const PaymentForm = ({ selectedPlan }: { selectedPlan: PlanType }) => {
 
                     </form>
                 </div>
+        </div>
+    );
+
+    if (embedded) return formContent;
+
+    return (
+        <section className="relative py-16 sm:py-20 overflow-hidden bg-zinc-50">
+            <div className="pointer-events-none absolute -top-40 left-1/2 -translate-x-1/2 h-96 w-96 rounded-full bg-falu-red-200/20 blur-3xl" />
+            <div className="pointer-events-none absolute -bottom-20 right-0 h-72 w-72 rounded-full bg-yellow-orange-200/15 blur-3xl" />
+            <div className="relative mx-auto max-w-2xl px-4 sm:px-6">
+                {formContent}
             </div>
         </section>
     );

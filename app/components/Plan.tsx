@@ -160,7 +160,7 @@ export default function PlansSection({ onSelectPlan }: PlansSectionProps) {
                             <p className="text-xs font-semibold uppercase tracking-widest text-white/40 mb-1">Personalizado</p>
                             <h3 className="text-xl font-extrabold text-white">Método 590 · 1:1</h3>
                             <div className="mt-4 flex items-baseline gap-1">
-                                <span className="text-4xl font-extrabold text-white">$100</span>
+                                <span className="text-4xl font-extrabold text-white">$120</span>
                                 <span className="text-sm text-white/40">/ mes</span>
                             </div>
                             <p className="mt-3 text-sm text-white/60 leading-relaxed">
