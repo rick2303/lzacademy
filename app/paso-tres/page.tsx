@@ -21,7 +21,7 @@ const plans = [
     popular: false,
     badge: null,
     route: "/essential",
-    muñeca: "/muñecapaso3essential.svg",
+    muñeca: "/muñecapaso3essential.webp",
     features: [
       "Acceso completo al Método 590",
       "Acceso completo a la plataforma",
@@ -45,7 +45,7 @@ const plans = [
     popular: true,
     badge: { text: "Recomendado", bg: "#f5d9a0", color: "#7a4a00" },
     route: "/premium",
-    muñeca: "/muñecapaso3premium.svg",
+    muñeca: "/muñecapaso3premium.webp",
     features: [
       "Acceso completo al Método 590",
       "1 hora de clase diaria (lunes a jueves)",
@@ -72,7 +72,7 @@ const plans = [
     popular: false,
     badge: { text: "Solo para ti", bg: "#c7f2e0", color: "#145c3c" },
     route: "/personalizado",
-    muñeca: "/muñecapaso3personalizada.svg",
+    muñeca: "/muñecapaso3personalizada.webp",
     features: [
       "Sesiones privadas 1:1 adaptadas a ti",
       "Acceso completo al Método 590",
@@ -224,8 +224,8 @@ function PasosTresContent() {
                     src={plan.muñeca}
                     alt=""
                     fill
-                    className="object-contain object-bottom"
-                    unoptimized
+                    className="object-contain object-bottom [filter:drop-shadow(-20px_15px_25px_rgba(0,0,0,0.35))]"
+                    sizes="90vw"
                     priority
                   />
                 </div>
@@ -360,9 +360,9 @@ function PasosTresContent() {
                 src={plan.muñeca}
                 alt={`Muñeca ${plan.id}`}
                 fill
-                className="object-contain object-bottom"
+                className="object-contain object-bottom [filter:drop-shadow(-20px_15px_25px_rgba(0,0,0,0.35))]"
+                sizes="33vw"
                 priority
-                unoptimized
               />
             </div>
           ))}

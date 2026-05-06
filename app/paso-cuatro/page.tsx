@@ -23,9 +23,9 @@ const nivelMap: Record<string, string> = {
 };
 
 const planCharacter: Record<string, string> = {
-  Essential:     "/muñeca-essential.svg",
-  Premium:       "/muñeca-premium.svg",
-  Personalizado: "/muñeca-personalizada.svg",
+  Essential:     "/muñeca-essential.webp",
+  Premium:       "/muñeca-premium.webp",
+  Personalizado: "/muñeca-personalizada.webp",
 };
 
 function PasoCuatroContent() {
@@ -63,8 +63,8 @@ function PasoCuatroContent() {
               alt={`Muñeca ${activePlan}`}
               width={582}
               height={568}
-              className="w-auto h-[360px] lg:h-[520px] transition-opacity duration-300"
-              unoptimized
+              className="w-auto h-[360px] lg:h-[520px] transition-opacity duration-300 [filter:drop-shadow(-40px_30px_50px_rgba(0,0,0,0.45))]"
+              sizes="(max-width: 1024px) 360px, 520px"
               priority
             />
           </div>

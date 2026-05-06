@@ -52,13 +52,13 @@ export default function PasoUnoPage() {
           {/* Columna izquierda: imagen */}
           <div className="flex items-center justify-center order-2 lg:order-1">
             <Image
-              src="/muñecapaso1.svg"
+              src="/muñecapaso1.webp"
               alt="Personaje guía"
               width={582}
               height={568}
-              className="w-[560px] h-auto lg:w-full lg:max-w-[880px]"
+              className="w-[560px] h-auto lg:w-full lg:max-w-[880px] [filter:drop-shadow(-40px_30px_50px_rgba(0,0,0,0.45))]"
+              sizes="(max-width: 1024px) 560px, 880px"
               priority
-              unoptimized
             />
           </div>
 

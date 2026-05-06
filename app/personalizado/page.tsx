@@ -51,18 +51,18 @@ function PersonalizadoPlanContent() {
           {/* ── Columna izquierda: muñeca-personalizada ── */}
           <div className="flex items-center justify-center order-2 lg:order-1">
             <Image
-              src="/muñeca-personalizada.svg"
+              src="/muñeca-personalizada.webp"
               alt="Muñeca Personalizada"
               width={582}
               height={568}
-              className="w-[460px] h-auto lg:w-[560px]"
+              className="w-[460px] h-auto lg:w-[560px] [filter:drop-shadow(-40px_30px_50px_rgba(0,0,0,0.45))]"
+              sizes="(max-width: 1024px) 460px, 560px"
               priority
-              unoptimized
             />
           </div>
 
           {/* ── Columna derecha: contenido del plan ── */}
-          <div className="flex flex-col items-center justify-center py-6 lg:py-0 order-1 lg:order-2">
+          <div className="flex flex-col items-center justify-center pt-6 pb-14 lg:pt-8 lg:pb-12 order-1 lg:order-2">
 
             <div className="text-center mb-6 lg:mb-8 w-full">
               <h1

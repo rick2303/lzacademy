@@ -94,18 +94,18 @@ function PasosDosContent() {
           {/* ── Columna izquierda: muñecapaso2 ── */}
           <div className="flex items-center justify-center order-2 lg:order-1">
             <Image
-              src="/muñecapaso2.svg"
+              src="/muñecapaso2.webp"
               alt="Personaje guía paso 2"
               width={582}
               height={568}
-              className="w-[380px] h-auto -translate-x-8 lg:translate-x-0 lg:w-full lg:max-w-[580px]"
+              className="w-[380px] h-auto -translate-x-8 lg:translate-x-0 lg:w-full lg:max-w-[580px] [filter:drop-shadow(-40px_30px_50px_rgba(0,0,0,0.45))]"
+              sizes="(max-width: 1024px) 380px, 580px"
               priority
-              unoptimized
             />
           </div>
 
           {/* ── Columna derecha: pregunta + opciones ── */}
-          <div className="flex flex-col items-center justify-center py-4 lg:py-0 order-1 lg:order-2">
+          <div className="flex flex-col items-center justify-center pt-4 pb-14 lg:pt-8 lg:pb-12 order-1 lg:order-2">
 
             {/* Título */}
             <div className="text-center mb-4 lg:mb-8">

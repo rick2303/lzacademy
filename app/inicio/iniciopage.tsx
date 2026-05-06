@@ -26,12 +26,13 @@ export default function InicioPage() {
 
                         {/* Columna izquierda: texto + botones */}
                         <div className="z-10 flex flex-col items-start order-1 lg:order-1">
-                            <div className="relative mt-1 w-full h-[220px] sm:h-[280px] lg:h-[400px]">
+                            <div className="relative mt-1 w-full h-[300px] sm:h-[280px] lg:h-[400px]">
                                 <Image
-                                    src="/textoinicio.svg"
+                                    src="/textoinicio.webp"
                                     alt="M590 siguiente nivel en 90 dias"
                                     fill
                                     className="object-contain object-left-bottom"
+                                    sizes="(max-width: 1024px) 100vw, 50vw"
                                     priority
                                 />
                             </div>
@@ -64,12 +65,12 @@ export default function InicioPage() {
                         <div className="relative flex items-center justify-center lg:h-full order-2 lg:order-2">
                             <div className="relative w-full h-full min-h-[260px] select-none">
                                 <Image
-                                    src="/human.svg"
+                                    src="/human.webp"
                                     alt="Persona estudiando inglés con laptop"
                                     fill
                                     className="object-contain object-center"
+                                    sizes="(max-width: 1024px) 100vw, 50vw"
                                     priority
-                                    unoptimized
                                 />
                             </div>
                         </div>

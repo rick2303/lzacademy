@@ -47,13 +47,13 @@ function EssentialPlanContent() {
             {/* ── Columna izquierda: muñeca-essential ── */}
             <div className="flex items-center justify-center order-2 lg:order-1">
               <Image
-                src="/muñeca-essential.svg"
+                src="/muñeca-essential.webp"
                 alt="Muñeca Essential"
                 width={582}
                 height={568}
-                className="w-[380px] h-auto lg:w-[460px]"
+                className="w-[380px] h-auto lg:w-[460px] [filter:drop-shadow(-40px_30px_50px_rgba(0,0,0,0.45))]"
+                sizes="(max-width: 1024px) 380px, 460px"
                 priority
-                unoptimized
               />
             </div>
 
