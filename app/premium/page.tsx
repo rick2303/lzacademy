@@ -85,6 +85,7 @@ function PremiumPlanContent() {
                       <span className="text-4xl lg:text-5xl font-extrabold leading-none">$50</span>
                       <span className="text-xs lg:text-sm font-bold"> USD/mes</span>
                     </div>
+                    <p className="text-[11px] lg:text-[12px] text-zinc-400 font-medium mb-2">Facturación automática cada 4 semanas</p>
                     <p className="text-[12px] lg:text-[13px] text-zinc-500 font-medium leading-relaxed">
                       Para quienes quieren clases en vivo y avanzar más rápido con acompañamiento diario.
                     </p>

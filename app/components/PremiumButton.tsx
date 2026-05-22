@@ -312,7 +312,7 @@ export default function PremiumButton() {
                       Procesando...
                     </>
                   ) : (
-                    "Proceder al pago — $50/mes"
+                    "Proceder al pago — $50"
                   )}
                 </button>
 

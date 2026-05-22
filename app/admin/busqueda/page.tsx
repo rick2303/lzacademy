@@ -105,7 +105,33 @@ interface UserResult {
     inscription_date: string | null; last_payment_date: string | null;
     customer_stripe_id: string | null; created_at: string;
     notes: string | null;
+    subscription_status: string | null;
+    stripe_subscription_id: string | null;
+    cancel_at_period_end: boolean | null;
+    current_period_end: string | null;
     payments: Payment[]; interest: Interest[];
+}
+
+const SUB_STATUS_CHIP: Record<string, { bg: string; text: string; dot: string }> = {
+    active:              { bg: "bg-emerald-50", text: "text-emerald-700", dot: "bg-emerald-400" },
+    trialing:            { bg: "bg-blue-50",    text: "text-blue-700",    dot: "bg-blue-400" },
+    past_due:            { bg: "bg-amber-50",   text: "text-amber-700",   dot: "bg-amber-400" },
+    canceled:            { bg: "bg-red-50",     text: "text-red-600",     dot: "bg-red-400" },
+    cancelled:           { bg: "bg-red-50",     text: "text-red-600",     dot: "bg-red-400" },
+    unpaid:              { bg: "bg-red-50",     text: "text-red-600",     dot: "bg-red-400" },
+    incomplete:          { bg: "bg-gray-100",   text: "text-gray-500",    dot: "bg-gray-300" },
+    incomplete_expired:  { bg: "bg-gray-100",   text: "text-gray-500",    dot: "bg-gray-300" },
+};
+
+function SubStatusChip({ status }: { status: string | null }) {
+    if (!status) return <span className="text-gray-300 text-xs">—</span>;
+    const c = SUB_STATUS_CHIP[status] ?? { bg: "bg-gray-100", text: "text-gray-500", dot: "bg-gray-300" };
+    return (
+        <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold ${c.bg} ${c.text}`}>
+            <span className={`w-1.5 h-1.5 rounded-full ${c.dot}`} />
+            {status}
+        </span>
+    );
 }
 
 // ── Field atom ──────────────────────────────────────────
@@ -132,6 +158,10 @@ export default function BusquedaPage() {
     const [notesSaving, setNotesSaving] = useState(false);
     const [notesSaved, setNotesSaved] = useState(false);
     const [statusSaving, setStatusSaving] = useState(false);
+    const [subBusy, setSubBusy] = useState<null | "cancel" | "refund" | "portal">(null);
+    const [subMsg, setSubMsg] = useState<{ type: "success" | "error"; text: string } | null>(null);
+    const [portalUrl, setPortalUrl] = useState<string | null>(null);
+    const [portalCopied, setPortalCopied] = useState(false);
     const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
     const inputRef    = useRef<HTMLInputElement>(null);
     const router = useRouter();
@@ -175,6 +205,79 @@ export default function BusquedaPage() {
         setEditing(false);
         setSaved(false);
         setNotesSaved(false);
+        setSubMsg(null);
+        setPortalUrl(null);
+        setPortalCopied(false);
+        setSubBusy(null);
+    }
+
+    async function refreshUser(id: number) {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session) return;
+        const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/admin/search?q=${encodeURIComponent(query)}`, {
+            headers: { Authorization: `Bearer ${session.access_token}` },
+        });
+        const data = await res.json();
+        const list: UserResult[] = Array.isArray(data) ? data : [];
+        const fresh = list.find((u) => u.id === id);
+        if (fresh) {
+            setResults((prev) => prev.map((u) => (u.id === id ? fresh : u)));
+            setSelected((prev) => (prev && prev.id === id ? fresh : prev));
+        }
+    }
+
+    async function handleCancelSubscription(refund: boolean) {
+        if (!selected) return;
+        const ok = refund
+            ? window.confirm("¿Reembolsar y cancelar la suscripción ahora? Esto emitirá un REEMBOLSO al cliente (garantía de 3 días) y cancelará la suscripción de inmediato. Esta acción no se puede deshacer.")
+            : window.confirm("¿Programar la cancelación al fin del periodo actual? El usuario mantendrá el acceso hasta el final del periodo ya pagado.");
+        if (!ok) return;
+        setSubBusy(refund ? "refund" : "cancel");
+        setSubMsg(null);
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session) { setSubBusy(null); return; }
+        try {
+            const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/admin/users/${selected.id}/cancel-subscription`, {
+                method: "POST",
+                headers: { Authorization: `Bearer ${session.access_token}`, "Content-Type": "application/json" },
+                body: JSON.stringify({ refund }),
+            });
+            const data = await res.json();
+            if (!res.ok || !data.success) throw new Error(data?.error || "No se pudo procesar la solicitud");
+            setSubMsg({
+                type: "success",
+                text: data.mode === "refund_and_cancel"
+                    ? "Reembolso emitido y suscripción cancelada correctamente."
+                    : "Cancelación programada al fin del periodo correctamente.",
+            });
+            await refreshUser(selected.id);
+        } catch (err) {
+            setSubMsg({ type: "error", text: err instanceof Error ? err.message : "Ocurrió un error inesperado." });
+        } finally {
+            setSubBusy(null);
+        }
+    }
+
+    async function handleBillingPortal() {
+        if (!selected) return;
+        setSubBusy("portal");
+        setSubMsg(null);
+        setPortalUrl(null);
+        setPortalCopied(false);
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session) { setSubBusy(null); return; }
+        try {
+            const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/admin/users/${selected.id}/billing-portal`, {
+                headers: { Authorization: `Bearer ${session.access_token}` },
+            });
+            const data = await res.json();
+            if (!res.ok || !data.url) throw new Error(data?.error || "No se pudo generar el link del portal");
+            setPortalUrl(data.url);
+        } catch (err) {
+            setSubMsg({ type: "error", text: err instanceof Error ? err.message : "Ocurrió un error inesperado." });
+        } finally {
+            setSubBusy(null);
+        }
     }
 
     async function handleStatusChange(newStatus: string) {
@@ -478,6 +581,113 @@ export default function BusquedaPage() {
                                     </div>
                                 </div>
                             </div>
+
+                            {/* ── Suscripción ── */}
+                            {(selected.stripe_subscription_id || selected.subscription_status) && (
+                                <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+                                    <div className="flex items-center gap-2 px-6 py-4 border-b border-gray-50">
+                                        <svg className="w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+                                            <path strokeLinecap="round" strokeLinejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                                        </svg>
+                                        <h3 className="text-sm font-semibold text-gray-700">Suscripción</h3>
+                                    </div>
+                                    <div className="p-6">
+                                        {/* Info grid */}
+                                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-x-6 gap-y-5 mb-6">
+                                            <Field label="Estado">
+                                                <SubStatusChip status={selected.subscription_status} />
+                                            </Field>
+                                            <Field label="Cancela al fin del periodo">
+                                                {selected.cancel_at_period_end ? (
+                                                    <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-amber-50 text-amber-700">
+                                                        <span className="w-1.5 h-1.5 rounded-full bg-amber-400" />
+                                                        Sí
+                                                    </span>
+                                                ) : (
+                                                    <span className="font-medium text-gray-600">No</span>
+                                                )}
+                                            </Field>
+                                            <Field label="Fin de periodo">
+                                                <span className="text-gray-600">{fmtDate(selected.current_period_end)}</span>
+                                            </Field>
+                                            <Field label="Subscription ID">
+                                                <CopyBadge value={selected.stripe_subscription_id} label={selected.stripe_subscription_id ? selected.stripe_subscription_id.slice(0, 18) + "…" : undefined} />
+                                            </Field>
+                                        </div>
+
+                                        {/* Status message */}
+                                        {subMsg && (
+                                            <div className={`flex items-center gap-2 mb-4 px-3 py-2.5 rounded-xl text-xs font-medium ${subMsg.type === "success" ? "bg-emerald-50 border border-emerald-200 text-emerald-700" : "bg-red-50 border border-red-200 text-red-700"}`}>
+                                                {subMsg.type === "success"
+                                                    ? <svg className="w-4 h-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                                                    : <svg className="w-4 h-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" /></svg>
+                                                }
+                                                {subMsg.text}
+                                            </div>
+                                        )}
+
+                                        {/* Portal URL result */}
+                                        {portalUrl && (
+                                            <div className="mb-4 px-3 py-3 bg-gray-50 border border-gray-200 rounded-xl">
+                                                <p className="text-xs font-medium text-gray-500 mb-2">Link del portal de Stripe (envíalo al usuario):</p>
+                                                <div className="flex items-center gap-2">
+                                                    <input
+                                                        readOnly
+                                                        value={portalUrl}
+                                                        onFocus={(e) => e.currentTarget.select()}
+                                                        className="flex-1 min-w-0 font-mono text-xs text-gray-600 bg-white border border-gray-200 rounded-lg px-2.5 py-1.5 focus:outline-none focus:ring-2 focus:ring-yellow-orange-300"
+                                                    />
+                                                    <button
+                                                        onClick={() => { navigator.clipboard.writeText(portalUrl); setPortalCopied(true); setTimeout(() => setPortalCopied(false), 1500); }}
+                                                        className="flex-shrink-0 inline-flex items-center gap-1.5 text-xs font-semibold text-gray-600 border border-gray-200 bg-white rounded-lg px-3 py-1.5 hover:bg-gray-100 hover:border-gray-300 transition-all cursor-pointer"
+                                                    >
+                                                        {portalCopied
+                                                            ? <><svg className="w-3.5 h-3.5 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>Copiado</>
+                                                            : <><svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-4 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg>Copiar</>
+                                                        }
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        )}
+
+                                        {/* Actions */}
+                                        <div className="flex flex-col sm:flex-row flex-wrap gap-2.5">
+                                            <button
+                                                onClick={() => handleCancelSubscription(false)}
+                                                disabled={subBusy !== null}
+                                                className="inline-flex items-center justify-center gap-1.5 text-xs font-semibold text-gray-700 border border-gray-200 bg-white rounded-lg px-3.5 py-2 hover:bg-gray-50 hover:border-gray-300 transition-all disabled:opacity-50 cursor-pointer"
+                                            >
+                                                {subBusy === "cancel"
+                                                    ? <><svg className="w-3.5 h-3.5 animate-spin" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" /><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" /></svg>Procesando…</>
+                                                    : <><svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>Cancelar al fin del periodo</>
+                                                }
+                                            </button>
+
+                                            <button
+                                                onClick={() => handleCancelSubscription(true)}
+                                                disabled={subBusy !== null}
+                                                className="inline-flex items-center justify-center gap-1.5 text-xs font-semibold text-white bg-gradient-to-r from-red-600 to-red-500 rounded-lg px-3.5 py-2 hover:opacity-90 transition-all disabled:opacity-50 shadow-sm cursor-pointer"
+                                            >
+                                                {subBusy === "refund"
+                                                    ? <><svg className="w-3.5 h-3.5 animate-spin" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" /><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" /></svg>Procesando…</>
+                                                    : <><svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6" /></svg>Reembolsar y cancelar (garantía 3 días)</>
+                                                }
+                                            </button>
+
+                                            <button
+                                                onClick={handleBillingPortal}
+                                                disabled={subBusy !== null}
+                                                className="inline-flex items-center justify-center gap-1.5 text-xs font-medium text-gray-600 border border-gray-200 bg-white rounded-lg px-3.5 py-2 hover:bg-gray-50 hover:border-gray-300 transition-all disabled:opacity-50 cursor-pointer"
+                                            >
+                                                {subBusy === "portal"
+                                                    ? <><svg className="w-3.5 h-3.5 animate-spin" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" /><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" /></svg>Generando…</>
+                                                    : <><svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M13.828 10.172a4 4 0 010 5.656l-3 3a4 4 0 01-5.656-5.656l1.5-1.5m6.5-1.328a4 4 0 010-5.656l3-3a4 4 0 015.656 5.656l-1.5 1.5" /></svg>Generar link de portal de Stripe</>
+                                                }
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
 
                             {/* ── Payment history ── */}
                             <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">

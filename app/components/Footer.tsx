@@ -6,9 +6,34 @@ export function Footer() {
       <Container>
         <div className="grid gap-3 sm:grid-cols-3 sm:items-center">
           {/* Izquierda */}
-          <p className="text-xs text-zinc-500 sm:justify-self-start">
-            © {new Date().getFullYear()} LZ English Academy. Todos los derechos reservados.
-          </p>
+          <div className="sm:justify-self-start">
+            <p className="text-xs text-zinc-500">
+              © {new Date().getFullYear()} LZ English Academy. Todos los derechos reservados.
+            </p>
+            <div className="mt-1 flex items-center gap-3 text-xs text-zinc-500">
+              <a href="/terminos" className="hover:text-zinc-700">
+                Términos
+              </a>
+              <span aria-hidden="true" className="text-zinc-300">
+                ·
+              </span>
+              <a href="/reembolsos" className="hover:text-zinc-700">
+                Reembolsos
+              </a>
+              <span aria-hidden="true" className="text-zinc-300">
+                ·
+              </span>
+              <a href="/privacidad" className="hover:text-zinc-700">
+                Privacidad
+              </a>
+              <span aria-hidden="true" className="text-zinc-300">
+                ·
+              </span>
+              <a href="/mi-suscripcion" className="hover:text-zinc-700">
+                Gestionar suscripción
+              </a>
+            </div>
+          </div>
 
           {/* Centro */}
           <div className="flex justify-center">

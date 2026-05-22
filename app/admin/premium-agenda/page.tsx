@@ -81,6 +81,7 @@ export default function PremiumAgenda() {
     const [loading, setLoading]   = useState(true);
     const [tab, setTab]           = useState<"pending" | "booked">("pending");
     const [origin, setOrigin]     = useState("");
+    const [cohort, setCohort]     = useState("");   // filtra por fecha de inicio (cohorte)
 
     useEffect(() => { setOrigin(window.location.origin); }, []);
 
@@ -114,7 +115,20 @@ export default function PremiumAgenda() {
         </div>
     );
 
-    const total = pending.length + booked.length;
+    // Cohortes = fechas de inicio únicas (de ambas pestañas), ordenadas desc.
+    const cohorts = Array.from(
+        new Set([...pending, ...booked].map((r) => r.inscription_date).filter(Boolean) as string[])
+    ).sort((a, b) => b.localeCompare(a));
+
+    const byCohort = (rows: PremiumRow[]) =>
+        cohort ? rows.filter((r) => r.inscription_date === cohort) : rows;
+
+    const pendingView = byCohort(pending);
+    const bookedView  = byCohort(booked);
+
+    const total     = pending.length + booked.length;
+    const totalView = pendingView.length + bookedView.length;
+    const cohortLabel = cohort ? fmtDate(cohort) : "este ciclo";
 
     return (
         <div className="p-4 md:p-8 max-w-screen-xl mx-auto">
@@ -128,22 +142,22 @@ export default function PremiumAgenda() {
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
                 <StatCard
                     label="Total Premium pagados"
-                    value={total}
-                    sub="este ciclo"
+                    value={totalView}
+                    sub={cohortLabel}
                     icon={<svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}><path strokeLinecap="round" strokeLinejoin="round" d="M17 20h5v-2a4 4 0 00-5-3.87M9 20H4v-2a4 4 0 015-3.87m6-4a4 4 0 11-8 0 4 4 0 018 0z" /></svg>}
                 />
                 <StatCard
                     label="Sin agendar"
-                    value={pending.length}
-                    sub={pending.length > 0 ? "requieren atención" : "todo al día"}
-                    bg={pending.length > 0 ? "bg-amber-50" : "bg-emerald-50"}
-                    accent={pending.length > 0 ? "text-amber-600" : "text-emerald-600"}
+                    value={pendingView.length}
+                    sub={pendingView.length > 0 ? "requieren atención" : "todo al día"}
+                    bg={pendingView.length > 0 ? "bg-amber-50" : "bg-emerald-50"}
+                    accent={pendingView.length > 0 ? "text-amber-600" : "text-emerald-600"}
                     icon={<svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}><path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>}
                 />
                 <StatCard
                     label="Agendados"
-                    value={booked.length}
-                    sub={total > 0 ? `${Math.round((booked.length / total) * 100)}% completado` : "—"}
+                    value={bookedView.length}
+                    sub={totalView > 0 ? `${Math.round((bookedView.length / totalView) * 100)}% completado` : "—"}
                     bg="bg-emerald-50"
                     accent="text-emerald-600"
                     icon={<svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}><path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>}
@@ -151,46 +165,70 @@ export default function PremiumAgenda() {
             </div>
 
             {/* Alert banner if pending > 0 */}
-            {pending.length > 0 && (
+            {pendingView.length > 0 && (
                 <div className="mb-5 flex items-center gap-3 px-4 py-3 rounded-2xl bg-amber-50 border border-amber-200 text-amber-700">
                     <svg className="w-5 h-5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                         <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
                     </svg>
                     <p className="text-sm font-medium">
-                        {pending.length} usuario{pending.length > 1 ? "s" : ""} Premium {pending.length > 1 ? "aún no han agendado" : "aún no ha agendado"} su clase.
+                        {pendingView.length} usuario{pendingView.length > 1 ? "s" : ""} Premium {pendingView.length > 1 ? "aún no han agendado" : "aún no ha agendado"} su clase
+                        {cohort ? ` (inicio ${cohortLabel})` : ""}.
                         Puedes copiar su enlace de agendamiento y enviárselo.
                     </p>
                 </div>
             )}
 
-            {/* Tabs */}
-            <div className="flex gap-1 mb-5 bg-gray-100 rounded-xl p-1 w-fit">
-                {(["pending", "booked"] as const).map((t) => (
-                    <button
-                        key={t}
-                        onClick={() => setTab(t)}
-                        className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
-                            tab === t
-                                ? "bg-white shadow-sm text-gray-800"
-                                : "text-gray-500 hover:text-gray-700"
-                        }`}
-                    >
-                        {t === "pending" ? "Sin agendar" : "Agendados"}
-                        <span className={`text-xs px-1.5 py-0.5 rounded-md font-semibold ${
-                            t === "pending"
-                                ? pending.length > 0 ? "bg-amber-100 text-amber-700" : "bg-gray-200 text-gray-400"
-                                : "bg-emerald-100 text-emerald-700"
-                        }`}>
-                            {t === "pending" ? pending.length : booked.length}
-                        </span>
-                    </button>
-                ))}
+            {/* Tabs + filtro por cohorte */}
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-5">
+                <div className="flex gap-1 bg-gray-100 rounded-xl p-1 w-fit">
+                    {(["pending", "booked"] as const).map((t) => (
+                        <button
+                            key={t}
+                            onClick={() => setTab(t)}
+                            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                                tab === t
+                                    ? "bg-white shadow-sm text-gray-800"
+                                    : "text-gray-500 hover:text-gray-700"
+                            }`}
+                        >
+                            {t === "pending" ? "Sin agendar" : "Agendados"}
+                            <span className={`text-xs px-1.5 py-0.5 rounded-md font-semibold ${
+                                t === "pending"
+                                    ? pendingView.length > 0 ? "bg-amber-100 text-amber-700" : "bg-gray-200 text-gray-400"
+                                    : "bg-emerald-100 text-emerald-700"
+                            }`}>
+                                {t === "pending" ? pendingView.length : bookedView.length}
+                            </span>
+                        </button>
+                    ))}
+                </div>
+
+                {cohorts.length > 0 && (
+                    <div className="flex items-center gap-2">
+                        <label className="text-xs font-medium text-gray-500 whitespace-nowrap">Fecha de inicio</label>
+                        <select
+                            value={cohort}
+                            onChange={(e) => setCohort(e.target.value)}
+                            className="p-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-400 shadow-sm text-sm bg-white"
+                        >
+                            <option value="">Todas las cohortes</option>
+                            {cohorts.map((c) => (
+                                <option key={c} value={c}>{fmtDate(c)}</option>
+                            ))}
+                        </select>
+                        {cohort && (
+                            <button onClick={() => setCohort("")} className="text-xs text-zinc-500 hover:text-zinc-700 underline transition">
+                                Limpiar
+                            </button>
+                        )}
+                    </div>
+                )}
             </div>
 
             {/* ── Pending tab ── */}
             {tab === "pending" && (
                 <>
-                    {pending.length === 0 ? (
+                    {pendingView.length === 0 ? (
                         <div className="bg-white rounded-2xl border border-gray-100 p-12 text-center">
                             <div className="w-12 h-12 rounded-full bg-emerald-50 flex items-center justify-center mx-auto mb-3">
                                 <svg className="w-6 h-6 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -198,7 +236,9 @@ export default function PremiumAgenda() {
                                 </svg>
                             </div>
                             <p className="text-sm font-semibold text-gray-700">Todo al día</p>
-                            <p className="text-xs text-gray-400 mt-1">Todos los usuarios Premium han agendado su clase.</p>
+                            <p className="text-xs text-gray-400 mt-1">
+                                {cohort ? "Esta cohorte no tiene clases pendientes de agendar." : "Todos los usuarios Premium han agendado su clase."}
+                            </p>
                         </div>
                     ) : (
                         <>
@@ -214,7 +254,7 @@ export default function PremiumAgenda() {
                                             </tr>
                                         </thead>
                                         <tbody className="divide-y divide-gray-50">
-                                            {pending.map((row) => {
+                                            {pendingView.map((row) => {
                                                 const link = `${origin}/success?session_id=${row.session_id}`;
                                                 return (
                                                     <tr key={row.payment_id} className="hover:bg-amber-50 transition-colors">
@@ -240,7 +280,7 @@ export default function PremiumAgenda() {
 
                             {/* Mobile */}
                             <div className="md:hidden flex flex-col gap-3">
-                                {pending.map((row) => {
+                                {pendingView.map((row) => {
                                     const link = `${origin}/success?session_id=${row.session_id}`;
                                     return (
                                         <div key={row.payment_id} className="bg-white rounded-2xl border border-amber-200 bg-amber-50 p-4">
@@ -272,9 +312,11 @@ export default function PremiumAgenda() {
             {/* ── Booked tab ── */}
             {tab === "booked" && (
                 <>
-                    {booked.length === 0 ? (
+                    {bookedView.length === 0 ? (
                         <div className="bg-white rounded-2xl border border-gray-100 p-12 text-center">
-                            <p className="text-sm text-gray-400">Ningún usuario ha agendado todavía.</p>
+                            <p className="text-sm text-gray-400">
+                                {cohort ? "Esta cohorte no tiene clases agendadas." : "Ningún usuario ha agendado todavía."}
+                            </p>
                         </div>
                     ) : (
                         <>
@@ -290,7 +332,7 @@ export default function PremiumAgenda() {
                                             </tr>
                                         </thead>
                                         <tbody className="divide-y divide-gray-50">
-                                            {booked.map((row) => (
+                                            {bookedView.map((row) => (
                                                 <tr key={row.payment_id} className="hover:bg-emerald-50 transition-colors">
                                                     <td className="px-4 py-3 text-sm font-semibold text-gray-800 whitespace-nowrap">{row.full_name}</td>
                                                     <td className="px-4 py-3 text-sm text-gray-500 max-w-[180px] truncate">{row.email}</td>
@@ -316,7 +358,7 @@ export default function PremiumAgenda() {
 
                             {/* Mobile */}
                             <div className="md:hidden flex flex-col gap-3">
-                                {booked.map((row) => (
+                                {bookedView.map((row) => (
                                     <div key={row.payment_id} className="bg-white rounded-2xl border border-gray-100 p-4">
                                         <div className="flex items-start justify-between gap-2 mb-2">
                                             <div>

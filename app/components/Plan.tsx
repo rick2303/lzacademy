@@ -61,6 +61,7 @@ export default function PlansSection({ onSelectPlan }: PlansSectionProps) {
                                 <span className="text-4xl font-extrabold text-zinc-900">$10</span>
                                 <span className="text-sm text-[#8a6510]">/ mes</span>
                             </div>
+                            <p className="mt-1 text-xs text-[#9a7a30]">Facturación automática cada 4 semanas</p>
                             <p className="mt-3 text-sm text-zinc-700 leading-relaxed">
                                 Aprende con estructura clara — material completo, comunidad y clases grupales en vivo los viernes.
                             </p>
@@ -113,6 +114,7 @@ export default function PlansSection({ onSelectPlan }: PlansSectionProps) {
                                 <span className="text-4xl font-extrabold text-white">$50</span>
                                 <span className="text-sm text-white/50">/ mes</span>
                             </div>
+                            <p className="mt-1 text-xs text-white/50">Facturación automática cada 4 semanas</p>
                             <p className="mt-3 text-sm text-white/70 leading-relaxed">
                                 Para quienes quieren clases en vivo y avanzar más rápido con acompañamiento diario.
                             </p>

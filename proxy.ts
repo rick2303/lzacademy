@@ -21,6 +21,7 @@ const VALID_ROUTES = new Set([
   "/admin/premium-agenda",
   "/admin/marketing",
   "/admin/accesos",
+  "/admin/no-renovados",
   "/paso-uno",
   "/paso-dos",
   "/paso-tres",
@@ -28,6 +29,10 @@ const VALID_ROUTES = new Set([
   "/essential",
   "/premium",
   "/personalizado",
+  "/terminos",
+  "/reembolsos",
+  "/privacidad",
+  "/mi-suscripcion",
 ]);
 
 export default function middleware(request: NextRequest) {

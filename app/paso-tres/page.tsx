@@ -13,6 +13,7 @@ const plans = [
     subtitle: "Empieza con lo esencial para avanzar rápido:",
     price: "$10",
     priceUnit: "USD / mes",
+    billingNote: "Facturación automática cada 4 semanas",
     cardBg: "#fef0f0",
     nameColor: "#C0353E",
     checkColor: "#C0353E",
@@ -37,6 +38,7 @@ const plans = [
     subtitle: "Todo lo de Essential, más:",
     price: "$50",
     priceUnit: "USD / mes",
+    billingNote: "Facturación automática cada 4 semanas",
     cardBg: "#bf3d6d",
     nameColor: "#fff",
     checkColor: "#fff",
@@ -63,7 +65,8 @@ const plans = [
     name: "Plan\nPersonalizado",
     subtitle: "Todo lo de Premium, más:",
     price: "$120",
-    priceUnit: "USD/mes",
+    priceUnit: "USD pago único",
+    billingNote: null,
     cardBg: "#a02845",
     nameColor: "#fff",
     checkColor: "#fff",
@@ -184,6 +187,11 @@ function PasosTresContent() {
                     <p className="text-[11px] font-bold opacity-70 mt-0.5" style={{ color: plan.nameColor }}>
                       {plan.priceUnit}
                     </p>
+                    {plan.billingNote && (
+                      <p className="text-[10px] font-medium opacity-55 mt-0.5 max-w-[120px] ml-auto leading-tight" style={{ color: plan.nameColor }}>
+                        {plan.billingNote}
+                      </p>
+                    )}
                   </div>
                 </div>
 
@@ -331,6 +339,11 @@ function PasosTresContent() {
                     <p className="text-[13px] font-bold mt-1 opacity-80" style={{ color: "#fff" }}>
                       {plan.priceUnit}
                     </p>
+                    {plan.billingNote && (
+                      <p className="text-[11px] font-medium mt-1.5 opacity-60 text-center max-w-[180px]" style={{ color: "#fff" }}>
+                        {plan.billingNote}
+                      </p>
+                    )}
                     <button
                       type="button"
                       onClick={(e) => { e.stopPropagation(); handleSeleccionar(plan.route); }}

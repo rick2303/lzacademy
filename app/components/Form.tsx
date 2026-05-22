@@ -48,16 +48,31 @@ function buildSlotDisplay(datetimePt: string) {
 
 const planDetails = {
     Essential: {
-        description:
-            "Plan Essential, incluye: Acceso completo a la plataforma, Rutina diaria guiada, Grupo de WhatsApp, Clases prácticas los viernes",
+        tagline: "Aprende a tu ritmo con el Método 590 completo.",
+        features: [
+            "Acceso completo al Método 590",
+            "Plataforma con material organizado por sesión y nivel",
+            "Comunidad en WhatsApp",
+            "Clases de práctica en vivo los viernes",
+        ],
     },
     Premium: {
-        description:
-            "Plan Premium, incluye: Todo lo de Essential, más: 1 hora de clase diaria lunes a jueves, repasos los viernes, acompañamiento constante",
+        tagline: "Todo lo de Essential, con clases diarias en vivo.",
+        features: [
+            "Todo lo del Plan Essential",
+            "1 hora de clase diaria (lunes a jueves)",
+            "Repasos los viernes para resolver dudas",
+            "Práctica hablada diaria y acompañamiento constante",
+        ],
     },
     Personalizado: {
-        description:
-            "Plan Personalizado, incluye: Todo lo del Plan Premium, más: Rutinas personalizadas, Sesiones Personales, Seguimiento, Correciones en tiempo real.",
+        tagline: "Acompañamiento 1:1 totalmente a tu medida.",
+        features: [
+            "Todo lo del Plan Premium",
+            "Sesiones privadas 1:1 adaptadas a ti",
+            "Horario 100% flexible",
+            "Plan de trabajo personalizado y correcciones en tiempo real",
+        ],
     },
 };
 
@@ -123,7 +138,11 @@ const PaymentForm = ({
     const [premiumSlots, setPremiumSlots] = useState<PremiumSlot[]>([]);
     const [premiumSlotsLoading, setPremiumSlotsLoading] = useState(false);
 
-    const planPrice: Record<PlanType, string> = { Essential: "$10/mes", Premium: "$50/mes", Personalizado: "$120/mes" };
+    const planPrice: Record<PlanType, string> = { Essential: "$10", Premium: "$50", Personalizado: "$120" };
+
+    // Planes con suscripción recurrente (cobro automático cada 4 semanas)
+    const SUBSCRIPTION_PLANS: PlanType[] = ["Essential", "Premium"];
+    const isSubscription = SUBSCRIPTION_PLANS.includes(plan);
 
     useEffect(() => { setPlan(selectedPlan); }, [selectedPlan]);
 
@@ -202,7 +221,7 @@ const PaymentForm = ({
                     plan,
                     level: formData.englishLevel,
                     interestDate: formData.interestDate,
-                    description: planDetails[plan].description,
+                    description: `Incluye: ${planDetails[plan].features.join(" · ")}`,
                     motive: selectedDificultades || "no especificado",
                 }),
             });
@@ -241,6 +260,9 @@ const PaymentForm = ({
                             <span>{planPrice[plan]}</span>
                         </div>
                     )}
+                    {embedded && isSubscription && (
+                        <p className="mt-1.5 text-xs text-zinc-400">Facturación automática cada 4 semanas</p>
+                    )}
                     {!embedded && (
                         <div className="mt-3 inline-flex items-center gap-2 rounded-full bg-white px-4 py-1.5 text-xs font-semibold text-zinc-600 ring-1 ring-inset ring-zinc-200">
                             <span className="h-2 w-2 rounded-full bg-green-500 animate-pulse" />
@@ -249,6 +271,26 @@ const PaymentForm = ({
                                 : "Cupos disponibles · Próximamente"}
                         </div>
                     )}
+                </div>
+
+                {/* Detalle del plan seleccionado */}
+                <div className="mb-5 rounded-2xl border border-zinc-200 bg-white shadow-sm overflow-hidden">
+                    <div className="px-5 py-3 bg-zinc-50 border-b border-zinc-100">
+                        <p className="text-xs font-bold uppercase tracking-wide text-zinc-500">Tu Plan {plan} incluye</p>
+                        <p className="text-[13px] text-zinc-600 mt-0.5">{planDetails[plan].tagline}</p>
+                    </div>
+                    <ul className="px-5 py-4 space-y-2.5">
+                        {planDetails[plan].features.map((feat) => (
+                            <li key={feat} className="flex items-start gap-2.5">
+                                <span className="mt-0.5 shrink-0 flex h-4 w-4 items-center justify-center rounded-full bg-emerald-100">
+                                    <svg className="h-2.5 w-2.5 text-emerald-600" viewBox="0 0 10 10" fill="none">
+                                        <polyline points="1.5,5 4,7.5 8.5,2" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+                                    </svg>
+                                </span>
+                                <span className="text-[13px] text-zinc-700 leading-snug">{feat}</span>
+                            </li>
+                        ))}
+                    </ul>
                 </div>
 
                 {/* Card del formulario */}
@@ -412,9 +454,9 @@ const PaymentForm = ({
                                         className={selectClass}
                                         required
                                     >
-                                        <option value="Essential">Essential — $10/mes</option>
-                                        <option value="Premium">Premium — $50/mes</option>
-                                        <option value="Personalizado">Personalizado — $120/mes</option>
+                                        <option value="Essential">Essential — $10</option>
+                                        <option value="Premium">Premium — $50</option>
+                                        <option value="Personalizado">Personalizado — $120</option>
                                     </select>
                                     <div className="pointer-events-none absolute inset-y-0 right-3 flex items-center">
                                         <svg className="h-4 w-4 text-zinc-400" viewBox="0 0 16 16" fill="none">
@@ -531,6 +573,39 @@ const PaymentForm = ({
                             </div>
                         </div>
 
+                        {/* Disclosure de facturación (requerido por Stripe / redes de tarjetas) */}
+                        {isSubscription ? (
+                            <div className="rounded-xl border border-zinc-200 bg-zinc-50 px-4 py-3">
+                                <p className="text-xs leading-relaxed text-zinc-500">
+                                    <span className="font-semibold text-zinc-700">Suscripción:</span>{" "}
+                                    Cancela cuando quieras desde{" "}
+                                    <a href="/mi-suscripcion" className="font-medium text-falu-red-700 underline underline-offset-2 hover:text-falu-red-800">tu portal de suscripción</a>.
+                                </p>
+                                <div className="mt-2.5 flex items-center gap-2 rounded-lg bg-emerald-50 border border-emerald-200 px-3 py-2">
+                                    <svg className="h-4 w-4 shrink-0 text-emerald-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8}>
+                                        <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75 11.25 15 15 9.75m-3-7.036A11.959 11.959 0 0 1 3.598 6 11.99 11.99 0 0 0 3 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285Z" />
+                                    </svg>
+                                    <span className="text-xs font-semibold text-emerald-800">Reembolso garantizado los primeros 3 días</span>
+                                </div>
+                                <p className="mt-2 text-xs text-zinc-400">
+                                    <a href="/terminos" className="underline underline-offset-2 hover:text-zinc-600">Términos y Condiciones</a>
+                                    <span className="mx-1.5 opacity-50">·</span>
+                                    <a href="/reembolsos" className="underline underline-offset-2 hover:text-zinc-600">Política de Reembolso</a>
+                                </p>
+                            </div>
+                        ) : (
+                            <div className="rounded-xl border border-zinc-200 bg-zinc-50 px-4 py-3">
+                                <p className="text-xs leading-relaxed text-zinc-500">
+                                    <span className="font-semibold text-zinc-700">Pago único</span> — no hay cobro automático ni renovación.
+                                </p>
+                                <p className="mt-1.5 text-xs text-zinc-400">
+                                    <a href="/terminos" className="underline underline-offset-2 hover:text-zinc-600">Términos y Condiciones</a>
+                                    <span className="mx-1.5 opacity-50">·</span>
+                                    <a href="/reembolsos" className="underline underline-offset-2 hover:text-zinc-600">Política de Reembolso</a>
+                                </p>
+                            </div>
+                        )}
+
                         {/* Divisor */}
                         <div className="border-t border-zinc-100 pt-2" />
 
@@ -549,7 +624,7 @@ const PaymentForm = ({
                                 </>
                             ) : (
                                 <>
-                                    {{ Essential: "Comenzar Essential — $10/mes", Premium: "Comenzar Premium — $50/mes", Personalizado: "Comenzar Personalizado — $120/mes" }[plan]}
+                                    {`Comenzar ${plan} — ${planPrice[plan]}`}
                                     <svg className="h-4 w-4" viewBox="0 0 16 16" fill="none">
                                         <path stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
                                     </svg>

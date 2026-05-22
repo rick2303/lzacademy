@@ -120,6 +120,13 @@ const SuccessContent = () => {
 
     const isPremiumPending = state === "success" && userData?.plan === "Premium" && schedulingStatus === "pending";
     const isPremiumBooked  = state === "success" && userData?.plan === "Premium" && schedulingStatus === "completed";
+    const isSubscriptionPlan = userData?.plan === "Essential" || userData?.plan === "Premium";
+
+    const nextChargeDate = isSubscriptionPlan && userData?.current_period_end
+        ? new Date(userData.current_period_end).toLocaleDateString("es-ES", {
+            day: "numeric", month: "long", year: "numeric", timeZone: "UTC",
+          })
+        : null;
     const planMeta = PLAN_META[userData?.plan] ?? PLAN_META["Essential"];
     const firstName = userData?.full_name?.split(" ")[0] ?? null;
 
@@ -647,7 +654,9 @@ const SuccessContent = () => {
                                             <circle cx="8" cy="8" r="6" />
                                             <path d="M8 5v1.5m0 3V11m-1.5-5.5h2.25a1.25 1.25 0 010 2.5H7m0 0h2.5" strokeLinecap="round" />
                                         </svg>
-                                        Pago único · ${(amount / 100).toFixed(0)} USD · sin renovación automática
+                                        {isSubscriptionPlan
+                                            ? `Suscripción · $${(amount / 100).toFixed(0)} USD · se renueva cada 4 semanas`
+                                            : `Pago único · $${(amount / 100).toFixed(0)} USD · sin renovación automática`}
                                     </span>
                                 )}
                             </div>
@@ -792,6 +801,25 @@ const SuccessContent = () => {
                                             <div>
                                                 <p className="sc-date-label">Fecha oficial de inicio</p>
                                                 <p className="sc-date-value">{formattedStartDate}</p>
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {/* Próximo cobro (solo suscripción) */}
+                                    {nextChargeDate && (
+                                        <div className="sc-date-row">
+                                            <div className="sc-date-icon">
+                                                <svg viewBox="0 0 20 20" width="18" height="18" fill="none" stroke="#9c181d" strokeWidth="1.5">
+                                                    <rect x="2" y="5" width="16" height="11" rx="2.5" />
+                                                    <path d="M2 9h16" strokeLinecap="round" />
+                                                </svg>
+                                            </div>
+                                            <div>
+                                                <p className="sc-date-label">Próximo cobro automático</p>
+                                                <p className="sc-date-value">{nextChargeDate}</p>
+                                                <p style={{ fontSize: "0.75rem", color: "#71717a", margin: "3px 0 0", lineHeight: 1.5 }}>
+                                                    Este pago cubre tu primer periodo. Después se cobra ${amount !== null ? `${(amount / 100).toFixed(0)} USD ` : ""}cada 4 semanas; cancela cuando quieras desde tu portal de suscripción.
+                                                </p>
                                             </div>
                                         </div>
                                     )}

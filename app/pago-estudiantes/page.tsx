@@ -42,9 +42,9 @@ const selectClass =
   "w-full rounded-xl border border-zinc-200 bg-zinc-50 px-4 py-3 text-sm text-zinc-900 transition focus:outline-none focus:ring-2 focus:ring-falu-red-400 focus:border-transparent focus:bg-white hover:border-zinc-300 appearance-none cursor-pointer";
 
 const PLAN_PRICES: Record<string, string> = {
-  Essential: "$10/mes",
-  Premium: "$50/mes",
-  Personalizado: "$100/mes",
+  Essential: "$10",
+  Premium: "$50",
+  Personalizado: "$120",
 };
 
 export default function PagoEstudiantesPage() {
@@ -206,6 +206,11 @@ export default function PagoEstudiantesPage() {
   const today = new Date().toISOString().split("T")[0];
   const futureDates = specialDates.filter((d) => d.value >= today);
 
+  // Planes con suscripción recurrente (cobro automático cada 4 semanas)
+  const SUBSCRIPTION_PLANS = ["Essential", "Premium"];
+  const isSubscription = SUBSCRIPTION_PLANS.includes(plan);
+  const BILLING_AMOUNT: Record<string, string> = { Essential: "$10", Premium: "$50", Personalizado: "$120" };
+
   return (
     <main className="min-h-screen bg-zinc-50 px-4 py-12">
       <div className="w-full max-w-lg mx-auto space-y-4">
@@ -273,9 +278,9 @@ export default function PagoEstudiantesPage() {
                   }}
                   className={selectClass}
                 >
-                  <option value="Essential">Essential — $10/mes</option>
-                  <option value="Premium">Premium — $50/mes</option>
-                  <option value="Personalizado">Personalizado — $100/mes</option>
+                  <option value="Essential">Essential — $10</option>
+                  <option value="Premium">Premium — $50</option>
+                  <option value="Personalizado">Personalizado — $120</option>
                 </select>
                 <div className="pointer-events-none absolute inset-y-0 right-3 flex items-center">
                   <svg className="h-4 w-4 text-zinc-400" viewBox="0 0 16 16" fill="none">
@@ -283,6 +288,9 @@ export default function PagoEstudiantesPage() {
                   </svg>
                 </div>
               </div>
+              {isSubscription && (
+                <p className="mt-1.5 text-xs text-zinc-400">Facturación automática cada 4 semanas</p>
+              )}
             </div>
 
             {/* Level */}
@@ -350,6 +358,38 @@ export default function PagoEstudiantesPage() {
                   <path d="M8 5v3.5M8 11h.01" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
                 </svg>
                 <p className="text-sm text-red-600">{formError}</p>
+              </div>
+            )}
+
+            {/* Disclosure de facturación (requerido por Stripe / redes de tarjetas) */}
+            {isSubscription ? (
+              <div className="rounded-xl border border-zinc-200 bg-zinc-50 px-4 py-3">
+                <p className="text-xs leading-relaxed text-zinc-500">
+                  <span className="font-semibold text-zinc-700">Suscripción:</span>{" "}
+                  se te cobrará {BILLING_AMOUNT[plan] ?? ""} cada 4 semanas de forma automática hasta que canceles.
+                  Cancela cuando quieras escribiendo a{" "}
+                  <a href="mailto:info@lz-englishacademy.com" className="font-medium text-falu-red-700 underline underline-offset-2 hover:text-falu-red-800">info@lz-englishacademy.com</a>;
+                  conservas acceso hasta el final del periodo ya pagado.
+                </p>
+                <p className="mt-1.5 text-xs leading-relaxed text-zinc-500">
+                  Reembolso completo si cancelas antes de iniciar tus clases o dentro de los primeros 3 días.
+                </p>
+                <p className="mt-1.5 text-xs text-zinc-400">
+                  <a href="/terminos" className="underline underline-offset-2 hover:text-zinc-600">Términos y Condiciones</a>
+                  <span className="mx-1.5 opacity-50">·</span>
+                  <a href="/reembolsos" className="underline underline-offset-2 hover:text-zinc-600">Política de Reembolso</a>
+                </p>
+              </div>
+            ) : (
+              <div className="rounded-xl border border-zinc-200 bg-zinc-50 px-4 py-3">
+                <p className="text-xs leading-relaxed text-zinc-500">
+                  <span className="font-semibold text-zinc-700">Pago único</span> — no hay cobro automático ni renovación.
+                </p>
+                <p className="mt-1.5 text-xs text-zinc-400">
+                  <a href="/terminos" className="underline underline-offset-2 hover:text-zinc-600">Términos y Condiciones</a>
+                  <span className="mx-1.5 opacity-50">·</span>
+                  <a href="/reembolsos" className="underline underline-offset-2 hover:text-zinc-600">Política de Reembolso</a>
+                </p>
               </div>
             )}
 

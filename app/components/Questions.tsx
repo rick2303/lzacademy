@@ -7,7 +7,21 @@ const preguntasFrecuentes: { pregunta: string; respuesta: React.ReactNode }[] = 
   {
     pregunta: "¿Puedo cancelar en cualquier momento?",
     respuesta:
-      "Sí, sin compromisos ni contratos. Puedes cancelar cuando quieras desde tu cuenta. No hay penalizaciones ni cargos ocultos.",
+      "Sí, sin compromisos ni contratos. Puedes cancelar cuando quieras. No hay penalizaciones ni cargos ocultos.",
+  },
+  {
+    pregunta: "¿Cómo cancelo mi suscripción?",
+    respuesta: (
+      <>
+        Es muy sencillo: entra a{" "}
+        <a href="/mi-suscripcion" className="font-semibold text-falu-red-800 hover:text-falu-red-900 underline">
+          Gestiona tu suscripción
+        </a>{" "}
+        e ingresa el correo con el que te inscribiste. Te enviaremos un enlace seguro a tu bandeja de
+        entrada para gestionar o cancelar tu suscripción en un par de clics. Conservas tu acceso hasta
+        el final del periodo que ya pagaste.
+      </>
+    ),
   },
   {
     pregunta: "¿Qué pasa si no soy constante con la rutina diaria?",

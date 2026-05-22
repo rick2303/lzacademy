@@ -10,6 +10,7 @@ const navItems = [
   { label: "Búsqueda", href: "/admin/busqueda" },
   { label: "Marketing", href: "/admin/marketing" },
   { label: "Usuarios recurrentes", href: "/admin/recurrentes" },
+  { label: "No renovados", href: "/admin/no-renovados" },
   { label: "Fechas de inicio", href: "/admin/fechas" },
   { label: "Contenido", href: "/admin/contenido" },
   { label: "Premium · Agenda", href: "/admin/premium-agenda" },

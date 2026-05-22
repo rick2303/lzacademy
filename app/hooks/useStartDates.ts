@@ -26,7 +26,10 @@ export function useStartDates() {
   const today = new Date();
   today.setDate(today.getDate() - 1);
   const yesterday = today.toISOString().split("T")[0];
-  const availableDates = dates.filter((d) => d.value > yesterday);
+  // Orden ascendente por fecha (YYYY-MM-DD) para que [0] sea siempre la más cercana.
+  const availableDates = dates
+    .filter((d) => d.value > yesterday)
+    .sort((a, b) => a.value.localeCompare(b.value));
 
   // Current calendar month in PT — used by form date pickers
   const currentMonthPT = new Intl.DateTimeFormat("sv-SE", { timeZone: "America/Los_Angeles" })
