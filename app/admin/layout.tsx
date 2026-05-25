@@ -9,6 +9,7 @@ const navItems = [
   { label: "Pagos", href: "/admin/dashboard" },
   { label: "Búsqueda", href: "/admin/busqueda" },
   { label: "Marketing", href: "/admin/marketing" },
+  { label: "Correos", href: "/admin/correos" },
   { label: "Usuarios recurrentes", href: "/admin/recurrentes" },
   { label: "No renovados", href: "/admin/no-renovados" },
   { label: "Fechas de inicio", href: "/admin/fechas" },

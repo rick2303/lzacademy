@@ -20,6 +20,7 @@ const VALID_ROUTES = new Set([
   "/admin/busqueda",
   "/admin/premium-agenda",
   "/admin/marketing",
+  "/admin/correos",
   "/admin/accesos",
   "/admin/no-renovados",
   "/paso-uno",
