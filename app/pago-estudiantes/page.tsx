@@ -60,6 +60,12 @@ export default function PagoEstudiantesPage() {
   const [checkoutLoading, setCheckoutLoading] = useState(false);
   const [formError, setFormError] = useState("");
 
+  // Código de descuento (solo para planes elegibles; ver DISCOUNTABLE_PLANS abajo).
+  const [discountCode, setDiscountCode] = useState("");
+  const [validatingDiscount, setValidatingDiscount] = useState(false);
+  const [discountError, setDiscountError] = useState("");
+  const [appliedDiscount, setAppliedDiscount] = useState<{ code: string; label: string; discountedAmount: number } | null>(null);
+
   useEffect(() => {
     if (!student) return;
     fetch(`${BACKEND_URL}/config/special-dates`)
@@ -94,6 +100,33 @@ export default function PagoEstudiantesPage() {
     }
   }
 
+  async function handleApplyDiscount() {
+    const code = discountCode.trim();
+    if (!code || validatingDiscount) return;
+    setValidatingDiscount(true);
+    setDiscountError("");
+    try {
+      const res = await fetch(`${BACKEND_URL}/validate-discount`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ code, plan }),
+      });
+      const data = await res.json();
+      if (data.valid) {
+        setAppliedDiscount({ code: data.code, label: data.label, discountedAmount: data.discountedAmount });
+        setDiscountError("");
+      } else {
+        setAppliedDiscount(null);
+        setDiscountError(data.reason || "Código no válido.");
+      }
+    } catch {
+      setAppliedDiscount(null);
+      setDiscountError("No pudimos validar el código. Intenta de nuevo.");
+    } finally {
+      setValidatingDiscount(false);
+    }
+  }
+
   async function handleCheckout(e: React.FormEvent) {
     e.preventDefault();
     if (!level) { setFormError("Selecciona tu nivel de inglés."); return; }
@@ -104,7 +137,13 @@ export default function PagoEstudiantesPage() {
       const res = await fetch(`${BACKEND_URL}/student-checkout`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: email.trim(), plan, level, interestDate }),
+        body: JSON.stringify({
+          email: email.trim(),
+          plan,
+          level,
+          interestDate,
+          discountCode: appliedDiscount ? appliedDiscount.code : undefined,
+        }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data?.error || "Error");
@@ -211,6 +250,16 @@ export default function PagoEstudiantesPage() {
   const isSubscription = SUBSCRIPTION_PLANS.includes(plan);
   const BILLING_AMOUNT: Record<string, string> = { Essential: "$10", Premium: "$50", Personalizado: "$120" };
 
+  // Planes que aceptan códigos de descuento. Debe coincidir con el backend
+  // (discount.service.js → DISCOUNTS_FOR_SUBSCRIPTIONS). Hoy solo Personalizado.
+  const DISCOUNTABLE_PLANS = ["Personalizado"];
+  const showDiscount = DISCOUNTABLE_PLANS.includes(plan);
+  const formatPrice = (cents: number) => {
+    const v = cents / 100;
+    return `$${Number.isInteger(v) ? v : v.toFixed(2)}`;
+  };
+  const displayPrice = appliedDiscount ? formatPrice(appliedDiscount.discountedAmount) : (PLAN_PRICES[plan] ?? "");
+
   return (
     <main className="min-h-screen bg-zinc-50 px-4 py-12">
       <div className="w-full max-w-lg mx-auto space-y-4">
@@ -274,6 +323,9 @@ export default function PagoEstudiantesPage() {
                       (level === "Intermedio alto-gramatica" || level === "Intermedio alto-produccion")) {
                       setLevel("");
                     }
+                    // El descuento depende del plan: al cambiarlo se invalida.
+                    setAppliedDiscount(null);
+                    setDiscountError("");
                     setFormError("");
                   }}
                   className={selectClass}
@@ -351,6 +403,58 @@ export default function PagoEstudiantesPage() {
               )}
             </div>
 
+            {/* Código de descuento (solo planes elegibles) */}
+            {showDiscount && (
+              <div>
+                <label htmlFor="discount" className="block text-sm font-semibold text-zinc-700 mb-1.5">
+                  Código de descuento <span className="font-normal text-zinc-400">(opcional)</span>
+                </label>
+                {appliedDiscount ? (
+                  <div className="flex items-center justify-between gap-2 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3">
+                    <div className="flex items-center gap-2 min-w-0">
+                      <svg className="h-4 w-4 shrink-0 text-emerald-600" viewBox="0 0 16 16" fill="none">
+                        <path d="M2 6l3 3 5-5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                      </svg>
+                      <p className="text-sm text-emerald-700 truncate">
+                        <span className="font-mono font-semibold">{appliedDiscount.code}</span> · {appliedDiscount.label}
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => { setAppliedDiscount(null); setDiscountCode(""); setDiscountError(""); }}
+                      className="shrink-0 text-xs font-medium text-zinc-500 hover:text-red-500 transition"
+                    >
+                      Quitar
+                    </button>
+                  </div>
+                ) : (
+                  <div className="flex gap-2">
+                    <input
+                      id="discount"
+                      type="text"
+                      value={discountCode}
+                      onChange={(e) => { setDiscountCode(e.target.value.toUpperCase()); setDiscountError(""); }}
+                      placeholder="Ingresa tu código"
+                      className="flex-1 rounded-xl border border-zinc-200 bg-zinc-50 px-4 py-3 text-sm font-mono uppercase text-zinc-900 placeholder-zinc-400 transition focus:outline-none focus:ring-2 focus:ring-falu-red-400 focus:border-transparent focus:bg-white hover:border-zinc-300"
+                    />
+                    <button
+                      type="button"
+                      onClick={handleApplyDiscount}
+                      disabled={validatingDiscount || !discountCode.trim()}
+                      className="shrink-0 inline-flex items-center justify-center gap-2 rounded-xl px-5 py-3 text-sm font-semibold text-white bg-zinc-800 hover:bg-zinc-900 transition disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {validatingDiscount ? (
+                        <svg className="h-4 w-4 animate-spin" viewBox="0 0 16 16" fill="none">
+                          <circle cx="8" cy="8" r="6" stroke="currentColor" strokeWidth="2" strokeDasharray="28" strokeDashoffset="10" strokeLinecap="round" />
+                        </svg>
+                      ) : "Aplicar"}
+                    </button>
+                  </div>
+                )}
+                {discountError && <p className="mt-1.5 text-xs text-red-600">{discountError}</p>}
+              </div>
+            )}
+
             {formError && (
               <div className="flex items-start gap-2 rounded-xl bg-red-50 border border-red-200 px-4 py-3">
                 <svg className="mt-0.5 h-4 w-4 shrink-0 text-red-500" viewBox="0 0 16 16" fill="none">
@@ -409,7 +513,15 @@ export default function PagoEstudiantesPage() {
                 </>
               ) : (
                 <>
-                  Ir al pago seguro — {PLAN_PRICES[plan] ?? ""}
+                  Ir al pago seguro —{" "}
+                  {appliedDiscount ? (
+                    <span className="inline-flex items-center gap-1.5">
+                      <span className="line-through opacity-60">{PLAN_PRICES[plan] ?? ""}</span>
+                      <span>{displayPrice}</span>
+                    </span>
+                  ) : (
+                    displayPrice
+                  )}
                   <svg className="h-4 w-4" viewBox="0 0 16 16" fill="none">
                     <path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
                   </svg>

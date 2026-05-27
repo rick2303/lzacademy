@@ -16,6 +16,7 @@ const navItems = [
   { label: "Contenido", href: "/admin/contenido" },
   { label: "Premium · Agenda", href: "/admin/premium-agenda" },
   { label: "Accesos", href: "/admin/accesos" },
+  { label: "Descuentos", href: "/admin/descuentos" },
 ];
 
 const IDLE_MS = 20 * 60 * 1000; // 20 minutos
