@@ -1,8 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { supabase } from "../../lib/supabaseClient";
 import { useRouter } from "next/navigation";
+import { ErrorState } from "../_utils/ErrorState";
 
 interface ContentConfig {
     email_no_response_title: string;
@@ -17,22 +18,29 @@ const DEFAULTS: ContentConfig = {
 export default function ContenidoPage() {
     const [content, setContent] = useState<ContentConfig>(DEFAULTS);
     const [loading, setLoading] = useState(true);
+    const [loadError, setLoadError] = useState<string | null>(null);
     const [saving, setSaving] = useState(false);
     const [saved, setSaved] = useState(false);
     const [error, setError] = useState("");
     const router = useRouter();
 
-    useEffect(() => {
-        async function load() {
+    const load = useCallback(async () => {
+        setLoadError(null);
+        try {
             const { data: { session } } = await supabase.auth.getSession();
             if (!session) { router.push("/admin/login"); return; }
 
             const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/config/content`);
-            if (res.ok) setContent(await res.json());
+            if (!res.ok) throw new Error(`Error del servidor (${res.status})`);
+            setContent(await res.json());
+        } catch (e) {
+            setLoadError(e instanceof Error ? e.message : "Error de red");
+        } finally {
             setLoading(false);
         }
-        load();
-    }, []);
+    }, [router]);
+
+    useEffect(() => { load(); }, [load]);
 
     async function handleSave() {
         setSaving(true);
@@ -59,6 +67,8 @@ export default function ContenidoPage() {
         }
         setSaving(false);
     }
+
+    if (loadError) return <ErrorState message={loadError} onRetry={load} />;
 
     if (loading) return (
         <div className="flex items-center justify-center min-h-[60vh]">
@@ -150,7 +160,7 @@ export default function ContenidoPage() {
                 <button
                     onClick={handleSave}
                     disabled={saving}
-                    className="px-6 py-2.5 bg-falu-red-700 text-white text-sm font-semibold rounded-xl hover:bg-falu-red-800 transition disabled:opacity-40 disabled:cursor-not-allowed"
+                    className="px-6 py-2.5 bg-yellow-orange-500 text-white text-sm font-semibold rounded-xl hover:bg-yellow-orange-600 transition shadow-sm disabled:opacity-40 disabled:cursor-not-allowed"
                 >
                     {saving ? "Guardando…" : "Guardar cambios"}
                 </button>

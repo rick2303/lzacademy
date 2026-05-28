@@ -1,11 +1,13 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { supabase } from "../../lib/supabaseClient";
 import { useRouter } from "next/navigation";
 import dayjs from "dayjs";
 import utc from "dayjs/plugin/utc";
 import timezone from "dayjs/plugin/timezone";
+import { useEscapeKey } from "../_utils/useEscapeKey";
+import { ErrorState } from "../_utils/ErrorState";
 dayjs.extend(utc);
 dayjs.extend(timezone);
 
@@ -25,7 +27,7 @@ interface Lead {
 interface SendResult {
     id: string;
     email?: string;
-    status: "sent" | "failed" | "skipped";
+    status: "sent" | "sent_but_not_marked" | "failed" | "skipped";
     converted?: boolean;
     error?: string;
     reason?: string;
@@ -52,6 +54,7 @@ export default function CorreosMasivos() {
     const router = useRouter();
     const [leads, setLeads] = useState<Lead[]>([]);
     const [loading, setLoading] = useState(true);
+    const [loadError, setLoadError] = useState<string | null>(null);
 
     const [subject, setSubject] = useState("");
     const [body, setBody] = useState("");
@@ -64,8 +67,12 @@ export default function CorreosMasivos() {
     const [summary, setSummary] = useState<SendSummary | null>(null);
     const [error, setError] = useState<string | null>(null);
 
-    useEffect(() => {
-        async function load() {
+    // Cerrar el modal de confirmación con Esc (además del click-fuera existente).
+    useEscapeKey(confirmOpen && !sending, () => setConfirmOpen(false));
+
+    const load = useCallback(async () => {
+        setLoadError(null);
+        try {
             const { data: { session } } = await supabase.auth.getSession();
             if (!session) {
                 router.push("/admin/login");
@@ -74,6 +81,7 @@ export default function CorreosMasivos() {
             const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/admin/marketing`, {
                 headers: { Authorization: `Bearer ${session.access_token}` },
             });
+            if (!res.ok) throw new Error(`Error del servidor (${res.status})`);
             const result = await res.json();
             const subs: Lead[] = (result.submissions ?? []).map((s: Record<string, unknown>) => ({
                 id: String(s.id),
@@ -86,10 +94,14 @@ export default function CorreosMasivos() {
                 converted: Boolean(s.converted),
             }));
             setLeads(subs);
+        } catch (e) {
+            setLoadError(e instanceof Error ? e.message : "Error de red");
+        } finally {
             setLoading(false);
         }
-        load();
     }, [router]);
+
+    useEffect(() => { load(); }, [load]);
 
     const filtered = useMemo(() => {
         const q = search.trim().toLowerCase();
@@ -162,6 +174,8 @@ export default function CorreosMasivos() {
             setSending(false);
         }
     };
+
+    if (loadError) return <ErrorState message={loadError} onRetry={load} />;
 
     if (loading) {
         return (
@@ -263,7 +277,7 @@ export default function CorreosMasivos() {
                         <button
                             onClick={() => setConfirmOpen(true)}
                             disabled={!canSend}
-                            className="w-full flex items-center justify-center gap-2 bg-falu-red-600 text-white px-4 py-2.5 rounded-lg hover:bg-falu-red-700 transition shadow-sm text-sm font-semibold disabled:opacity-40 disabled:cursor-not-allowed"
+                            className="w-full flex items-center justify-center gap-2 bg-yellow-orange-500 text-white px-4 py-2.5 rounded-lg hover:bg-yellow-orange-600 transition shadow-sm text-sm font-semibold disabled:opacity-40 disabled:cursor-not-allowed"
                         >
                             {sending ? (
                                 <>
@@ -419,7 +433,7 @@ export default function CorreosMasivos() {
                             </button>
                             <button
                                 onClick={handleSend}
-                                className="px-4 py-2 text-sm rounded-lg bg-falu-red-600 text-white hover:bg-falu-red-700 transition font-semibold"
+                                className="px-4 py-2 text-sm rounded-lg bg-yellow-orange-500 text-white hover:bg-yellow-orange-600 transition font-semibold shadow-sm"
                             >
                                 Sí, enviar
                             </button>

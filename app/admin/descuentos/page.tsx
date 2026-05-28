@@ -1,9 +1,10 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { supabase } from "../../lib/supabaseClient";
 import { useRouter } from "next/navigation";
 import dayjs from "dayjs";
+import { ErrorState } from "../_utils/ErrorState";
 
 interface DiscountCode {
     code: string;
@@ -54,12 +55,16 @@ const dataOf = (r: Row): DiscountCode => ({
     active: r.active, expires_at: r.expires_at, max_uses: r.max_uses, uses: r.uses,
 });
 
+// Normalización del code idéntica a la que aplica el backend (normalizeCode +
+// el handleSave de abajo). Sin esto, "promo10" vs "PROMO10" daban dirty falso.
+const normalizeCode = (code?: string) => (code ?? "").trim().toUpperCase();
+
 // Comparación campo por campo (NO usar JSON.stringify: la columna jsonb de Postgres
 // reordena las claves al leerlas, así que el string nunca coincidiría con el orden
 // local y todo saldría siempre como "sin guardar").
 const sameCode = (a?: DiscountCode, b?: DiscountCode): boolean =>
     !!a && !!b &&
-    a.code === b.code &&
+    normalizeCode(a.code) === normalizeCode(b.code) &&
     a.type === b.type &&
     Number(a.value) === Number(b.value) &&
     a.plan === b.plan &&
@@ -88,25 +93,32 @@ export default function DescuentosPage() {
     // Snapshot ordenado de lo último guardado, para detectar cambios y descartar.
     const [saved, setSaved] = useState<{ _id: string; data: DiscountCode }[]>([]);
     const [loading, setLoading] = useState(true);
+    const [loadError, setLoadError] = useState<string | null>(null);
     const [saving, setSaving] = useState(false);
     const [toast, setToast] = useState<{ ok: boolean; msg: string } | null>(null);
     const router = useRouter();
 
-    useEffect(() => {
-        async function load() {
+    const load = useCallback(async () => {
+        setLoadError(null);
+        try {
             const { data: { session } } = await supabase.auth.getSession();
             if (!session) { router.push("/admin/login"); return; }
             const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/admin/discounts`, {
                 headers: { Authorization: `Bearer ${session.access_token}` },
             });
+            if (!res.ok) throw new Error(`Error del servidor (${res.status})`);
             const data: DiscountCode[] = await res.json();
             const list = (Array.isArray(data) ? data : []).map((c) => ({ _id: uid(), data: c }));
             setSaved(list);
             setRows(list.map((s) => ({ ...s.data, _id: s._id, _isNew: false, _editing: false })));
+        } catch (e) {
+            setLoadError(e instanceof Error ? e.message : "Error de red");
+        } finally {
             setLoading(false);
         }
-        load();
-    }, []);
+    }, [router]);
+
+    useEffect(() => { load(); }, [load]);
 
     const savedById = useMemo(() => {
         const m: Record<string, DiscountCode> = {};
@@ -176,6 +188,8 @@ export default function DescuentosPage() {
         }
     };
 
+    if (loadError) return <ErrorState message={loadError} onRetry={load} />;
+
     if (loading) return (
         <div className="flex items-center justify-center min-h-[60vh]">
             <div className="flex flex-col items-center gap-3 text-gray-400">
@@ -210,7 +224,7 @@ export default function DescuentosPage() {
                 </div>
                 <button
                     onClick={addNew}
-                    className="flex items-center gap-2 px-4 py-2 text-sm font-semibold text-white bg-falu-red-700 rounded-xl hover:bg-falu-red-800 transition shadow-sm cursor-pointer"
+                    className="flex items-center gap-2 px-4 py-2 text-sm font-semibold text-white bg-yellow-orange-500 rounded-xl hover:bg-yellow-orange-600 transition shadow-sm cursor-pointer"
                 >
                     <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" /></svg>
                     Nuevo código
@@ -233,7 +247,7 @@ export default function DescuentosPage() {
                     </div>
                     <p className="text-sm font-medium text-gray-600">Aún no hay códigos de descuento</p>
                     <p className="text-xs text-gray-400 mt-1 mb-4">Crea tu primer código para usarlo en el checkout.</p>
-                    <button onClick={addNew} className="inline-flex items-center gap-2 px-4 py-2 text-sm font-semibold text-white bg-falu-red-700 rounded-xl hover:bg-falu-red-800 transition cursor-pointer">
+                    <button onClick={addNew} className="inline-flex items-center gap-2 px-4 py-2 text-sm font-semibold text-white bg-yellow-orange-500 rounded-xl hover:bg-yellow-orange-600 transition shadow-sm cursor-pointer">
                         <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" /></svg>
                         Crear código
                     </button>
@@ -438,7 +452,7 @@ export default function DescuentosPage() {
                             <button
                                 onClick={handleSave}
                                 disabled={saving}
-                                className="flex items-center gap-2 px-5 py-2 text-sm font-semibold bg-falu-red-700 text-white rounded-xl hover:bg-falu-red-800 transition disabled:opacity-50 cursor-pointer"
+                                className="flex items-center gap-2 px-5 py-2 text-sm font-semibold bg-yellow-orange-500 text-white rounded-xl hover:bg-yellow-orange-600 transition shadow-sm disabled:opacity-50 cursor-pointer"
                             >
                                 {saving
                                     ? <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" /><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" /></svg>

@@ -50,9 +50,13 @@ export default function AdminLogin() {
 
                         {/* Brand */}
                         <div className="flex items-center gap-3 mb-8">
-                            <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-falu-red-600 to-yellow-orange-400 flex items-center justify-center shadow-md shadow-red-300/40 flex-shrink-0">
-                                <span className="text-white font-black text-sm tracking-tight">LZ</span>
-                            </div>
+                            <span className="relative w-12 h-12 rounded-full overflow-hidden ring-1 ring-black/5 shadow-md shadow-gray-300/40 flex-shrink-0">
+                                <img
+                                    src="/lzacademy_logo1.png"
+                                    alt="LZ English Academy"
+                                    className="absolute inset-0 w-full h-full object-cover"
+                                />
+                            </span>
                             <div className="leading-none">
                                 <p className="text-base font-bold text-gray-900">LZ Academy</p>
                                 <p className="text-xs text-gray-400 mt-0.5">Admin panel</p>
@@ -154,9 +158,26 @@ export default function AdminLogin() {
                             </button>
                         </form>
 
-                        <p className="text-center text-xs text-gray-400 mt-7">
-                            © {new Date().getFullYear()} LZ English Academy
-                        </p>
+                        {/* Footer: copyright + powered by */}
+                        <div className="mt-7 pt-5 border-t border-gray-100 flex flex-col items-center gap-3">
+                            <a
+                                href="https://qali-t.com"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="inline-flex items-center gap-2 group"
+                                aria-label="Powered by QALI-T"
+                            >
+                                <span className="inline-flex h-5 w-5 items-center justify-center rounded-lg bg-zinc-900/5 ring-1 ring-inset ring-zinc-200 group-hover:ring-zinc-300 transition">
+                                    <img src="/logo_solo.png" alt="QALI-T" className="h-3 w-auto object-contain" />
+                                </span>
+                                <span className="text-[11px] font-semibold text-zinc-500 group-hover:text-zinc-700 transition">
+                                    Powered by <span className="text-falu-red-700">QALI-T</span>
+                                </span>
+                            </a>
+                            <p className="text-[11px] text-gray-300">
+                                © {new Date().getFullYear()} LZ English Academy
+                            </p>
+                        </div>
                     </div>
                 </div>
             </div>

@@ -2,11 +2,12 @@
 
 const ACCESOS_ENABLED = true;
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { supabase } from "../../lib/supabaseClient";
 import { useRouter } from "next/navigation";
 import dayjs from "dayjs";
 import utc from "dayjs/plugin/utc";
+import { ErrorState } from "../_utils/ErrorState";
 dayjs.extend(utc);
 
 const PLAN_DOT: Record<string, string> = {
@@ -86,6 +87,7 @@ export default function AccesosPage() {
     const [users, setUsers] = useState<AccessUser[]>([]);
     const [links, setLinks] = useState<AccessLinks>({});
     const [loading, setLoading] = useState(true);
+    const [loadError, setLoadError] = useState<string | null>(null);
     const [filter, setFilter] = useState<"all" | "pending" | "sent">("pending");
     const [search, setSearch] = useState("");
     const [currentPage, setCurrentPage] = useState(1);
@@ -97,8 +99,9 @@ export default function AccesosPage() {
     const [configPlan, setConfigPlan] = useState("Essential");
     const router = useRouter();
 
-    useEffect(() => {
-        async function load() {
+    const load = useCallback(async () => {
+        setLoadError(null);
+        try {
             const { data: { session } } = await supabase.auth.getSession();
             if (!session) { router.push("/admin/login"); return; }
             const headers = { Authorization: `Bearer ${session.access_token}` };
@@ -108,14 +111,20 @@ export default function AccesosPage() {
                 fetch(`${base}/admin/accesos`, { headers }),
                 fetch(`${base}/admin/accesos/config`, { headers }),
             ]);
+            if (!usersRes.ok) throw new Error(`Error cargando usuarios (${usersRes.status})`);
+            if (!configRes.ok) throw new Error(`Error cargando config (${configRes.status})`);
             const [usersData, configData] = await Promise.all([usersRes.json(), configRes.json()]);
             setUsers(usersData);
             setLinks(configData);
             setConfigDraft(configData);
+        } catch (e) {
+            setLoadError(e instanceof Error ? e.message : "Error de red");
+        } finally {
             setLoading(false);
         }
-        load();
-    }, []);
+    }, [router]);
+
+    useEffect(() => { load(); }, [load]);
 
     const showToast = (id: number, name: string, ok: boolean) => {
         setToast({ id, name, ok });
@@ -243,6 +252,8 @@ export default function AccesosPage() {
             </div>
         </div>
     );
+
+    if (loadError) return <ErrorState message={loadError} onRetry={load} />;
 
     if (loading) return (
         <div className="flex items-center justify-center min-h-[60vh]">
@@ -601,7 +612,7 @@ export default function AccesosPage() {
                                                 <button
                                                     onClick={() => handleSend(u)}
                                                     disabled={isSending || !configReady}
-                                                    className="inline-flex items-center gap-2 text-xs font-semibold px-3.5 py-2 rounded-xl bg-falu-red-600 text-white hover:bg-falu-red-700 transition disabled:opacity-40 disabled:cursor-not-allowed"
+                                                    className="inline-flex items-center gap-2 text-xs font-semibold px-3.5 py-2 rounded-xl bg-yellow-orange-500 text-white hover:bg-yellow-orange-600 transition shadow-sm disabled:opacity-40 disabled:cursor-not-allowed"
                                                     title={!configReady ? "Configura los links de este nivel primero" : ""}
                                                 >
                                                     {isSending
@@ -674,7 +685,7 @@ export default function AccesosPage() {
                                     <button
                                         onClick={() => handleSend(u)}
                                         disabled={isSending || !configReady}
-                                        className={`inline-flex items-center gap-2 text-xs font-semibold px-3 py-1.5 rounded-xl transition disabled:opacity-40 disabled:cursor-not-allowed ${u.access_sent_at ? "border border-gray-200 text-gray-500 hover:bg-gray-50" : "bg-falu-red-600 text-white hover:bg-falu-red-700"}`}
+                                        className={`inline-flex items-center gap-2 text-xs font-semibold px-3 py-1.5 rounded-xl transition disabled:opacity-40 disabled:cursor-not-allowed ${u.access_sent_at ? "border border-gray-200 text-gray-500 hover:bg-gray-50" : "bg-yellow-orange-500 text-white hover:bg-yellow-orange-600 shadow-sm"}`}
                                         title={!configReady ? "Configura los links de este nivel primero" : ""}
                                     >
                                         {isSending

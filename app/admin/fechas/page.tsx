@@ -1,8 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { supabase } from "../../lib/supabaseClient";
 import { useRouter } from "next/navigation";
+import { ErrorState } from "../_utils/ErrorState";
 
 interface StartDate {
     value: string;
@@ -53,6 +54,7 @@ export default function FechasPage() {
     // Start dates
     const [dates, setDates]     = useState<StartDate[]>([]);
     const [loading, setLoading] = useState(true);
+    const [loadError, setLoadError] = useState<string | null>(null);
     const [saving, setSaving]   = useState(false);
     const [newDate, setNewDate] = useState("");
     const [error, setError]     = useState("");
@@ -67,8 +69,9 @@ export default function FechasPage() {
     const [slotsError, setSlotsError]   = useState("");
     const [slotsSaved, setSlotsSaved]   = useState(false);
 
-    useEffect(() => {
-        async function load() {
+    const load = useCallback(async () => {
+        setLoadError(null);
+        try {
             const { data: { session } } = await supabase.auth.getSession();
             if (!session) { router.push("/admin/login"); return; }
 
@@ -80,13 +83,19 @@ export default function FechasPage() {
                 fetch(`${base}/config/premium-slots/all`, { headers: { Authorization: `Bearer ${token}` } }),
             ]);
 
-            if (datesRes.ok) setDates(await datesRes.json());
-            if (slotsRes.ok) setSlots(await slotsRes.json());
+            if (!datesRes.ok) throw new Error(`Error fechas (${datesRes.status})`);
+            if (!slotsRes.ok) throw new Error(`Error horarios (${slotsRes.status})`);
+            setDates(await datesRes.json());
+            setSlots(await slotsRes.json());
+        } catch (e) {
+            setLoadError(e instanceof Error ? e.message : "Error de red");
+        } finally {
             setLoading(false);
             setLoadingSlots(false);
         }
-        load();
-    }, []);
+    }, [router]);
+
+    useEffect(() => { load(); }, [load]);
 
     // ─── Start dates ───────────────────────────────────────────────
     async function saveDates(updatedDates: StartDate[]) {
@@ -159,6 +168,8 @@ export default function FechasPage() {
     const today = new Date().toISOString().split("T")[0];
     const nowDT  = new Date().toISOString().slice(0, 16);
 
+    if (loadError) return <ErrorState message={loadError} onRetry={load} />;
+
     if (loading) return (
         <div className="flex items-center justify-center min-h-[60vh]">
             <div className="flex flex-col items-center gap-3 text-gray-400">
@@ -204,7 +215,7 @@ export default function FechasPage() {
                         <button
                             onClick={handleAdd}
                             disabled={!newDate || saving}
-                            className="px-4 py-2 bg-falu-red-700 text-white text-sm font-semibold rounded-xl hover:bg-falu-red-800 transition disabled:opacity-40 disabled:cursor-not-allowed"
+                            className="px-4 py-2 bg-yellow-orange-500 text-white text-sm font-semibold rounded-xl hover:bg-yellow-orange-600 transition shadow-sm disabled:opacity-40 disabled:cursor-not-allowed"
                         >
                             Agregar
                         </button>
@@ -348,7 +359,7 @@ export default function FechasPage() {
                             <select
                                 value={newSlotStartDate}
                                 onChange={(e) => { setNewSlotStartDate(e.target.value); setSlotsError(""); }}
-                                className="w-full p-2 text-sm border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-300 bg-gray-50 appearance-none cursor-pointer"
+                                className="w-full p-2 text-sm border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-yellow-orange-300 bg-gray-50 appearance-none cursor-pointer"
                             >
                                 <option value="">Selecciona fecha de inicio</option>
                                 {dates.filter(d => d.enabled && d.value >= today).map(d => (
@@ -363,7 +374,7 @@ export default function FechasPage() {
                                 min={nowDT}
                                 value={newSlotDt}
                                 onChange={(e) => { setNewSlotDt(e.target.value); setSlotsError(""); }}
-                                className="w-full p-2 text-sm border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-300 bg-gray-50"
+                                className="w-full p-2 text-sm border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-yellow-orange-300 bg-gray-50"
                             />
                         </div>
                     </div>

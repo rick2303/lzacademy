@@ -1,10 +1,12 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { supabase } from "../../lib/supabaseClient";
 import { useRouter } from "next/navigation";
 import dayjs from "dayjs";
 import utc from "dayjs/plugin/utc";
+import { planColor } from "../_utils/planColors";
+import { ErrorState } from "../_utils/ErrorState";
 dayjs.extend(utc);
 
 interface NoRenewUser {
@@ -18,16 +20,6 @@ interface NoRenewUser {
     cancel_at_period_end: boolean | null;
     current_period_end: string | null;
     last_payment_date: string | null;
-}
-
-const PLAN_COLORS: Record<string, string> = {
-    Essential: "bg-blue-500",
-    Premium: "bg-violet-500",
-    Personalizado: "bg-emerald-500",
-    Speaking: "bg-yellow-orange-500",
-};
-function planColor(plan: string) {
-    return PLAN_COLORS[plan] ?? "bg-gray-400";
 }
 
 const STATUS_CHIP: Record<string, { bg: string; text: string; dot: string }> = {
@@ -62,21 +54,30 @@ export default function NoRenovadosPage() {
     const [currentPage, setCurrentPage] = useState(1);
     const [search, setSearch] = useState("");
     const [planFilter, setPlanFilter] = useState("all");
+    const [loadError, setLoadError] = useState<string | null>(null);
     const router = useRouter();
 
-    useEffect(() => {
-        async function loadData() {
+    const loadData = useCallback(async () => {
+        setLoadError(null);
+        try {
             const { data: { session } } = await supabase.auth.getSession();
             if (!session) { router.push("/admin/login"); return; }
             const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/admin/no-renovados`, {
                 headers: { Authorization: `Bearer ${session.access_token}` },
             });
+            if (!response.ok) throw new Error(`Error del servidor (${response.status})`);
             const result = await response.json();
             if (Array.isArray(result)) setUsers(result);
+        } catch (e) {
+            setLoadError(e instanceof Error ? e.message : "Error de red");
+        } finally {
             setLoading(false);
         }
-        loadData();
-    }, []);
+    }, [router]);
+
+    useEffect(() => { loadData(); }, [loadData]);
+
+    if (loadError) return <ErrorState message={loadError} onRetry={loadData} />;
 
     if (loading) return (
         <div className="flex items-center justify-center min-h-[60vh]">

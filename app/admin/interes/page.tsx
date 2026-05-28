@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { supabase } from "../../lib/supabaseClient";
 import { useRouter } from "next/navigation";
 import * as XLSX from "xlsx";
@@ -8,6 +8,9 @@ import { saveAs } from "file-saver";
 import dayjs from "dayjs";
 import utc from "dayjs/plugin/utc";
 import timezone from "dayjs/plugin/timezone";
+import { LongText } from "../_utils/LongText";
+import { useEscapeKey } from "../_utils/useEscapeKey";
+import { ErrorState } from "../_utils/ErrorState";
 dayjs.extend(utc);
 dayjs.extend(timezone);
 
@@ -89,6 +92,7 @@ function TextModal({
     text: string;
     onClose: () => void;
 }) {
+    useEscapeKey(true, onClose);
     return (
         <div
             className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4"
@@ -148,6 +152,7 @@ export default function InterestDashboard() {
     const [modal, setModal] = useState<{ title: string; text: string } | null>(null);
     const [currentPage, setCurrentPage] = useState(1);
     const [toggling, setToggling] = useState<string | null>(null);
+    const [loadError, setLoadError] = useState<string | null>(null);
     const router = useRouter();
 
     const handleToggleContacted = async (id: string, current: boolean) => {
@@ -169,8 +174,9 @@ export default function InterestDashboard() {
         }
     };
 
-    useEffect(() => {
-        async function loadData() {
+    const loadData = useCallback(async () => {
+        setLoadError(null);
+        try {
             const {
                 data: { session },
             } = await supabase.auth.getSession();
@@ -189,6 +195,7 @@ export default function InterestDashboard() {
                 }
             );
 
+            if (!response.ok) throw new Error(`Error del servidor (${response.status})`);
             const result = await response.json();
             if (result.submissions) {
                 setSubmissions(result.submissions);
@@ -196,11 +203,14 @@ export default function InterestDashboard() {
             } else if (Array.isArray(result)) {
                 setSubmissions(result);
             }
+        } catch (e) {
+            setLoadError(e instanceof Error ? e.message : "Error de red");
+        } finally {
             setLoading(false);
         }
+    }, [router]);
 
-        loadData();
-    }, []);
+    useEffect(() => { loadData(); }, [loadData]);
 
     // Reset página al cambiar filtros
     useEffect(() => {
@@ -286,19 +296,7 @@ export default function InterestDashboard() {
         saveAs(new Blob([buffer], { type: "application/octet-stream" }), "interesados.xlsx");
     };
 
-    const LongText = ({ title, value }: { title: string; value: string | null }) => {
-        if (!value) return <span className="text-gray-300 text-xs">—</span>;
-        const preview = value.length > 40 ? value.slice(0, 40) + "…" : value;
-        return (
-            <button
-                className="text-xs text-left text-zinc-600 hover:text-falu-red-700 hover:underline transition max-w-[160px] truncate block"
-                onClick={() => setModal({ title, text: value })}
-                title="Ver completo"
-            >
-                {preview}
-            </button>
-        );
-    };
+    if (loadError) return <ErrorState message={loadError} onRetry={loadData} />;
 
     if (loading)
         return (
@@ -527,10 +525,10 @@ export default function InterestDashboard() {
                                     <td className="px-3 py-2 text-xs text-gray-500 max-w-[140px] truncate" title={s.main_difficulty}>{s.main_difficulty}</td>
                                     <td className="px-3 py-2"><Badge value={s.daily_routine} /></td>
                                     <td className="px-3 py-2">
-                                        <LongText title="¿Qué cambiaría en tu vida?" value={s.life_change} />
+                                        <LongText title="¿Qué cambiaría en tu vida?" value={s.life_change} onOpen={setModal} />
                                     </td>
                                     <td className="px-3 py-2">
-                                        <LongText title="Información adicional" value={s.additional_info} />
+                                        <LongText title="Información adicional" value={s.additional_info} onOpen={setModal} />
                                     </td>
                                 </tr>
                             ))

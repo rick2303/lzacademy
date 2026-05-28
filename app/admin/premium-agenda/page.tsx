@@ -1,11 +1,12 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { supabase } from "../../lib/supabaseClient";
 import { useRouter } from "next/navigation";
 import dayjs from "dayjs";
 import utc from "dayjs/plugin/utc";
 import timezone from "dayjs/plugin/timezone";
+import { ErrorState } from "../_utils/ErrorState";
 dayjs.extend(utc);
 dayjs.extend(timezone);
 
@@ -79,14 +80,16 @@ export default function PremiumAgenda() {
     const [pending, setPending]   = useState<PremiumRow[]>([]);
     const [booked, setBooked]     = useState<PremiumRow[]>([]);
     const [loading, setLoading]   = useState(true);
+    const [loadError, setLoadError] = useState<string | null>(null);
     const [tab, setTab]           = useState<"pending" | "booked">("pending");
     const [origin, setOrigin]     = useState("");
     const [cohort, setCohort]     = useState("");   // filtra por fecha de inicio (cohorte)
 
     useEffect(() => { setOrigin(window.location.origin); }, []);
 
-    useEffect(() => {
-        async function load() {
+    const load = useCallback(async () => {
+        setLoadError(null);
+        try {
             const { data: { session } } = await supabase.auth.getSession();
             if (!session) { router.push("/admin/login"); return; }
             const headers = { Authorization: `Bearer ${session.access_token}` };
@@ -95,13 +98,21 @@ export default function PremiumAgenda() {
                 fetch(`${BACKEND}/admin/premium-sesiones`, { headers }),
                 fetch(`${BACKEND}/admin/premium-sesiones-agendadas`, { headers }),
             ]);
+            if (!r1.ok) throw new Error(`Error pendientes (${r1.status})`);
+            if (!r2.ok) throw new Error(`Error agendadas (${r2.status})`);
             const [p, b] = await Promise.all([r1.json(), r2.json()]);
             setPending(Array.isArray(p) ? p : []);
             setBooked(Array.isArray(b) ? b : []);
+        } catch (e) {
+            setLoadError(e instanceof Error ? e.message : "Error de red");
+        } finally {
             setLoading(false);
         }
-        load();
-    }, []);
+    }, [router, BACKEND]);
+
+    useEffect(() => { load(); }, [load]);
+
+    if (loadError) return <ErrorState message={loadError} onRetry={load} />;
 
     if (loading) return (
         <div className="flex items-center justify-center min-h-[60vh]">
@@ -209,7 +220,7 @@ export default function PremiumAgenda() {
                         <select
                             value={cohort}
                             onChange={(e) => setCohort(e.target.value)}
-                            className="p-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-400 shadow-sm text-sm bg-white"
+                            className="p-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-orange-300 shadow-sm text-sm bg-white"
                         >
                             <option value="">Todas las cohortes</option>
                             {cohorts.map((c) => (
