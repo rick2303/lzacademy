@@ -16,6 +16,7 @@ const VALID_ROUTES = new Set([
   "/admin/interes",
   "/admin/recurrentes",
   "/admin/fechas",
+  "/admin/niveles",
   "/admin/contenido",
   "/admin/login",
   "/admin/busqueda",

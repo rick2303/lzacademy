@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useLevelAvailability } from "../hooks/useLevelAvailability";
 
 interface StudentData {
   full_name: string;
@@ -53,6 +54,7 @@ export default function PagoEstudiantesPage() {
   const [student, setStudent] = useState<StudentData | null>(null);
   const [verifyError, setVerifyError] = useState("");
 
+  const { isLevelAvailable } = useLevelAvailability();
   const [plan, setPlan] = useState("Essential");
   const [level, setLevel] = useState("");
   const [interestDate, setInterestDate] = useState("");
@@ -230,17 +232,14 @@ export default function PagoEstudiantesPage() {
   }
 
   // ─── Step 2: Student card + plan selection ─────────────────────────────────
-  const availableLevels = [
+  const ALL_LEVELS = [
     { value: "Principiante", label: "Principiante (A1)" },
     { value: "Basico", label: "Básico (A2)" },
     { value: "Intermedio", label: "Intermedio (B1)" },
-    ...(plan !== "Personalizado"
-      ? [{ value: "Intermedio alto-gramatica", label: "Intermedio alto (B2.1)" }]
-      : []),
-    ...(plan === "Essential"
-      ? [{ value: "Intermedio alto-produccion", label: "Intermedio alto (B2.2)" }]
-      : []),
+    { value: "Intermedio alto-gramatica", label: "Intermedio alto (B2.1)" },
+    { value: "Intermedio alto-produccion", label: "Intermedio alto (B2.2)" },
   ];
+  const availableLevels = ALL_LEVELS.filter((l) => isLevelAvailable(plan, l.value));
 
   const today = new Date().toISOString().split("T")[0];
   const futureDates = specialDates.filter((d) => d.value >= today);
@@ -319,8 +318,7 @@ export default function PagoEstudiantesPage() {
                   value={plan}
                   onChange={(e) => {
                     setPlan(e.target.value);
-                    if (e.target.value === "Personalizado" &&
-                      (level === "Intermedio alto-gramatica" || level === "Intermedio alto-produccion")) {
+                    if (level && !isLevelAvailable(e.target.value, level)) {
                       setLevel("");
                     }
                     // El descuento depende del plan: al cambiarlo se invalida.

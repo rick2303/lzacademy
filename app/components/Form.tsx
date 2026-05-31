@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useStartDates } from "../hooks/useStartDates";
+import { useLevelAvailability } from "../hooks/useLevelAvailability";
 
 interface PremiumSlot { id: string; datetime_pt: string; start_date: string; enabled: boolean; }
 
@@ -125,6 +126,7 @@ const PaymentForm = ({
     const [loading, setLoading] = useState(false);
     const [emailSuggestion, setEmailSuggestion] = useState<string | null>(null);
     const { dates: allDates } = useStartDates();
+    const { isLevelAvailable } = useLevelAvailability();
     const availableDates = allDates.filter(d => !d.excludedPlans?.includes(plan));
     const [formData, setFormData] = useState({
         email: "",
@@ -151,6 +153,14 @@ const PaymentForm = ({
             setFormData(prev => ({ ...prev, englishLevel: selectedNivel }));
         }
     }, [selectedNivel]);
+
+    // Si el nivel actual no está disponible para el plan (p. ej. viene preseleccionado
+    // desde paso-uno), se limpia para que el usuario lo vuelva a elegir entre los válidos.
+    useEffect(() => {
+        if (formData.englishLevel && !isLevelAvailable(plan, formData.englishLevel)) {
+            setFormData(prev => ({ ...prev, englishLevel: "" }));
+        }
+    }, [plan, formData.englishLevel, isLevelAvailable]);
 
     // Auto-select the nearest available date
     useEffect(() => {
@@ -187,10 +197,7 @@ const PaymentForm = ({
             setPlan(value as PlanType);
             onPlanChange?.(value as PlanType);
             const updates: Partial<typeof formData> = {};
-            if (
-                (value === "Personalizado" && (formData.englishLevel === "Intermedio alto-gramatica" || formData.englishLevel === "Intermedio alto-produccion")) ||
-                (value === "Premium" && formData.englishLevel === "Intermedio alto-produccion")
-            ) {
+            if (formData.englishLevel && !isLevelAvailable(value as PlanType, formData.englishLevel)) {
                 updates.englishLevel = "";
             }
             if (formData.interestDate && allDates.find(d => d.value === formData.interestDate)?.excludedPlans?.includes(value)) {
@@ -481,11 +488,11 @@ const PaymentForm = ({
                                         required
                                     >
                                         <option value="">Selecciona tu nivel</option>
-                                        <option value="Principiante">Principiante (A1)</option>
-                                        <option value="Basico">Básico (A2)</option>
-                                        <option value="Intermedio">Intermedio (B1)</option>
-                                        {plan !== "Personalizado" && <option value="Intermedio alto-gramatica">Intermedio alto (B2.1)</option>}
-                                        {plan !== "Personalizado" && plan !== "Premium" && <option value="Intermedio alto-produccion">Intermedio alto (B2.2)</option>}
+                                        {isLevelAvailable(plan, "Principiante") && <option value="Principiante">Principiante (A1)</option>}
+                                        {isLevelAvailable(plan, "Basico") && <option value="Basico">Básico (A2)</option>}
+                                        {isLevelAvailable(plan, "Intermedio") && <option value="Intermedio">Intermedio (B1)</option>}
+                                        {isLevelAvailable(plan, "Intermedio alto-gramatica") && <option value="Intermedio alto-gramatica">Intermedio alto (B2.1)</option>}
+                                        {isLevelAvailable(plan, "Intermedio alto-produccion") && <option value="Intermedio alto-produccion">Intermedio alto (B2.2)</option>}
                                     </select>
                                     <div className="pointer-events-none absolute inset-y-0 right-3 flex items-center">
                                         <svg className="h-4 w-4 text-zinc-400" viewBox="0 0 16 16" fill="none">
