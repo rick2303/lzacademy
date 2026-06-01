@@ -57,6 +57,15 @@ interface DashboardData {
 const PAGE_SIZE = 15;
 const STATUSES = ["active", "inactive", "cancelled"];
 
+const LEVEL_LABEL: Record<string, string> = {
+    "Principiante":               "Principiante · A1",
+    "Basico":                     "Básico · A2",
+    "Intermedio":                 "Intermedio · B1",
+    "Intermedio alto-gramatica":  "Intermedio alto · B2.1",
+    "Intermedio alto-produccion": "Intermedio alto · B2.2",
+};
+const LEVEL_ORDER = ["Principiante", "Basico", "Intermedio", "Intermedio alto-gramatica", "Intermedio alto-produccion"];
+
 function CopyEmail({ email }: { email: string }) {
     const [copied, setCopied] = useState(false);
     return (
@@ -94,7 +103,7 @@ function StatCard({ label, value, sub, icon, accent = "text-falu-red-600", bg = 
 
 export default function Dashboard() {
     const [data, setData] = useState<DashboardData | null>(null);
-    const [filters, setFilters] = useState({ country: "", status: "", plan: "", inscriptionDate: "", paymentDateFrom: "", paymentDateTo: "" });
+    const [filters, setFilters] = useState({ country: "", status: "", plan: "", level: "", inscriptionDate: "", paymentDateFrom: "", paymentDateTo: "" });
     const [search, setSearch] = useState("");
     const [sortBy, setSortBy] = useState<"last_payment_date" | "id">("last_payment_date");
     const [showAtRisk, setShowAtRisk] = useState(false);
@@ -171,6 +180,7 @@ export default function Dashboard() {
         if (filters.country && u.country !== filters.country) return false;
         if (filters.status && u.status !== filters.status) return false;
         if (filters.plan && u.plan !== filters.plan) return false;
+        if (filters.level && u.level !== filters.level) return false;
         if (filters.inscriptionDate && !u.inscription_date?.startsWith(filters.inscriptionDate)) return false;
         if (filters.paymentDateFrom && (!u.last_payment_date || dayjs.utc(u.last_payment_date).tz(PT).format("YYYY-MM-DD") < filters.paymentDateFrom)) return false;
         if (filters.paymentDateTo && (!u.last_payment_date || dayjs.utc(u.last_payment_date).tz(PT).format("YYYY-MM-DD") > filters.paymentDateTo)) return false;
@@ -198,6 +208,14 @@ export default function Dashboard() {
     const inscriptionDates = Array.from(
         new Set(data.users.map((u) => u.inscription_date).filter(Boolean))
     ).sort() as string[];
+    const levels = Array.from(new Set(data.users.map((u) => u.level).filter(Boolean)))
+        .sort((a, b) => {
+            const ai = LEVEL_ORDER.indexOf(a), bi = LEVEL_ORDER.indexOf(b);
+            if (ai !== -1 && bi !== -1) return ai - bi;
+            if (ai !== -1) return -1;
+            if (bi !== -1) return 1;
+            return a.localeCompare(b);
+        }) as string[];
 
     const monthlyRows = Object.entries(data.revenueByMonth ?? {}).sort((a, b) => b[0].localeCompare(a[0]));
     const planRows = Object.entries(data.paymentsByPlan ?? {}).sort((a, b) => b[1].count - a[1].count);
@@ -356,13 +374,6 @@ export default function Dashboard() {
 
             {/* Level distribution */}
             {(() => {
-                const LEVEL_LABEL: Record<string, string> = {
-                    "Principiante":              "Principiante · A1",
-                    "Basico":                    "Básico · A2",
-                    "Intermedio":                "Intermedio · B1",
-                    "Intermedio alto-gramatica": "Intermedio alto · B2.1",
-                    "Intermedio alto-produccion":"Intermedio alto · B2.2",
-                };
                 const levelMap: Record<string, Record<string, number>> = {};
                 for (const u of data.users) {
                     const lvl = u.level || "Sin nivel";
@@ -373,8 +384,7 @@ export default function Dashboard() {
                 const levels = Object.entries(levelMap)
                     .map(([level, plans]) => ({ level, total: Object.values(plans).reduce((a, b) => a + b, 0), plans }))
                     .sort((a, b) => {
-                        const ORDER = ["Principiante", "Basico", "Intermedio", "Intermedio alto-gramatica", "Intermedio alto-produccion"];
-                        const ai = ORDER.indexOf(a.level), bi = ORDER.indexOf(b.level);
+                        const ai = LEVEL_ORDER.indexOf(a.level), bi = LEVEL_ORDER.indexOf(b.level);
                         if (ai !== -1 && bi !== -1) return ai - bi;
                         if (ai !== -1) return -1;
                         if (bi !== -1) return 1;
@@ -460,6 +470,14 @@ export default function Dashboard() {
                         </select>
                     </div>
                     <div className="flex flex-col gap-1">
+                        <label className="text-xs text-gray-400 font-medium">Nivel</label>
+                        <select className="p-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-orange-300 bg-gray-50"
+                            value={filters.level} onChange={(e) => setFilters({ ...filters, level: e.target.value })}>
+                            <option value="">Todos</option>
+                            {levels.map((l) => <option key={l} value={l}>{LEVEL_LABEL[l] ?? l}</option>)}
+                        </select>
+                    </div>
+                    <div className="flex flex-col gap-1">
                         <label className="text-xs text-gray-400 font-medium">Fecha de inicio</label>
                         <select className="p-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-orange-300 bg-gray-50"
                             value={filters.inscriptionDate} onChange={(e) => setFilters({ ...filters, inscriptionDate: e.target.value })}>
@@ -480,7 +498,7 @@ export default function Dashboard() {
                             value={filters.paymentDateTo} onChange={(e) => setFilters({ ...filters, paymentDateTo: e.target.value })} />
                     </div>
                     {hasActiveFilters && (
-                        <button onClick={() => { setFilters({ country: "", status: "", plan: "", inscriptionDate: "", paymentDateFrom: "", paymentDateTo: "" }); setSearch(""); setShowAtRisk(false); }}
+                        <button onClick={() => { setFilters({ country: "", status: "", plan: "", level: "", inscriptionDate: "", paymentDateFrom: "", paymentDateTo: "" }); setSearch(""); setShowAtRisk(false); }}
                             className="px-3 py-2 text-xs text-gray-400 hover:text-gray-700 border border-gray-200 rounded-lg hover:bg-gray-50 transition">
                             Limpiar
                         </button>
