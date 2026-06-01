@@ -405,7 +405,7 @@ export default function Inicio() {
                                             <div className="text-right flex-shrink-0 flex flex-col items-end gap-1">
                                                 <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-md ${k.cls}`}>{k.label}</span>
                                                 {c.current_period_end && (
-                                                    <p className="text-[10px] text-gray-400">hasta {dayjs.utc(c.current_period_end).format("DD MMM")}</p>
+                                                    <p className="text-[10px] text-gray-400">hasta {dayjs.utc(c.current_period_end).tz(PT).format("DD MMM")}</p>
                                                 )}
                                             </div>
                                         </div>

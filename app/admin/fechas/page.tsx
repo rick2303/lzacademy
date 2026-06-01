@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import { supabase } from "../../lib/supabaseClient";
 import { useRouter } from "next/navigation";
 import { ErrorState } from "../_utils/ErrorState";
+import { todayPT, nowPTInput } from "../_utils/ptTime";
 
 interface StartDate {
     value: string;
@@ -165,8 +166,10 @@ export default function FechasPage() {
         saveSlots(updated);
     }
 
-    const today = new Date().toISOString().split("T")[0];
-    const nowDT  = new Date().toISOString().slice(0, 16);
+    // Fecha/hora actual en horario de California (PT), no en UTC, para que los
+    // límites de los inputs y el cálculo de "pasada" coincidan con la zona del negocio.
+    const today = todayPT();
+    const nowDT = nowPTInput();
 
     if (loadError) return <ErrorState message={loadError} onRetry={load} />;
 

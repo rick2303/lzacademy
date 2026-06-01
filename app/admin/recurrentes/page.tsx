@@ -5,9 +5,13 @@ import { supabase } from "../../lib/supabaseClient";
 import { useRouter } from "next/navigation";
 import dayjs from "dayjs";
 import utc from "dayjs/plugin/utc";
+import timezone from "dayjs/plugin/timezone";
 import { planColor } from "../_utils/planColors";
 import { ErrorState } from "../_utils/ErrorState";
 dayjs.extend(utc);
+dayjs.extend(timezone);
+
+const PT = "America/Los_Angeles";
 
 interface RecurringUser {
     email: string;
@@ -97,8 +101,8 @@ export default function RecurrentesPage() {
             u.plan,
             u.payment_count,
             (u.total_paid / 100).toFixed(2),
-            dayjs.utc(u.first_payment).format("YYYY-MM-DD"),
-            dayjs.utc(u.last_payment).format("YYYY-MM-DD"),
+            dayjs.utc(u.first_payment).tz(PT).format("YYYY-MM-DD"),
+            dayjs.utc(u.last_payment).tz(PT).format("YYYY-MM-DD"),
         ]);
         const csv = [headers, ...rows].map((r) => r.map((v) => `"${String(v).replace(/"/g, '""')}"`).join(",")).join("\n");
         const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
@@ -259,8 +263,8 @@ export default function RecurrentesPage() {
                                                 </span>
                                             </td>
                                             <td className="px-5 py-3 text-sm font-bold text-gray-800">${(u.total_paid / 100).toFixed(2)}</td>
-                                            <td className="px-5 py-3 text-xs text-gray-400">{dayjs.utc(u.first_payment).format("DD/MM/YYYY")}</td>
-                                            <td className="px-5 py-3 text-xs text-gray-400">{dayjs.utc(u.last_payment).format("DD/MM/YYYY")}</td>
+                                            <td className="px-5 py-3 text-xs text-gray-400">{dayjs.utc(u.first_payment).tz(PT).format("DD/MM/YYYY")}</td>
+                                            <td className="px-5 py-3 text-xs text-gray-400">{dayjs.utc(u.last_payment).tz(PT).format("DD/MM/YYYY")}</td>
                                         </tr>
                                     ))}
                                 </tbody>
@@ -303,9 +307,9 @@ export default function RecurrentesPage() {
                                     <span className="text-sm font-bold text-gray-800">${(u.total_paid / 100).toFixed(2)}</span>
                                 </div>
                                 <div className="flex gap-3 mt-2 text-xs text-gray-400">
-                                    <span>Desde: {dayjs.utc(u.first_payment).format("DD/MM/YY")}</span>
+                                    <span>Desde: {dayjs.utc(u.first_payment).tz(PT).format("DD/MM/YY")}</span>
                                     <span>·</span>
-                                    <span>Último: {dayjs.utc(u.last_payment).format("DD/MM/YY")}</span>
+                                    <span>Último: {dayjs.utc(u.last_payment).tz(PT).format("DD/MM/YY")}</span>
                                 </div>
                             </div>
                         ))}

@@ -11,6 +11,9 @@ dayjs.extend(timezone);
 
 const PT = "America/Los_Angeles";
 const fmtPT  = (ts: string | null, fmt = "DD MMM YYYY, h:mm a") => ts ? dayjs.utc(ts).tz(PT).format(fmt) : "—";
+// Timestamps (created_at, current_period_end) → día calendario en PT.
+const fmtDatePT = (ts: string | null) => ts ? dayjs.utc(ts).tz(PT).format("DD MMM YYYY") : "—";
+// Solo fechas sin hora (inscription_date): se muestran tal cual, sin convertir zona.
 const fmtDate = (d: string | null) => d ? dayjs.utc(d).format("DD MMM YYYY") : "—";
 
 const PLANS  = ["Essential", "Premium", "Personalizado", "Speaking"];
@@ -527,7 +530,7 @@ export default function BusquedaPage() {
                                         </Field>
 
                                         <Field label="Registrado">
-                                            <span className="text-gray-600">{fmtDate(selected.created_at)}</span>
+                                            <span className="text-gray-600">{fmtDatePT(selected.created_at)}</span>
                                         </Field>
 
                                         <Field label="Plan">
@@ -608,7 +611,7 @@ export default function BusquedaPage() {
                                                 )}
                                             </Field>
                                             <Field label="Fin de periodo">
-                                                <span className="text-gray-600">{fmtDate(selected.current_period_end)}</span>
+                                                <span className="text-gray-600">{fmtDatePT(selected.current_period_end)}</span>
                                             </Field>
                                             <Field label="Subscription ID">
                                                 <CopyBadge value={selected.stripe_subscription_id} label={selected.stripe_subscription_id ? selected.stripe_subscription_id.slice(0, 18) + "…" : undefined} />

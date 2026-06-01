@@ -7,8 +7,12 @@ import { supabase } from "../../lib/supabaseClient";
 import { useRouter } from "next/navigation";
 import dayjs from "dayjs";
 import utc from "dayjs/plugin/utc";
+import timezone from "dayjs/plugin/timezone";
 import { ErrorState } from "../_utils/ErrorState";
 dayjs.extend(utc);
+dayjs.extend(timezone);
+
+const PT = "America/Los_Angeles";
 
 const PLAN_DOT: Record<string, string> = {
     Essential:     "bg-blue-400",
@@ -584,7 +588,7 @@ export default function AccesosPage() {
                                                     <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
                                                     Enviado
                                                 </span>
-                                                <p className="text-xs text-gray-400 mt-1">{dayjs.utc(u.access_sent_at).format("DD/MM/YY")}</p>
+                                                <p className="text-xs text-gray-400 mt-1">{dayjs.utc(u.access_sent_at).tz(PT).format("DD/MM/YY")}</p>
                                             </div>
                                         ) : (
                                             <span className="inline-flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-full bg-amber-50 text-amber-700">

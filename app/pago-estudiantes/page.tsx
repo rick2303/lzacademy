@@ -241,7 +241,9 @@ export default function PagoEstudiantesPage() {
   ];
   const availableLevels = ALL_LEVELS.filter((l) => isLevelAvailable(plan, l.value));
 
-  const today = new Date().toISOString().split("T")[0];
+  // "Hoy" en la zona horaria local del usuario (YYYY-MM-DD), no en UTC: cada fecha
+  // sigue disponible hasta las 11:59pm de la zona del usuario.
+  const today = new Intl.DateTimeFormat("sv-SE").format(new Date());
   const futureDates = specialDates.filter((d) => d.value >= today);
 
   // Planes con suscripción recurrente (cobro automático cada 4 semanas)

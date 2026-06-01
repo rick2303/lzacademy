@@ -5,9 +5,13 @@ import { supabase } from "../../lib/supabaseClient";
 import { useRouter } from "next/navigation";
 import dayjs from "dayjs";
 import utc from "dayjs/plugin/utc";
+import timezone from "dayjs/plugin/timezone";
 import { planColor } from "../_utils/planColors";
 import { ErrorState } from "../_utils/ErrorState";
 dayjs.extend(utc);
+dayjs.extend(timezone);
+
+const PT = "America/Los_Angeles";
 
 interface NoRenewUser {
     id: number;
@@ -46,7 +50,7 @@ function StatusBadge({ status }: { status: string | null }) {
 
 const PAGE_SIZE = 15;
 const PLANS = ["Essential", "Premium", "Personalizado", "Speaking"];
-const fmtDate = (d: string | null) => (d ? dayjs.utc(d).format("DD/MM/YYYY") : "—");
+const fmtDate = (d: string | null) => (d ? dayjs.utc(d).tz(PT).format("DD/MM/YYYY") : "—");
 
 export default function NoRenovadosPage() {
     const [users, setUsers] = useState<NoRenewUser[]>([]);
@@ -121,8 +125,8 @@ export default function NoRenovadosPage() {
             u.level,
             u.subscription_status ?? "",
             u.cancel_at_period_end ? "Sí" : "No",
-            u.current_period_end ? dayjs.utc(u.current_period_end).format("YYYY-MM-DD") : "",
-            u.last_payment_date ? dayjs.utc(u.last_payment_date).format("YYYY-MM-DD") : "",
+            u.current_period_end ? dayjs.utc(u.current_period_end).tz(PT).format("YYYY-MM-DD") : "",
+            u.last_payment_date ? dayjs.utc(u.last_payment_date).tz(PT).format("YYYY-MM-DD") : "",
         ]);
         const csv = [headers, ...rows].map((r) => r.map((v) => `"${String(v).replace(/"/g, '""')}"`).join(",")).join("\n");
         const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });

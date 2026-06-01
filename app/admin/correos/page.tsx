@@ -42,11 +42,12 @@ interface SendSummary {
     results: SendResult[];
 }
 
-type FilterKey = "nuevos" | "no_contactados" | "todos";
+type FilterKey = "nuevos" | "no_contactados" | "no_convertidos" | "todos";
 
 const FILTERS: { key: FilterKey; label: string; hint: string }[] = [
     { key: "nuevos", label: "Nuevos", hint: "Sin contactar y sin pago" },
     { key: "no_contactados", label: "No contactados", hint: "Aún no marcados como contactados" },
+    { key: "no_convertidos", label: "No convertidos", hint: "Aún sin ningún pago registrado" },
     { key: "todos", label: "Todos", hint: "Todos los leads" },
 ];
 
@@ -108,6 +109,7 @@ export default function CorreosMasivos() {
         return leads.filter((l) => {
             if (filter === "nuevos" && (l.contacted || l.converted)) return false;
             if (filter === "no_contactados" && l.contacted) return false;
+            if (filter === "no_convertidos" && l.converted) return false;
             if (q && !l.full_name.toLowerCase().includes(q) && !l.email.toLowerCase().includes(q)) return false;
             return true;
         });
