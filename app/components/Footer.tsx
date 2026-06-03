@@ -62,12 +62,18 @@ export function Footer() {
           </div>
 
           {/* Derecha */}
-          <div className="flex justify-start sm:justify-end">
+          <div className="flex flex-col items-start gap-1.5 sm:items-end">
             <a
               href="/paso-uno"
               className="text-xs font-semibold text-falu-red-800 hover:text-falu-red-900"
             >
               Inscribirme →
+            </a>
+            <a
+              href="https://app.lainz590.com/login"
+              className="text-xs font-semibold text-zinc-500 hover:text-zinc-800"
+            >
+              Acceder a la plataforma →
             </a>
           </div>
         </div>

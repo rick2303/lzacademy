@@ -100,8 +100,15 @@ export function Navbar() {
             })}
           </nav>
 
-          {/* Spacer para equilibrar logo en desktop */}
-          <div className="hidden md:block shrink-0 w-[200px]" />
+          {/* CTA desktop — acceso a la plataforma */}
+          <div className="hidden md:flex shrink-0 w-[200px] justify-end">
+            <a
+              href="https://app.lainz590.com/login"
+              className="inline-flex items-center gap-1.5 rounded-xl border border-[#C0353E] px-4 py-2 text-[13px] font-bold text-[#C0353E] transition hover:bg-[#C0353E] hover:text-white"
+            >
+              Acceder →
+            </a>
+          </div>
 
           {/* ── Mobile hamburger ── */}
           <div className="flex md:hidden flex-1 justify-end">
@@ -189,6 +196,15 @@ export function Navbar() {
                     </Link>
                   );
                 })}
+
+                {/* CTA acceso plataforma */}
+                <a
+                  href="https://app.lainz590.com/login"
+                  onClick={() => setOpen(false)}
+                  className="mt-2 flex items-center justify-center gap-2 rounded-xl bg-[#C0353E] px-4 py-3.5 text-[15px] font-bold text-white transition hover:bg-[#a82d35]"
+                >
+                  Acceder a la plataforma →
+                </a>
               </nav>
             </Container>
           </div>
