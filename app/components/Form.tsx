@@ -137,8 +137,16 @@ const PaymentForm = ({
         interestDate: "",
     });
     const [error, setError] = useState("");
+    const [accepted, setAccepted] = useState(false);
     const [premiumSlots, setPremiumSlots] = useState<PremiumSlot[]>([]);
     const [premiumSlotsLoading, setPremiumSlotsLoading] = useState(false);
+
+    // Label legible de la fecha elegida (p. ej. "29 de junio de 2026"), para
+    // mostrarla en la nota, el checkbox y enviarla a Stripe.
+    const selectedDateLabel =
+        availableDates.find(d => d.value === formData.interestDate)?.label
+        ?? allDates.find(d => d.value === formData.interestDate)?.label
+        ?? "";
 
     const planPrice: Record<PlanType, string> = { Essential: "$10", Premium: "$50", Personalizado: "$120" };
 
@@ -168,6 +176,10 @@ const PaymentForm = ({
             setFormData(prev => ({ ...prev, interestDate: availableDates[0].value }));
         }
     }, [availableDates]);
+
+    // Re-confirmación obligatoria: si cambia el plan o la fecha, se desmarca el
+    // checkbox para que el alumno acepte la fecha vigente (no una anterior).
+    useEffect(() => { setAccepted(false); }, [plan, formData.interestDate]);
 
     useEffect(() => {
         if (plan !== "Premium") { setPremiumSlots([]); return; }
@@ -216,6 +228,7 @@ const PaymentForm = ({
         if (loading) return;
         const validationError = validateForm();
         if (validationError) { setError(validationError); return; }
+        if (!accepted) { setError("Debes aceptar los términos y confirmar tu fecha de inicio"); return; }
         setLoading(true);
         try {
             const res = await fetch(`${BACKEND_URL}/create-checkout-session`, {
@@ -228,6 +241,7 @@ const PaymentForm = ({
                     plan,
                     level: formData.englishLevel,
                     interestDate: formData.interestDate,
+                    interestDateLabel: selectedDateLabel,
                     description: `Incluye: ${planDetails[plan].features.join(" · ")}`,
                     motive: selectedDificultades || "no especificado",
                 }),
@@ -575,7 +589,10 @@ const PaymentForm = ({
                             <div>
                                 <p className="text-xs font-semibold text-falu-red-900">Importante sobre el inicio</p>
                                 <p className="mt-0.5 text-xs text-falu-red-700">
-                                    Accede hoy a la plataforma. Las clases grupales del viernes y sesiones 1:1 (si aplica) inician en la fecha seleccionada.
+                                    Accede hoy a la plataforma. Las clases grupales del viernes y sesiones 1:1 (si aplica) inician{" "}
+                                    {selectedDateLabel
+                                        ? <>el <span className="font-bold">{selectedDateLabel}</span></>
+                                        : "en la fecha seleccionada"}.
                                 </p>
                             </div>
                         </div>
@@ -594,24 +611,34 @@ const PaymentForm = ({
                                     </svg>
                                     <span className="text-xs font-semibold text-emerald-800">Reembolso garantizado los primeros 3 días</span>
                                 </div>
-                                <p className="mt-2 text-xs text-zinc-400">
-                                    <a href="/terminos" className="underline underline-offset-2 hover:text-zinc-600">Términos y Condiciones</a>
-                                    <span className="mx-1.5 opacity-50">·</span>
-                                    <a href="/reembolsos" className="underline underline-offset-2 hover:text-zinc-600">Política de Reembolso</a>
-                                </p>
                             </div>
                         ) : (
                             <div className="rounded-xl border border-zinc-200 bg-zinc-50 px-4 py-3">
                                 <p className="text-xs leading-relaxed text-zinc-500">
                                     <span className="font-semibold text-zinc-700">Pago único</span> — no hay cobro automático ni renovación.
                                 </p>
-                                <p className="mt-1.5 text-xs text-zinc-400">
-                                    <a href="/terminos" className="underline underline-offset-2 hover:text-zinc-600">Términos y Condiciones</a>
-                                    <span className="mx-1.5 opacity-50">·</span>
-                                    <a href="/reembolsos" className="underline underline-offset-2 hover:text-zinc-600">Política de Reembolso</a>
-                                </p>
                             </div>
                         )}
+
+                        {/* Confirmación de términos + fecha (clickwrap: aceptación activa y registrada) */}
+                        <label className={`flex items-start gap-2.5 cursor-pointer select-none rounded-xl border px-4 py-3 transition ${accepted ? "border-falu-red-300 bg-falu-red-50" : "border-zinc-200"}`}>
+                            <input
+                                type="checkbox"
+                                checked={accepted}
+                                onChange={(e) => { setAccepted(e.target.checked); setError(""); }}
+                                className="mt-0.5 h-4 w-4 shrink-0 rounded border-zinc-300 text-falu-red-700 focus:ring-falu-red-600"
+                            />
+                            <span className="text-xs leading-relaxed text-zinc-600">
+                                Acepto los{" "}
+                                <a href="/terminos" target="_blank" rel="noopener noreferrer" className="font-medium text-falu-red-700 underline underline-offset-2 hover:text-falu-red-800">Términos y Condiciones</a>
+                                {" "}y la{" "}
+                                <a href="/reembolsos" target="_blank" rel="noopener noreferrer" className="font-medium text-falu-red-700 underline underline-offset-2 hover:text-falu-red-800">Política de Reembolso</a>
+                                , y confirmo que mi Plan {plan}{" "}
+                                {selectedDateLabel
+                                    ? <>inicia el <span className="font-semibold text-zinc-800">{selectedDateLabel}</span></>
+                                    : "inicia en la fecha seleccionada"}.
+                            </span>
+                        </label>
 
                         {/* Divisor */}
                         <div className="border-t border-zinc-100 pt-2" />
@@ -619,7 +646,7 @@ const PaymentForm = ({
                         {/* CTA */}
                         <button
                             type="submit"
-                            disabled={loading}
+                            disabled={loading || !accepted}
                             className="w-full inline-flex items-center justify-center gap-2 rounded-xl px-6 py-3.5 text-sm font-semibold text-white bg-falu-red-700 hover:bg-falu-red-800 active:bg-falu-red-900 transition disabled:opacity-50 disabled:cursor-not-allowed shadow-sm"
                         >
                             {loading ? (
