@@ -11,7 +11,8 @@ interface StartDate {
     label: string;
     enabled: boolean;
     special?: boolean;
-    excludedPlans?: string[];
+    excludedPlans?: string[];        // planes excluidos del formulario público normal
+    excludedPlansSpecial?: string[]; // planes excluidos de /pago-estudiantes
 }
 
 interface PremiumSlot {
@@ -171,6 +172,82 @@ export default function FechasPage() {
     const today = todayPT();
     const nowDT = nowPTInput();
 
+    // ─── Render helpers (reutilizan saving / dates / saveDates por closure) ───
+
+    // Switch compacto y accesible (estados Activa / Especial).
+    const renderToggle = (opts: {
+        on: boolean;
+        color: "emerald" | "violet";
+        label: string;
+        srLabel: string;
+        onClick: () => void;
+    }) => {
+        const trackOn = opts.color === "emerald" ? "bg-emerald-500" : "bg-violet-500";
+        const textOn = opts.color === "emerald" ? "text-emerald-600" : "text-violet-600";
+        const ring = opts.color === "emerald" ? "focus-visible:ring-emerald-300" : "focus-visible:ring-violet-300";
+        return (
+            <button
+                type="button"
+                role="switch"
+                aria-checked={opts.on}
+                aria-label={opts.srLabel}
+                onClick={opts.onClick}
+                disabled={saving}
+                className={`group inline-flex items-center gap-2 rounded-full cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-1 ${ring}`}
+            >
+                <span className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${opts.on ? trackOn : "bg-gray-200 group-hover:bg-gray-300"}`}>
+                    <span className={`inline-block h-3.5 w-3.5 rounded-full bg-white shadow-sm transition-transform ${opts.on ? "translate-x-[1.125rem]" : "translate-x-0.5"}`} />
+                </span>
+                <span className={`text-xs font-medium ${opts.on ? textOn : "text-gray-400"}`}>{opts.label}</span>
+            </button>
+        );
+    };
+
+    // Chips de exclusión de planes: ✓ disponible / ✗ excluido (toggle al hacer clic).
+    const renderPlanExclusion = (
+        date: StartDate,
+        i: number,
+        field: "excludedPlans" | "excludedPlansSpecial",
+        accent: "red" | "violet",
+    ) => {
+        const excludedCls = accent === "red"
+            ? "border-red-200 bg-red-50 text-red-600"
+            : "border-violet-200 bg-violet-50 text-violet-600";
+        return (
+            <div className="flex flex-wrap items-center gap-1.5">
+                {["Essential", "Premium", "Personalizado"].map((p) => {
+                    const current = date[field] ?? [];
+                    const excluded = current.includes(p);
+                    return (
+                        <button
+                            key={p}
+                            type="button"
+                            disabled={saving}
+                            aria-pressed={!excluded}
+                            title={`${p}: ${excluded ? "excluido — clic para habilitar" : "disponible — clic para excluir"}`}
+                            onClick={() => {
+                                const next = excluded ? current.filter((x) => x !== p) : [...current, p];
+                                saveDates(dates.map((d, idx) => idx === i ? { ...d, [field]: next } : d));
+                            }}
+                            className={`inline-flex items-center gap-1 rounded-lg border px-2 py-1 text-xs font-medium transition cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-1 focus-visible:ring-gray-300 ${
+                                excluded
+                                    ? `${excludedCls} line-through`
+                                    : "border-gray-200 bg-white text-gray-600 hover:border-gray-300 hover:bg-gray-50"
+                            }`}
+                        >
+                            {excluded ? (
+                                <svg className="h-3 w-3" viewBox="0 0 12 12" fill="none" aria-hidden="true"><path d="M3 3l6 6M9 3l-6 6" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" /></svg>
+                            ) : (
+                                <svg className="h-3 w-3 text-emerald-500" viewBox="0 0 12 12" fill="none" aria-hidden="true"><path d="M2 6.2l2.4 2.4L10 3" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" /></svg>
+                            )}
+                            {p}
+                        </button>
+                    );
+                })}
+            </div>
+        );
+    };
+
     if (loadError) return <ErrorState message={loadError} onRetry={load} />;
 
     if (loading) return (
@@ -255,82 +332,67 @@ export default function FechasPage() {
                             {dates.map((date, i) => {
                                 const isPast = date.value < today;
                                 return (
-                                    <li key={date.value} className={`flex items-center justify-between px-5 py-4 gap-4 ${isPast ? "opacity-50" : ""}`}>
-                                        <div className="flex items-center gap-3 min-w-0">
-                                            {isPast && (
-                                                <span className="shrink-0 text-xs bg-gray-100 text-gray-400 px-2 py-0.5 rounded-lg">Pasada</span>
-                                            )}
+                                    <li key={date.value} className={`px-4 sm:px-5 py-4 transition-colors hover:bg-gray-50/60 ${isPast ? "opacity-60" : ""}`}>
+                                        {/* Cabecera: fecha + estados + eliminar */}
+                                        <div className="flex items-start justify-between gap-3">
                                             <div className="min-w-0">
-                                                <p className="text-sm font-semibold text-gray-800 truncate">{date.label}</p>
-                                                <p className="text-xs text-gray-400">{formatMMDDYYYY(date.value)}</p>
+                                                <div className="flex items-center gap-2">
+                                                    <p className="text-sm font-semibold text-gray-800 truncate">{date.label}</p>
+                                                    {isPast && (
+                                                        <span className="shrink-0 text-[10px] font-medium bg-gray-100 text-gray-400 px-1.5 py-0.5 rounded-md">Pasada</span>
+                                                    )}
+                                                </div>
+                                                <p className="text-xs text-gray-400 tabular-nums mt-0.5">{formatMMDDYYYY(date.value)}</p>
+                                            </div>
+                                            <div className="flex items-center gap-3 sm:gap-5 shrink-0">
+                                                {renderToggle({
+                                                    on: !!date.enabled,
+                                                    color: "emerald",
+                                                    label: date.enabled ? "Activa" : "Inactiva",
+                                                    srLabel: `Mostrar ${date.label} en el formulario público`,
+                                                    onClick: () => handleToggle(i),
+                                                })}
+                                                {renderToggle({
+                                                    on: !!date.special,
+                                                    color: "violet",
+                                                    label: date.special ? "Especial" : "Normal",
+                                                    srLabel: `Mostrar ${date.label} en /pago-estudiantes`,
+                                                    onClick: () => saveDates(dates.map((d, idx) => idx === i ? { ...d, special: !d.special } : d)),
+                                                })}
+                                                <button
+                                                    onClick={() => handleDelete(i)}
+                                                    disabled={saving}
+                                                    aria-label={`Eliminar ${date.label}`}
+                                                    className="p-1.5 text-gray-300 hover:text-red-500 hover:bg-red-50 rounded-lg transition cursor-pointer disabled:opacity-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-200"
+                                                >
+                                                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                                        <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                                    </svg>
+                                                </button>
                                             </div>
                                         </div>
-                                        <div className="flex items-center gap-3 shrink-0">
-                                            <button
-                                                onClick={() => handleToggle(i)}
-                                                disabled={saving}
-                                                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none disabled:opacity-50 ${
-                                                    date.enabled ? "bg-emerald-500" : "bg-gray-200"
-                                                }`}
-                                            >
-                                                <span className={`inline-block h-4 w-4 rounded-full bg-white shadow transition-transform ${
-                                                    date.enabled ? "translate-x-6" : "translate-x-1"
-                                                }`} />
-                                            </button>
-                                            <span className={`text-xs font-medium w-16 ${date.enabled ? "text-emerald-600" : "text-gray-400"}`}>
-                                                {date.enabled ? "Activa" : "Inactiva"}
-                                            </span>
 
-                                            {/* Toggle: Especial (para /pago-estudiantes) */}
-                                            <button
-                                                onClick={() => saveDates(dates.map((d, idx) => idx === i ? { ...d, special: !d.special } : d))}
-                                                disabled={saving}
-                                                title="Habilitar en /pago-estudiantes"
-                                                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none disabled:opacity-50 ${
-                                                    date.special ? "bg-violet-500" : "bg-gray-200"
-                                                }`}
-                                            >
-                                                <span className={`inline-block h-4 w-4 rounded-full bg-white shadow transition-transform ${
-                                                    date.special ? "translate-x-6" : "translate-x-1"
-                                                }`} />
-                                            </button>
-                                            <span className={`text-xs font-medium w-16 ${date.special ? "text-violet-600" : "text-gray-400"}`}>
-                                                {date.special ? "Especial" : "Normal"}
-                                            </span>
-
-                                            {/* Toggles: excluir planes del form normal */}
-                                            <div className="flex items-center gap-1">
-                                                {["Essential", "Premium", "Personalizado"].map((p) => {
-                                                    const excluded = date.excludedPlans?.includes(p) ?? false;
-                                                    return (
-                                                        <button
-                                                            key={p}
-                                                            disabled={saving}
-                                                            title={excluded ? `Habilitar ${p}` : `Deshabilitar ${p}`}
-                                                            onClick={() => {
-                                                                const current = date.excludedPlans ?? [];
-                                                                const next = excluded
-                                                                    ? current.filter((x) => x !== p)
-                                                                    : [...current, p];
-                                                                saveDates(dates.map((d, idx) => idx === i ? { ...d, excludedPlans: next } : d));
-                                                            }}
-                                                            className={`text-[10px] font-bold px-1.5 py-0.5 rounded transition disabled:opacity-50 ${excluded ? "bg-red-100 text-red-500 line-through" : "bg-gray-100 text-gray-500 hover:bg-gray-200"}`}
-                                                        >
-                                                            {p === "Essential" ? "E" : p === "Premium" ? "P" : "C"}
-                                                        </button>
-                                                    );
-                                                })}
+                                        {/* Panel: exclusión de planes por flujo */}
+                                        <div className="mt-3 rounded-xl border border-gray-100 bg-gray-50/70 px-3 py-2.5 space-y-2">
+                                            <div className="flex flex-col sm:flex-row sm:items-center gap-1.5 sm:gap-3">
+                                                <span className="text-[11px] font-semibold uppercase tracking-wide text-gray-500 sm:w-44 sm:shrink-0">
+                                                    Planes · Formulario público
+                                                </span>
+                                                {renderPlanExclusion(date, i, "excludedPlans", "red")}
                                             </div>
 
-                                            <button
-                                                onClick={() => handleDelete(i)}
-                                                disabled={saving}
-                                                className="p-1.5 text-gray-300 hover:text-red-500 hover:bg-red-50 rounded-lg transition disabled:opacity-50"
-                                            >
-                                                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                                                    <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                                                </svg>
-                                            </button>
+                                            {date.special ? (
+                                                <div className="flex flex-col sm:flex-row sm:items-center gap-1.5 sm:gap-3 pt-2 border-t border-gray-100">
+                                                    <span className="text-[11px] font-semibold uppercase tracking-wide text-violet-600 sm:w-44 sm:shrink-0">
+                                                        Planes · /pago-estudiantes
+                                                    </span>
+                                                    {renderPlanExclusion(date, i, "excludedPlansSpecial", "violet")}
+                                                </div>
+                                            ) : (
+                                                <p className="text-[11px] text-gray-400 pt-2 border-t border-gray-100">
+                                                    Activa <span className="font-medium text-violet-500">Especial</span> para configurar los planes de <code>/pago-estudiantes</code>.
+                                                </p>
+                                            )}
                                         </div>
                                     </li>
                                 );
@@ -338,8 +400,9 @@ export default function FechasPage() {
                         </ul>
                     )}
                 </div>
-                <p className="text-xs text-gray-400 mt-3 px-1">
-                    Las fechas <strong>activas</strong> aparecen en el formulario público de inscripción. Las marcadas como <strong className="text-violet-500">Especial</strong> se muestran en <code>/pago-estudiantes</code> para pagos especiales de estudiantes actuales. Las fechas pasadas se ocultan automáticamente.
+                <p className="text-xs text-gray-400 mt-3 px-1 leading-relaxed">
+                    <strong className="text-emerald-600">Activa</strong> muestra la fecha en el formulario público; <strong className="text-violet-500">Especial</strong> la muestra en <code>/pago-estudiantes</code>. Son independientes y las fechas pasadas se ocultan solas.
+                    En el panel de cada fecha, un plan con ✓ está disponible y uno <span className="line-through">tachado</span> queda excluido <strong>solo en ese flujo</strong>.
                 </p>
             </div>
 

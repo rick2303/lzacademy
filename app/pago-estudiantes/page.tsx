@@ -15,6 +15,7 @@ interface SpecialDate {
   value: string;
   label: string;
   special: boolean;
+  excludedPlansSpecial?: string[]; // planes excluidos de /pago-estudiantes para esta fecha
 }
 
 const MONTH_NAMES_ES = [
@@ -150,8 +151,10 @@ export default function PagoEstudiantesPage() {
       const data = await res.json();
       if (!res.ok) throw new Error(data?.error || "Error");
       window.location.href = data.url;
-    } catch {
-      setFormError("No pudimos iniciar tu pago. Intenta nuevamente.");
+    } catch (err) {
+      setFormError(err instanceof Error && err.message !== "Error"
+        ? err.message
+        : "No pudimos iniciar tu pago. Intenta nuevamente.");
       setCheckoutLoading(false);
     }
   }
@@ -244,7 +247,10 @@ export default function PagoEstudiantesPage() {
   // "Hoy" en la zona horaria local del usuario (YYYY-MM-DD), no en UTC: cada fecha
   // sigue disponible hasta las 11:59pm de la zona del usuario.
   const today = new Intl.DateTimeFormat("sv-SE").format(new Date());
-  const futureDates = specialDates.filter((d) => d.value >= today);
+  // Solo fechas futuras y que no excluyan el plan seleccionado en /pago-estudiantes.
+  const futureDates = specialDates
+    .filter((d) => d.value >= today)
+    .filter((d) => !(d.excludedPlansSpecial ?? []).includes(plan));
 
   // Planes con suscripción recurrente (cobro automático cada 4 semanas)
   const SUBSCRIPTION_PLANS = ["Essential", "Premium"];
@@ -319,9 +325,17 @@ export default function PagoEstudiantesPage() {
                   id="plan"
                   value={plan}
                   onChange={(e) => {
-                    setPlan(e.target.value);
-                    if (level && !isLevelAvailable(e.target.value, level)) {
+                    const newPlan = e.target.value;
+                    setPlan(newPlan);
+                    if (level && !isLevelAvailable(newPlan, level)) {
                       setLevel("");
+                    }
+                    // Si la fecha elegida queda excluida para el nuevo plan, resetearla.
+                    if (interestDate) {
+                      const d = specialDates.find((s) => s.value === interestDate);
+                      if (d && (d.excludedPlansSpecial ?? []).includes(newPlan)) {
+                        setInterestDate("");
+                      }
                     }
                     // El descuento depende del plan: al cambiarlo se invalida.
                     setAppliedDiscount(null);

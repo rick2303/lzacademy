@@ -87,12 +87,27 @@ const LEVELS = [
     "Intermedio alto-produccion",
 ];
 
+const MONTHS_SHORT_ES = ["ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dic"];
+
+// Clave de cohorte (fecha de inicio) normalizada a "YYYY-MM-DD". Los usuarios sin
+// fecha caen en el grupo "none".
+const cohortKey = (u: AccessUser) =>
+    u.inscription_date ? dayjs.utc(u.inscription_date).format("YYYY-MM-DD") : "none";
+
+// Etiqueta corta para el tab de cohorte: "15 jun" / "Sin fecha".
+function cohortLabel(key: string) {
+    if (key === "none") return "Sin fecha";
+    const [, m, d] = key.split("-");
+    return `${parseInt(d, 10)} ${MONTHS_SHORT_ES[parseInt(m, 10) - 1]}`;
+}
+
 export default function AccesosPage() {
     const [users, setUsers] = useState<AccessUser[]>([]);
     const [links, setLinks] = useState<AccessLinks>({});
     const [loading, setLoading] = useState(true);
     const [loadError, setLoadError] = useState<string | null>(null);
     const [filter, setFilter] = useState<"all" | "pending" | "sent">("pending");
+    const [dateFilter, setDateFilter] = useState<string>("all");
     const [search, setSearch] = useState("");
     const [currentPage, setCurrentPage] = useState(1);
     const [sending, setSending] = useState<number | null>(null);
@@ -191,7 +206,7 @@ export default function AccesosPage() {
         const url = URL.createObjectURL(blob);
         const a = document.createElement("a");
         a.href = url;
-        a.download = `accesos-${filter}-${dayjs().format("YYYY-MM-DD")}.csv`;
+        a.download = `accesos-${filter}-${dateFilter === "all" ? "todas" : dateFilter}-${dayjs().format("YYYY-MM-DD")}.csv`;
         a.click();
         URL.revokeObjectURL(url);
     };
@@ -213,7 +228,9 @@ export default function AccesosPage() {
         }
     };
 
-    const filtered = users.filter(u => {
+    // Coincidencia con los filtros que NO son la fecha de inicio (tab enviado/pendiente
+    // + búsqueda). Se reutiliza para el conteo de cada tab de cohorte.
+    const matchesNonDate = (u: AccessUser) => {
         if (filter === "pending" && u.access_sent_at) return false;
         if (filter === "sent" && !u.access_sent_at) return false;
         if (search) {
@@ -221,16 +238,29 @@ export default function AccesosPage() {
             if (!u.full_name.toLowerCase().includes(q) && !u.email.toLowerCase().includes(q)) return false;
         }
         return true;
-    });
+    };
+
+    // Cohortes (fechas de inicio) presentes en los usuarios, ascendente; "Sin fecha" al final.
+    const cohorts = Array.from(new Set(users.map(cohortKey)))
+        .sort((a, b) => (a === "none" ? 1 : b === "none" ? -1 : a.localeCompare(b)));
+
+    const cohortCount = (key: string) =>
+        users.filter(u => (key === "all" || cohortKey(u) === key) && matchesNonDate(u)).length;
+
+    const filtered = users.filter(u =>
+        (dateFilter === "all" || cohortKey(u) === dateFilter) && matchesNonDate(u)
+    );
 
     const PAGE_SIZE = 15;
     const totalPages = Math.ceil(filtered.length / PAGE_SIZE);
     const paginated = filtered.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
 
-    const pendingCount = users.filter(u => !u.access_sent_at).length;
-    const sentCount    = users.filter(u => !!u.access_sent_at).length;
+    // Las tarjetas de stats reflejan el cohorte seleccionado (todos si dateFilter = "all").
+    const dateScoped = dateFilter === "all" ? users : users.filter(u => cohortKey(u) === dateFilter);
+    const pendingCount = dateScoped.filter(u => !u.access_sent_at).length;
+    const sentCount    = dateScoped.filter(u => !!u.access_sent_at).length;
 
-    useEffect(() => { setCurrentPage(1); }, [filter, search]);
+    useEffect(() => { setCurrentPage(1); }, [filter, dateFilter, search]);
 
     const levelConfigOk = (plan: string, level: string) => {
         const c = links[plan]?.[level];
@@ -467,7 +497,7 @@ export default function AccesosPage() {
                     </div>
                     <div>
                         <p className="text-xs text-gray-400 uppercase tracking-wide font-medium">Total activos</p>
-                        <p className="text-2xl font-bold text-gray-800">{users.length}</p>
+                        <p className="text-2xl font-bold text-gray-800">{dateScoped.length}</p>
                     </div>
                 </div>
                 <div className={`bg-white rounded-2xl border shadow-sm p-5 flex items-center gap-4 ${pendingCount > 0 ? "border-amber-200" : "border-gray-100"}`}>
@@ -516,6 +546,32 @@ export default function AccesosPage() {
                     </button>
                 )}
             </div>
+
+            {/* Cohort (start date) tabs */}
+            {cohorts.length > 1 && (
+                <div className="mb-4">
+                    <p className="text-xs font-medium text-gray-400 uppercase tracking-wide mb-2">Fecha de inicio</p>
+                    <div className="flex flex-wrap items-center gap-2">
+                        <button
+                            onClick={() => setDateFilter("all")}
+                            className={`inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full text-sm font-medium border transition ${dateFilter === "all" ? "bg-violet-600 text-white border-violet-600 shadow-sm" : "bg-white text-gray-600 border-gray-200 hover:bg-gray-50"}`}
+                        >
+                            Todas
+                            <span className={`text-xs font-semibold px-1.5 py-0.5 rounded-full ${dateFilter === "all" ? "bg-white/20 text-white" : "bg-gray-100 text-gray-500"}`}>{cohortCount("all")}</span>
+                        </button>
+                        {cohorts.map(key => (
+                            <button
+                                key={key}
+                                onClick={() => setDateFilter(key)}
+                                className={`inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full text-sm font-medium border transition ${dateFilter === key ? "bg-violet-600 text-white border-violet-600 shadow-sm" : "bg-white text-gray-600 border-gray-200 hover:bg-gray-50"}`}
+                            >
+                                {cohortLabel(key)}
+                                <span className={`text-xs font-semibold px-1.5 py-0.5 rounded-full ${dateFilter === key ? "bg-white/20 text-white" : "bg-gray-100 text-gray-500"}`}>{cohortCount(key)}</span>
+                            </button>
+                        ))}
+                    </div>
+                </div>
+            )}
 
             {/* Filter tabs */}
             <div className="flex items-center gap-1 bg-gray-100 rounded-xl p-1 w-fit mb-5">
