@@ -173,13 +173,14 @@ export default function PlansSection({ onSelectPlan }: PlansSectionProps) {
                             <p className="text-xs font-semibold text-white/40 mb-3">Todo lo anterior, más:</p>
                             <ul className="space-y-3">
                                 {[
-                                    "Sesiones privadas 1:1 adaptadas a ti",
+                                    "2 sesiones privadas 1:1 por semana adaptadas a ti",
+                                    "1 sesión de práctica grupal cada viernes",
                                     "Acceso completo al Método 590",
-                                    "Horario 100% flexible",
+                                    "Horario flexible para tus sesiones privadas",
                                     "Plan de trabajo personalizado desde el día 1",
+                                    "Corrección y feedback en tiempo real",
                                     "Seguimiento y motivación constante",
-                                    "Corrección en tiempo real",
-                                    "Avanza exactamente a tu ritmo",
+                                    "Avanza a tu ritmo con guía personalizada",
                                 ].map((item) => (
                                     <li key={item} className="flex items-start gap-2.5 text-sm text-white/75">
                                         <svg className="mt-0.5 h-4 w-4 shrink-0 text-green-400" viewBox="0 0 16 16" fill="none">

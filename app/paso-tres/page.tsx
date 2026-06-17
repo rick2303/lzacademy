@@ -77,13 +77,14 @@ const plans = [
     route: "/personalizado",
     muñeca: "/muñecapaso3personalizada.webp",
     features: [
-      "Sesiones privadas 1:1 adaptadas a ti",
+      "2 sesiones privadas 1:1 por semana adaptadas a ti",
+      "1 sesión de práctica grupal cada viernes",
       "Acceso completo al Método 590",
-      "Horario 100% flexible",
+      "Horario flexible para tus sesiones privadas",
       "Plan de trabajo personalizado desde el día 1",
+      "Corrección y feedback en tiempo real",
       "Seguimiento y motivación constante",
-      "Corrección en tiempo real",
-      "Avanza exactamente a tu ritmo",
+      "Avanza a tu ritmo con guía personalizada",
     ],
   },
 ];

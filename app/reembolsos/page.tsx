@@ -1,7 +1,12 @@
 import Link from "next/link";
 import { Container } from "../components/Container";
 
-const LAST_UPDATED = "21 de mayo de 2026";
+const LAST_UPDATED = "17 de junio de 2026";
+
+// TODO (pendiente de decisión del dueño): definir el tratamiento de la comisión de Stripe
+// en reembolsos. Stripe NO devuelve la comisión original (~2.9% + $0.30) al hacer un refund.
+// Opciones: (a) reembolso total absorbiendo la comisión, o (b) descontar la comisión no
+// recuperable del monto reembolsado. Mientras se decide, la política mantiene "reembolso completo".
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
@@ -59,6 +64,39 @@ export default function ReembolsosPage() {
               </p>
             </div>
 
+            {/* RESUMEN / TL;DR */}
+            <div className="mt-8 rounded-2xl border border-falu-red-200 bg-falu-red-50/60 p-5">
+              <p className="text-sm font-bold uppercase tracking-wide text-falu-red-700">
+                En resumen
+              </p>
+              <ul className="mt-3 list-disc space-y-2 pl-5 text-[15px] leading-relaxed text-zinc-700">
+                <li>
+                  <strong>Reembolso completo</strong> si cancelas{" "}
+                  <strong>antes de iniciar tus clases</strong> o dentro de los{" "}
+                  <strong>primeros 3 días naturales</strong> de tu cohorte (solo primera
+                  inscripción).
+                </li>
+                <li>
+                  Después de los 3 días, el periodo en curso <strong>no es reembolsable</strong>,
+                  pero puedes cancelar la renovación para no pagar el siguiente.
+                </li>
+                <li>
+                  Las <strong>renovaciones</strong> y reinscripciones <strong>no</strong> tienen
+                  garantía de reembolso.
+                </li>
+                <li>
+                  Solicítalo a{" "}
+                  <a
+                    href="mailto:info@lz-englishacademy.com"
+                    className="font-semibold text-falu-red-700 hover:text-falu-red-800"
+                  >
+                    info@lz-englishacademy.com
+                  </a>
+                  ; se procesa por Stripe en <strong>5–10 días hábiles</strong>.
+                </li>
+              </ul>
+            </div>
+
             <Section title="1. Garantía de satisfacción para estudiantes nuevos">
               <p>
                 Si es tu <strong>primera inscripción</strong>, tienes derecho a un{" "}
@@ -67,10 +105,22 @@ export default function ReembolsosPage() {
               <ul className="list-disc space-y-2 pl-5">
                 <li>antes de que inicien tus clases, o</li>
                 <li>
-                  dentro de los primeros <strong>3 días</strong> posteriores al inicio de tu
-                  cohorte.
+                  dentro de los primeros <strong>3 días naturales</strong> (calendario)
+                  posteriores al inicio de tu cohorte.
                 </li>
               </ul>
+              <p>
+                Se considera <strong>primera inscripción</strong> el primer pago realizado en tu
+                historial con LZ English Academy. Las reinscripciones posteriores no califican
+                para esta garantía (ver punto 3).
+              </p>
+              <p>
+                Si dentro del periodo de garantía ya recibiste{" "}
+                <strong>sesiones individuales (1:1), clases en vivo o sesiones de práctica</strong>{" "}
+                incluidas en tu plan (por ejemplo, en Premium o Speaking Sessions), podremos{" "}
+                <strong>descontar el valor de las sesiones ya tomadas</strong> del monto a
+                reembolsar.
+              </p>
             </Section>
 
             <Section title="2. Después de los 3 días">
@@ -99,9 +149,11 @@ export default function ReembolsosPage() {
 
             <Section title="4. Planes de pago único">
               <p>
-                Personalizado y Speaking Sessions se rigen por la misma garantía de 3 días desde
-                el inicio del servicio contratado para compras nuevas; pasado ese plazo no son
-                reembolsables.
+                Personalizado y Speaking Sessions se rigen por la misma garantía para compras
+                nuevas: puedes solicitar reembolso completo <strong>antes de la fecha del
+                servicio agendado</strong> o dentro de los <strong>3 días naturales</strong>{" "}
+                posteriores a dicha fecha; pasado ese plazo no son reembolsables. Si la sesión ya
+                fue impartida, aplica el descuento por sesiones consumidas indicado en el punto 1.
               </p>
             </Section>
 
@@ -115,8 +167,14 @@ export default function ReembolsosPage() {
                   info@lz-englishacademy.com
                 </a>{" "}
                 indicando el correo de tu inscripción. Los reembolsos aprobados se procesan al
-                método de pago original a través de Stripe y pueden tardar varios días hábiles en
-                reflejarse, según tu banco.
+                método de pago original a través de Stripe y suelen tardar{" "}
+                <strong>entre 5 y 10 días hábiles</strong> en reflejarse, según tu banco.
+              </p>
+              <p>
+                <strong>
+                  Antes de iniciar una disputa o contracargo con tu banco, contáctanos.
+                </strong>{" "}
+                Resolvemos la gran mayoría de las solicitudes directamente y de forma más rápida.
               </p>
             </Section>
 

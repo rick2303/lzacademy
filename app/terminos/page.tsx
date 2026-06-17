@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { Container } from "../components/Container";
 
-const LAST_UPDATED = "21 de mayo de 2026";
+const LAST_UPDATED = "17 de junio de 2026";
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
@@ -207,8 +207,8 @@ export default function TerminosPage() {
                 </Link>
                 , que forma parte integral de estos Términos. En resumen: los estudiantes nuevos
                 disponen de una garantía de reembolso completo si cancelan antes de iniciar sus
-                clases o dentro de los primeros 3 días de su cohorte; las renovaciones no son
-                reembolsables.
+                clases o dentro de los primeros 3 días naturales de su cohorte; las renovaciones y
+                reinscripciones no son reembolsables.
               </p>
             </Section>
 

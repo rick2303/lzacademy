@@ -4,16 +4,16 @@ import { useCallback, useEffect, useState } from "react";
 import { supabase } from "../../lib/supabaseClient";
 import { useRouter } from "next/navigation";
 import { ErrorState } from "../_utils/ErrorState";
+import { LEVELED_PLAN_KEYS, planLabel, planBadgeClass } from "@/app/lib/plans";
 
 type Availability = Record<string, Record<string, boolean>>;
 
-const PLANS = ["Essential", "Premium", "Personalizado"];
+// Planes con niveles y su presentación: derivados del catálogo único de planes.
+const PLANS = LEVELED_PLAN_KEYS;
 
-const PLAN_META: Record<string, { label: string; chip: string }> = {
-  Essential:     { label: "Essential",     chip: "bg-sky-100 text-sky-700" },
-  Premium:       { label: "Premium",       chip: "bg-violet-100 text-violet-700" },
-  Personalizado: { label: "Personalizado", chip: "bg-falu-red-100 text-falu-red-700" },
-};
+const PLAN_META: Record<string, { label: string; chip: string }> = Object.fromEntries(
+  PLANS.map((p) => [p, { label: planLabel(p), chip: planBadgeClass(p) }])
+);
 
 const LEVELS: { value: string; label: string }[] = [
   { value: "Principiante",                label: "Principiante (A1)" },

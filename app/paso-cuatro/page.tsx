@@ -4,14 +4,14 @@ import { Suspense, useState } from "react";
 import Image from "next/image";
 import { useSearchParams } from "next/navigation";
 import PaymentForm from "@/app/components/Form";
+import { CHECKOUT_PLAN_KEYS, PLAN_MAP } from "@/app/lib/plans";
 
 type PlanType = "Essential" | "Premium" | "Personalizado";
 
-const planMap: Record<string, PlanType> = {
-  essential:     "Essential",
-  premium:       "Premium",
-  personalizado: "Personalizado",
-};
+// URL param (en minúsculas) → key del plan, derivado del catálogo (planes de checkout).
+const planMap: Record<string, PlanType> = Object.fromEntries(
+  CHECKOUT_PLAN_KEYS.map((k) => [k.toLowerCase(), k])
+) as Record<string, PlanType>;
 
 const nivelMap: Record<string, string> = {
   "A1":   "Principiante",
@@ -22,11 +22,10 @@ const nivelMap: Record<string, string> = {
   "?":    "",
 };
 
-const planCharacter: Record<string, string> = {
-  Essential:     "/muñeca-essential.webp",
-  Premium:       "/muñeca-premium.webp",
-  Personalizado: "/muñeca-personalizada.webp",
-};
+// Imagen del personaje por plan, derivada del catálogo.
+const planCharacter: Record<string, string> = Object.fromEntries(
+  CHECKOUT_PLAN_KEYS.map((k) => [k, PLAN_MAP[k].character ?? ""])
+);
 
 function PasoCuatroContent() {
   const searchParams = useSearchParams();

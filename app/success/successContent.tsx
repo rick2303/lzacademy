@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { getPlan, isSubscriptionPlan as isSubPlan, requiresScheduling } from "@/app/lib/plans";
 
 interface PremiumSlot { id: string; datetime_pt: string; enabled: boolean; }
 
@@ -58,11 +59,8 @@ function ptDatetimeToISO(datetimePt: string): string {
     return `${datetimePt}:00${sign}${String(absOffset).padStart(2, "0")}:00`;
 }
 
-const PLAN_META: Record<string, { color: string; bg: string; border: string }> = {
-    Essential:     { color: "#0369a1", bg: "#f0f9ff", border: "#bae6fd" },
-    Premium:       { color: "#7c3aed", bg: "#faf5ff", border: "#ddd6fe" },
-    Personalizado: { color: "#9c181d", bg: "#fef2f2", border: "#ffc9cb" },
-};
+// Colores del chip de plan: vienen del catálogo único (app/lib/plans.ts).
+const FALLBACK_CHIP = { color: "#0369a1", bg: "#f0f9ff", border: "#bae6fd" };
 
 type UiState = "loading" | "success" | "error";
 
@@ -118,16 +116,16 @@ const SuccessContent = () => {
             .catch(() => {});
     }, [session_id]);
 
-    const isPremiumPending = state === "success" && userData?.plan === "Premium" && schedulingStatus === "pending";
-    const isPremiumBooked  = state === "success" && userData?.plan === "Premium" && schedulingStatus === "completed";
-    const isSubscriptionPlan = userData?.plan === "Essential" || userData?.plan === "Premium";
+    const isPremiumPending = state === "success" && requiresScheduling(userData?.plan) && schedulingStatus === "pending";
+    const isPremiumBooked  = state === "success" && requiresScheduling(userData?.plan) && schedulingStatus === "completed";
+    const isSubscription = isSubPlan(userData?.plan);
 
-    const nextChargeDate = isSubscriptionPlan && userData?.current_period_end
+    const nextChargeDate = isSubscription && userData?.current_period_end
         ? new Date(userData.current_period_end).toLocaleDateString("es-ES", {
             day: "numeric", month: "long", year: "numeric", timeZone: "UTC",
           })
         : null;
-    const planMeta = PLAN_META[userData?.plan] ?? PLAN_META["Essential"];
+    const planMeta = getPlan(userData?.plan)?.chip ?? FALLBACK_CHIP;
     const firstName = userData?.full_name?.split(" ")[0] ?? null;
 
     const formattedStartDate = userData?.inscription_date
@@ -654,7 +652,7 @@ const SuccessContent = () => {
                                             <circle cx="8" cy="8" r="6" />
                                             <path d="M8 5v1.5m0 3V11m-1.5-5.5h2.25a1.25 1.25 0 010 2.5H7m0 0h2.5" strokeLinecap="round" />
                                         </svg>
-                                        {isSubscriptionPlan
+                                        {isSubscription
                                             ? `Suscripción · $${(amount / 100).toFixed(0)} USD · se renueva cada 4 semanas`
                                             : `Pago único · $${(amount / 100).toFixed(0)} USD · sin renovación automática`}
                                     </span>

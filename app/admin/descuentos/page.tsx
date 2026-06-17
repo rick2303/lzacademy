@@ -5,12 +5,13 @@ import { supabase } from "../../lib/supabaseClient";
 import { useRouter } from "next/navigation";
 import dayjs from "dayjs";
 import { ErrorState } from "../_utils/ErrorState";
+import { DISCOUNT_PLAN_OPTIONS, planLabel, isSubscriptionPlan, type DiscountPlan } from "@/app/lib/plans";
 
 interface DiscountCode {
     code: string;
     type: "percent" | "fixed";
     value: number;
-    plan: "all" | "Essential" | "Premium" | "Personalizado";
+    plan: DiscountPlan;
     active: boolean;
     expires_at: string | null;
     max_uses: number | null;
@@ -24,20 +25,19 @@ interface Row extends DiscountCode {
     _editing: boolean;
 }
 
-const PLAN_OPTIONS: { value: DiscountCode["plan"]; label: string }[] = [
-    { value: "all",           label: "Todos los planes" },
-    { value: "Personalizado", label: "Personalizado" },
-    { value: "Essential",     label: "Essential" },
-    { value: "Premium",       label: "Premium" },
-];
+// Opciones de plan para un código (catálogo único + "all").
+const planOptionLabel = (p: DiscountPlan) => (p === "all" ? "Todos los planes" : planLabel(p));
+const PLAN_OPTIONS: { value: DiscountPlan; label: string }[] = DISCOUNT_PLAN_OPTIONS.map((p) => ({
+    value: p,
+    label: planOptionLabel(p),
+}));
 
-const PLAN_LABEL: Record<string, string> = {
-    all: "Todos los planes", Personalizado: "Personalizado", Essential: "Essential", Premium: "Premium",
-};
+const PLAN_LABEL: Record<string, string> = Object.fromEntries(
+    DISCOUNT_PLAN_OPTIONS.map((p) => [p, planOptionLabel(p)])
+);
 
-// Planes que aún NO aplican descuentos (suscripción). Debe coincidir con
-// DISCOUNTS_FOR_SUBSCRIPTIONS del backend (discount.service.js).
-const SUBSCRIPTION_PLANS = ["Essential", "Premium"];
+// Las suscripciones aún NO aplican descuentos (coincide con el backend,
+// discount.service.js → DISCOUNTS_FOR_SUBSCRIPTIONS); se deriva del catálogo.
 
 const uid = () =>
     (typeof crypto !== "undefined" && crypto.randomUUID)
@@ -257,7 +257,7 @@ export default function DescuentosPage() {
                     {rows.map((r) => {
                         const dirty = isDirty(r);
                         const st = statusOf(r);
-                        const subWarning = SUBSCRIPTION_PLANS.includes(r.plan);
+                        const subWarning = isSubscriptionPlan(r.plan);
 
                         // ── Tarjeta en modo edición / borrador ──────────────────────
                         if (r._editing) {

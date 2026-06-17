@@ -3,15 +3,16 @@
 import { useCallback, useEffect, useState } from "react";
 import { supabase } from "../../lib/supabaseClient";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import dayjs from "dayjs";
 import utc from "dayjs/plugin/utc";
 import timezone from "dayjs/plugin/timezone";
 import { planColor } from "../_utils/planColors";
 import { ErrorState } from "../_utils/ErrorState";
+import { PT, fmtDatePT } from "../_utils/format";
+import { ALL_PLAN_KEYS } from "@/app/lib/plans";
 dayjs.extend(utc);
 dayjs.extend(timezone);
-
-const PT = "America/Los_Angeles";
 
 interface NoRenewUser {
     id: number;
@@ -49,8 +50,7 @@ function StatusBadge({ status }: { status: string | null }) {
 }
 
 const PAGE_SIZE = 15;
-const PLANS = ["Essential", "Premium", "Personalizado", "Speaking"];
-const fmtDate = (d: string | null) => (d ? dayjs.utc(d).tz(PT).format("DD/MM/YYYY") : "—");
+const PLANS = ALL_PLAN_KEYS;
 
 export default function NoRenovadosPage() {
     const [users, setUsers] = useState<NoRenewUser[]>([]);
@@ -242,7 +242,7 @@ export default function NoRenovadosPage() {
                             <table className="min-w-full divide-y divide-gray-100">
                                 <thead className="bg-gray-50">
                                     <tr>
-                                        {["Nombre", "Email", "País", "Plan", "Nivel", "Estado", "Fin de periodo", "Último pago"].map((h) => (
+                                        {["Nombre", "Email", "País", "Plan", "Nivel", "Estado", "Fin de periodo", "Último pago", "Gestionar"].map((h) => (
                                             <th key={h} className="px-5 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider whitespace-nowrap">{h}</th>
                                         ))}
                                     </tr>
@@ -271,8 +271,11 @@ export default function NoRenovadosPage() {
                                                     )}
                                                 </div>
                                             </td>
-                                            <td className="px-5 py-3 text-xs text-gray-400">{fmtDate(u.current_period_end)}</td>
-                                            <td className="px-5 py-3 text-xs text-gray-400">{fmtDate(u.last_payment_date)}</td>
+                                            <td className="px-5 py-3 text-xs text-gray-400">{fmtDatePT(u.current_period_end)}</td>
+                                            <td className="px-5 py-3 text-xs text-gray-400">{fmtDatePT(u.last_payment_date)}</td>
+                                            <td className="px-5 py-3 whitespace-nowrap">
+                                                <Link href={`/admin/busqueda?q=${encodeURIComponent(u.email)}`} className="text-xs font-medium text-falu-red-700 hover:text-falu-red-800 transition">Gestionar →</Link>
+                                            </td>
                                         </tr>
                                     ))}
                                 </tbody>
@@ -315,9 +318,12 @@ export default function NoRenovadosPage() {
                                     )}
                                 </div>
                                 <div className="flex gap-3 mt-2 text-xs text-gray-400">
-                                    <span>Fin: {fmtDate(u.current_period_end)}</span>
+                                    <span>Fin: {fmtDatePT(u.current_period_end)}</span>
                                     <span>·</span>
-                                    <span>Último pago: {fmtDate(u.last_payment_date)}</span>
+                                    <span>Último pago: {fmtDatePT(u.last_payment_date)}</span>
+                                </div>
+                                <div className="mt-3 pt-2 border-t border-gray-100">
+                                    <Link href={`/admin/busqueda?q=${encodeURIComponent(u.email)}`} className="text-xs font-medium text-falu-red-700 hover:text-falu-red-800 transition">Gestionar →</Link>
                                 </div>
                             </div>
                         ))}

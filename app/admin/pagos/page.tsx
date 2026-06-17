@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { supabase } from "../../lib/supabaseClient";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import * as XLSX from "xlsx";
 import { saveAs } from "file-saver";
 import dayjs from "dayjs";
@@ -538,14 +539,14 @@ export default function Dashboard() {
                     <table className="min-w-full divide-y divide-gray-100">
                         <thead className="bg-gray-50">
                             <tr>
-                                {["#", "Email", "Nombre", "Fecha inicio", "País", "Plan", "Estado", "Último pago", ""].map((h) => (
+                                {["#", "Email", "Nombre", "Fecha inicio", "País", "Plan", "Estado", "Último pago", "Nivel", "Gestionar"].map((h) => (
                                     <th key={h} className="px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider whitespace-nowrap">{h}</th>
                                 ))}
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-gray-50">
                             {paginatedUsers.length === 0 ? (
-                                <tr><td colSpan={9} className="text-center py-12 text-gray-300 text-sm">Sin registros</td></tr>
+                                <tr><td colSpan={10} className="text-center py-12 text-gray-300 text-sm">Sin registros</td></tr>
                             ) : paginatedUsers.map((u) => {
                                 const isAtRisk = atRiskUsers.some((r) => r.id === u.id);
                                 return (
@@ -579,6 +580,9 @@ export default function Dashboard() {
                                             {fmtPT(u.last_payment_date)}
                                         </td>
                                         <td className="px-4 py-3 text-xs text-gray-400">{u.level}</td>
+                                        <td className="px-4 py-3 whitespace-nowrap">
+                                            <Link href={`/admin/busqueda?q=${encodeURIComponent(u.email)}`} className="text-xs font-medium text-falu-red-700 hover:text-falu-red-800 transition">Ver detalle →</Link>
+                                        </td>
                                     </tr>
                                 );
                             })}
@@ -633,6 +637,9 @@ export default function Dashboard() {
                                         Pago: {fmtPT(u.last_payment_date, "MM/DD/YY h:mm a")}
                                     </span>
                                 )}
+                            </div>
+                            <div className="mt-3 pt-2 border-t border-gray-100">
+                                <Link href={`/admin/busqueda?q=${encodeURIComponent(u.email)}`} className="text-xs font-medium text-falu-red-700 hover:text-falu-red-800 transition">Ver detalle →</Link>
                             </div>
                         </div>
                     );

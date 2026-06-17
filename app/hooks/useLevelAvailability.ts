@@ -1,25 +1,12 @@
 "use client";
 
 import { useEffect, useState } from "react";
+// Los defaults de disponibilidad de niveles viven en el catálogo único de planes.
+import { DEFAULT_LEVEL_AVAILABILITY } from "@/app/lib/plans";
 
 export type LevelAvailability = Record<string, Record<string, boolean>>;
 
-// Default = comportamiento histórico hardcodeado. Sirve de fallback si el
-// backend no responde, para que el formulario de pago nunca se rompa.
-export const DEFAULT_LEVEL_AVAILABILITY: LevelAvailability = {
-  Essential: {
-    Principiante: true, Basico: true, Intermedio: true,
-    "Intermedio alto-gramatica": true, "Intermedio alto-produccion": true,
-  },
-  Premium: {
-    Principiante: true, Basico: true, Intermedio: true,
-    "Intermedio alto-gramatica": true, "Intermedio alto-produccion": false,
-  },
-  Personalizado: {
-    Principiante: true, Basico: true, Intermedio: true,
-    "Intermedio alto-gramatica": false, "Intermedio alto-produccion": false,
-  },
-};
+export { DEFAULT_LEVEL_AVAILABILITY };
 
 const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL!;
 

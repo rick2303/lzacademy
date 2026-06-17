@@ -265,6 +265,22 @@ export default function CorreosMasivos() {
                             Usa <code className="bg-gray-100 px-1 rounded">{"{nombre}"}</code> para insertar el nombre del lead.
                             Se aplica el diseño de marca de LZ English Academy.
                         </p>
+
+                        {(subject.trim() || body.trim()) && (
+                            <div className="mt-4 border-t border-gray-100 pt-4">
+                                <p className="text-xs font-medium text-gray-500 mb-2">
+                                    Vista previa <span className="text-gray-400">(con un nombre de ejemplo)</span>
+                                </p>
+                                <div className="rounded-lg border border-gray-200 bg-gray-50 p-4">
+                                    {subject.trim() && (
+                                        <p className="text-sm font-semibold text-gray-800 mb-2">{subject.trim()}</p>
+                                    )}
+                                    <p className="text-sm leading-relaxed text-gray-700 whitespace-pre-wrap">
+                                        {(body || "").replace(/\{nombre\}/g, "María")}
+                                    </p>
+                                </div>
+                            </div>
+                        )}
                     </div>
 
                     {/* Selección + envío */}

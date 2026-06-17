@@ -3,15 +3,16 @@
 import { useCallback, useEffect, useState } from "react";
 import { supabase } from "../../lib/supabaseClient";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import dayjs from "dayjs";
 import utc from "dayjs/plugin/utc";
 import timezone from "dayjs/plugin/timezone";
 import { planColor } from "../_utils/planColors";
 import { ErrorState } from "../_utils/ErrorState";
+import { PT, fmtDatePT } from "../_utils/format";
+import { ALL_PLAN_KEYS } from "@/app/lib/plans";
 dayjs.extend(utc);
 dayjs.extend(timezone);
-
-const PT = "America/Los_Angeles";
 
 interface RecurringUser {
     email: string;
@@ -25,7 +26,7 @@ interface RecurringUser {
 }
 
 const PAGE_SIZE = 15;
-const PLANS = ["Essential", "Premium", "Personalizado", "Speaking"];
+const PLANS = ALL_PLAN_KEYS;
 
 export default function RecurrentesPage() {
     const [users, setUsers] = useState<RecurringUser[]>([]);
@@ -240,7 +241,7 @@ export default function RecurrentesPage() {
                             <table className="min-w-full divide-y divide-gray-100">
                                 <thead className="bg-gray-50">
                                     <tr>
-                                        {["Nombre", "Email", "País", "Plan", "Pagos", "Total pagado", "Primer pago", "Último pago"].map((h) => (
+                                        {["Nombre", "Email", "País", "Plan", "Pagos", "Total pagado", "Primer pago", "Último pago", "Gestionar"].map((h) => (
                                             <th key={h} className="px-5 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider whitespace-nowrap">{h}</th>
                                         ))}
                                     </tr>
@@ -263,8 +264,11 @@ export default function RecurrentesPage() {
                                                 </span>
                                             </td>
                                             <td className="px-5 py-3 text-sm font-bold text-gray-800">${(u.total_paid / 100).toFixed(2)}</td>
-                                            <td className="px-5 py-3 text-xs text-gray-400">{dayjs.utc(u.first_payment).tz(PT).format("DD/MM/YYYY")}</td>
-                                            <td className="px-5 py-3 text-xs text-gray-400">{dayjs.utc(u.last_payment).tz(PT).format("DD/MM/YYYY")}</td>
+                                            <td className="px-5 py-3 text-xs text-gray-400">{fmtDatePT(u.first_payment)}</td>
+                                            <td className="px-5 py-3 text-xs text-gray-400">{fmtDatePT(u.last_payment)}</td>
+                                            <td className="px-5 py-3 whitespace-nowrap">
+                                                <Link href={`/admin/busqueda?q=${encodeURIComponent(u.email)}`} className="text-xs font-medium text-falu-red-700 hover:text-falu-red-800 transition">Ver detalle →</Link>
+                                            </td>
                                         </tr>
                                     ))}
                                 </tbody>
@@ -307,9 +311,12 @@ export default function RecurrentesPage() {
                                     <span className="text-sm font-bold text-gray-800">${(u.total_paid / 100).toFixed(2)}</span>
                                 </div>
                                 <div className="flex gap-3 mt-2 text-xs text-gray-400">
-                                    <span>Desde: {dayjs.utc(u.first_payment).tz(PT).format("DD/MM/YY")}</span>
+                                    <span>Desde: {fmtDatePT(u.first_payment)}</span>
                                     <span>·</span>
-                                    <span>Último: {dayjs.utc(u.last_payment).tz(PT).format("DD/MM/YY")}</span>
+                                    <span>Último: {fmtDatePT(u.last_payment)}</span>
+                                </div>
+                                <div className="mt-3 pt-2 border-t border-gray-100">
+                                    <Link href={`/admin/busqueda?q=${encodeURIComponent(u.email)}`} className="text-xs font-medium text-falu-red-700 hover:text-falu-red-800 transition">Ver detalle →</Link>
                                 </div>
                             </div>
                         ))}

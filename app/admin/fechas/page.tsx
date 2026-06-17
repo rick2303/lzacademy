@@ -5,6 +5,7 @@ import { supabase } from "../../lib/supabaseClient";
 import { useRouter } from "next/navigation";
 import { ErrorState } from "../_utils/ErrorState";
 import { todayPT, nowPTInput } from "../_utils/ptTime";
+import { CHECKOUT_PLAN_KEYS } from "@/app/lib/plans";
 
 interface StartDate {
     value: string;
@@ -215,7 +216,7 @@ export default function FechasPage() {
             : "border-violet-200 bg-violet-50 text-violet-600";
         return (
             <div className="flex flex-wrap items-center gap-1.5">
-                {["Essential", "Premium", "Personalizado"].map((p) => {
+                {CHECKOUT_PLAN_KEYS.map((p) => {
                     const current = date[field] ?? [];
                     const excluded = current.includes(p);
                     return (

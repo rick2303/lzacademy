@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useLevelAvailability } from "../hooks/useLevelAvailability";
+import { CHECKOUT_PLAN_KEYS, planPriceDisplay, isSubscriptionPlan, isDiscountablePlan, checkoutDescription } from "@/app/lib/plans";
 
 interface StudentData {
   full_name: string;
@@ -42,12 +43,6 @@ const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL!;
 
 const selectClass =
   "w-full rounded-xl border border-zinc-200 bg-zinc-50 px-4 py-3 text-sm text-zinc-900 transition focus:outline-none focus:ring-2 focus:ring-falu-red-400 focus:border-transparent focus:bg-white hover:border-zinc-300 appearance-none cursor-pointer";
-
-const PLAN_PRICES: Record<string, string> = {
-  Essential: "$10",
-  Premium: "$50",
-  Personalizado: "$120",
-};
 
 export default function PagoEstudiantesPage() {
   const [email, setEmail] = useState("");
@@ -145,6 +140,8 @@ export default function PagoEstudiantesPage() {
           plan,
           level,
           interestDate,
+          interestDateLabel: futureDates.find((d) => d.value === interestDate)?.label ?? "",
+          description: checkoutDescription(plan),
           discountCode: appliedDiscount ? appliedDiscount.code : undefined,
         }),
       });
@@ -252,20 +249,14 @@ export default function PagoEstudiantesPage() {
     .filter((d) => d.value >= today)
     .filter((d) => !(d.excludedPlansSpecial ?? []).includes(plan));
 
-  // Planes con suscripción recurrente (cobro automático cada 4 semanas)
-  const SUBSCRIPTION_PLANS = ["Essential", "Premium"];
-  const isSubscription = SUBSCRIPTION_PLANS.includes(plan);
-  const BILLING_AMOUNT: Record<string, string> = { Essential: "$10", Premium: "$50", Personalizado: "$120" };
-
-  // Planes que aceptan códigos de descuento. Debe coincidir con el backend
-  // (discount.service.js → DISCOUNTS_FOR_SUBSCRIPTIONS). Hoy solo Personalizado.
-  const DISCOUNTABLE_PLANS = ["Personalizado"];
-  const showDiscount = DISCOUNTABLE_PLANS.includes(plan);
+  // Suscripción recurrente y elegibilidad de descuentos según el catálogo único.
+  const isSubscription = isSubscriptionPlan(plan);
+  const showDiscount = isDiscountablePlan(plan);
   const formatPrice = (cents: number) => {
     const v = cents / 100;
     return `$${Number.isInteger(v) ? v : v.toFixed(2)}`;
   };
-  const displayPrice = appliedDiscount ? formatPrice(appliedDiscount.discountedAmount) : (PLAN_PRICES[plan] ?? "");
+  const displayPrice = appliedDiscount ? formatPrice(appliedDiscount.discountedAmount) : planPriceDisplay(plan);
 
   return (
     <main className="min-h-screen bg-zinc-50 px-4 py-12">
@@ -344,9 +335,9 @@ export default function PagoEstudiantesPage() {
                   }}
                   className={selectClass}
                 >
-                  <option value="Essential">Essential — $10</option>
-                  <option value="Premium">Premium — $50</option>
-                  <option value="Personalizado">Personalizado — $120</option>
+                  {CHECKOUT_PLAN_KEYS.map((k) => (
+                    <option key={k} value={k}>{`${k} — ${planPriceDisplay(k)}`}</option>
+                  ))}
                 </select>
                 <div className="pointer-events-none absolute inset-y-0 right-3 flex items-center">
                   <svg className="h-4 w-4 text-zinc-400" viewBox="0 0 16 16" fill="none">
@@ -484,7 +475,7 @@ export default function PagoEstudiantesPage() {
               <div className="rounded-xl border border-zinc-200 bg-zinc-50 px-4 py-3">
                 <p className="text-xs leading-relaxed text-zinc-500">
                   <span className="font-semibold text-zinc-700">Suscripción:</span>{" "}
-                  se te cobrará {BILLING_AMOUNT[plan] ?? ""} cada 4 semanas de forma automática hasta que canceles.
+                  se te cobrará {planPriceDisplay(plan)} cada 4 semanas de forma automática hasta que canceles.
                   Cancela cuando quieras escribiendo a{" "}
                   <a href="mailto:info@lz-englishacademy.com" className="font-medium text-falu-red-700 underline underline-offset-2 hover:text-falu-red-800">info@lz-englishacademy.com</a>;
                   conservas acceso hasta el final del periodo ya pagado.
@@ -530,7 +521,7 @@ export default function PagoEstudiantesPage() {
                   Ir al pago seguro —{" "}
                   {appliedDiscount ? (
                     <span className="inline-flex items-center gap-1.5">
-                      <span className="line-through opacity-60">{PLAN_PRICES[plan] ?? ""}</span>
+                      <span className="line-through opacity-60">{planPriceDisplay(plan)}</span>
                       <span>{displayPrice}</span>
                     </span>
                   ) : (

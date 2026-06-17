@@ -9,17 +9,11 @@ import dayjs from "dayjs";
 import utc from "dayjs/plugin/utc";
 import timezone from "dayjs/plugin/timezone";
 import { ErrorState } from "../_utils/ErrorState";
+import { LEVELED_PLAN_KEYS, planColor } from "@/app/lib/plans";
 dayjs.extend(utc);
 dayjs.extend(timezone);
 
 const PT = "America/Los_Angeles";
-
-const PLAN_DOT: Record<string, string> = {
-    Essential:     "bg-blue-400",
-    Premium:       "bg-violet-500",
-    Personalizado: "bg-red-400",
-    Speaking:      "bg-orange-400",
-};
 
 const LEVEL_LABEL: Record<string, string> = {
     "Principiante":               "Principiante · A1",
@@ -57,7 +51,8 @@ const LEVEL_LABELS: Record<string, string> = {
     "Intermedio alto-produccion": "B2.2",
 };
 
-const PLANS = ["Essential", "Premium", "Personalizado"];
+// Planes con niveles, derivados del catálogo único de planes.
+const PLANS = LEVELED_PLAN_KEYS;
 
 const LEVEL_BADGE: Record<string, { bg: string; text: string; label: string }> = {
     "Principiante":               { bg: "bg-emerald-100", text: "text-emerald-700", label: "A1" },
@@ -626,7 +621,7 @@ export default function AccesosPage() {
                                     </td>
                                     <td className="px-5 py-3.5">
                                         <span className="inline-flex items-center gap-1.5 text-sm text-gray-700">
-                                            <span className={`w-2 h-2 rounded-full flex-shrink-0 ${PLAN_DOT[u.plan] ?? "bg-gray-300"}`} />
+                                            <span className={`w-2 h-2 rounded-full flex-shrink-0 ${planColor(u.plan)}`} />
                                             {u.plan}
                                         </span>
                                     </td>
@@ -737,7 +732,7 @@ export default function AccesosPage() {
                                 </div>
                                 <div className="flex flex-wrap gap-1.5 mt-2">
                                     <span className="inline-flex items-center gap-1 text-xs text-gray-600 bg-gray-50 border border-gray-100 px-2 py-0.5 rounded-md">
-                                        <span className={`w-1.5 h-1.5 rounded-full ${PLAN_DOT[u.plan] ?? "bg-gray-300"}`} />{u.plan}
+                                        <span className={`w-1.5 h-1.5 rounded-full ${planColor(u.plan)}`} />{u.plan}
                                     </span>
                                     <span className="text-xs text-gray-500 bg-gray-50 border border-gray-100 px-2 py-0.5 rounded-md">{LEVEL_LABEL[u.level] ?? u.level}</span>
                                 </div>

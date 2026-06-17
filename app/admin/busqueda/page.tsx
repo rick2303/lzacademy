@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import dayjs from "dayjs";
 import utc from "dayjs/plugin/utc";
 import timezone from "dayjs/plugin/timezone";
+import { ALL_PLAN_KEYS } from "@/app/lib/plans";
 dayjs.extend(utc);
 dayjs.extend(timezone);
 
@@ -16,7 +17,7 @@ const fmtDatePT = (ts: string | null) => ts ? dayjs.utc(ts).tz(PT).format("DD MM
 // Solo fechas sin hora (inscription_date): se muestran tal cual, sin convertir zona.
 const fmtDate = (d: string | null) => d ? dayjs.utc(d).format("DD MMM YYYY") : "—";
 
-const PLANS  = ["Essential", "Premium", "Personalizado", "Speaking"];
+const PLANS  = ALL_PLAN_KEYS;
 const LEVELS = [
     { value: "Principiante",              label: "Principiante · A1" },
     { value: "Basico",                    label: "Básico · A2" },
@@ -173,7 +174,11 @@ export default function BusquedaPage() {
         supabase.auth.getSession().then(({ data: { session } }) => {
             if (!session) router.push("/admin/login");
         });
-        inputRef.current?.focus();
+        // Deep-link: otras páginas del admin (pagos, no-renovados, recurrentes) enlazan
+        // aquí con ?q=<email> para abrir directamente el detalle/gestión del usuario.
+        const q = new URLSearchParams(window.location.search).get("q");
+        if (q) setQuery(q);
+        else inputRef.current?.focus();
     }, []);
 
     useEffect(() => {

@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useStartDates } from "../hooks/useStartDates";
 import { useLevelAvailability } from "../hooks/useLevelAvailability";
+import { CHECKOUT_PLAN_KEYS, planPriceDisplay, isSubscriptionPlan, requiresScheduling, checkoutTagline, checkoutFeatures, checkoutDescription } from "@/app/lib/plans";
 
 interface PremiumSlot { id: string; datetime_pt: string; start_date: string; enabled: boolean; }
 
@@ -47,37 +48,8 @@ function buildSlotDisplay(datetimePt: string) {
     };
 }
 
-const planDetails = {
-    Essential: {
-        tagline: "Aprende a tu ritmo con el Método 590 completo.",
-        features: [
-            "Acceso completo al Método 590",
-            "Plataforma con material organizado por sesión y nivel",
-            "Comunidad en WhatsApp",
-            "Clases de práctica en vivo los viernes",
-        ],
-    },
-    Premium: {
-        tagline: "Todo lo de Essential, con clases diarias en vivo.",
-        features: [
-            "Todo lo del Plan Essential",
-            "1 hora de clase diaria (lunes a jueves)",
-            "Repasos los viernes para resolver dudas",
-            "Práctica hablada diaria y acompañamiento constante",
-        ],
-    },
-    Personalizado: {
-        tagline: "Acompañamiento 1:1 totalmente a tu medida.",
-        features: [
-            "Todo lo del Plan Premium",
-            "Sesiones privadas 1:1 adaptadas a ti",
-            "Horario 100% flexible",
-            "Plan de trabajo personalizado y correcciones en tiempo real",
-        ],
-    },
-};
-
-type PlanType = keyof typeof planDetails;
+// El resumen del plan (tagline + features) vive en el catálogo único (app/lib/plans.ts).
+type PlanType = "Essential" | "Premium" | "Personalizado";
 
 const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL!;
 
@@ -148,11 +120,8 @@ const PaymentForm = ({
         ?? allDates.find(d => d.value === formData.interestDate)?.label
         ?? "";
 
-    const planPrice: Record<PlanType, string> = { Essential: "$10", Premium: "$50", Personalizado: "$120" };
-
-    // Planes con suscripción recurrente (cobro automático cada 4 semanas)
-    const SUBSCRIPTION_PLANS: PlanType[] = ["Essential", "Premium"];
-    const isSubscription = SUBSCRIPTION_PLANS.includes(plan);
+    // Suscripción recurrente (cobro automático cada 4 semanas) según el catálogo.
+    const isSubscription = isSubscriptionPlan(plan);
 
     useEffect(() => { setPlan(selectedPlan); }, [selectedPlan]);
 
@@ -182,7 +151,7 @@ const PaymentForm = ({
     useEffect(() => { setAccepted(false); }, [plan, formData.interestDate]);
 
     useEffect(() => {
-        if (plan !== "Premium") { setPremiumSlots([]); return; }
+        if (!requiresScheduling(plan)) { setPremiumSlots([]); return; }
         setPremiumSlotsLoading(true);
         fetch(`${BACKEND_URL}/config/premium-slots`)
             .then(r => r.json())
@@ -242,7 +211,7 @@ const PaymentForm = ({
                     level: formData.englishLevel,
                     interestDate: formData.interestDate,
                     interestDateLabel: selectedDateLabel,
-                    description: `Incluye: ${planDetails[plan].features.join(" · ")}`,
+                    description: checkoutDescription(plan),
                     motive: selectedDificultades || "no especificado",
                 }),
             });
@@ -278,7 +247,7 @@ const PaymentForm = ({
                         <div className="mt-3 inline-flex items-center gap-2 rounded-full px-4 py-1.5 text-xs font-semibold" style={{ backgroundColor: "#fadadd", color: "#C0353E" }}>
                             <span>Plan {plan}</span>
                             <span className="opacity-50">·</span>
-                            <span>{planPrice[plan]}</span>
+                            <span>{planPriceDisplay(plan)}</span>
                         </div>
                     )}
                     {embedded && isSubscription && (
@@ -298,10 +267,10 @@ const PaymentForm = ({
                 <div className="mb-5 rounded-2xl border border-zinc-200 bg-white shadow-sm overflow-hidden">
                     <div className="px-5 py-3 bg-zinc-50 border-b border-zinc-100">
                         <p className="text-xs font-bold uppercase tracking-wide text-zinc-500">Tu Plan {plan} incluye</p>
-                        <p className="text-[13px] text-zinc-600 mt-0.5">{planDetails[plan].tagline}</p>
+                        <p className="text-[13px] text-zinc-600 mt-0.5">{checkoutTagline(plan)}</p>
                     </div>
                     <ul className="px-5 py-4 space-y-2.5">
-                        {planDetails[plan].features.map((feat) => (
+                        {checkoutFeatures(plan).map((feat) => (
                             <li key={feat} className="flex items-start gap-2.5">
                                 <span className="mt-0.5 shrink-0 flex h-4 w-4 items-center justify-center rounded-full bg-emerald-100">
                                     <svg className="h-2.5 w-2.5 text-emerald-600" viewBox="0 0 10 10" fill="none">
@@ -475,9 +444,9 @@ const PaymentForm = ({
                                         className={selectClass}
                                         required
                                     >
-                                        <option value="Essential">Essential — $10</option>
-                                        <option value="Premium">Premium — $50</option>
-                                        <option value="Personalizado">Personalizado — $120</option>
+                                        {CHECKOUT_PLAN_KEYS.map((k) => (
+                                            <option key={k} value={k}>{`${k} — ${planPriceDisplay(k)}`}</option>
+                                        ))}
                                     </select>
                                     <div className="pointer-events-none absolute inset-y-0 right-3 flex items-center">
                                         <svg className="h-4 w-4 text-zinc-400" viewBox="0 0 16 16" fill="none">
@@ -544,7 +513,7 @@ const PaymentForm = ({
                         </div>
 
                         {/* Horarios disponibles — solo Premium con fecha seleccionada */}
-                        {plan === "Premium" && formData.interestDate && (() => {
+                        {requiresScheduling(plan) && formData.interestDate && (() => {
                             const dateSlots = premiumSlots.filter(s => s.start_date === formData.interestDate);
                             if (premiumSlotsLoading) return null;
                             if (dateSlots.length === 0) return (
@@ -658,7 +627,7 @@ const PaymentForm = ({
                                 </>
                             ) : (
                                 <>
-                                    {`Comenzar ${plan} — ${planPrice[plan]}`}
+                                    {`Comenzar ${plan} — ${planPriceDisplay(plan)}`}
                                     <svg className="h-4 w-4" viewBox="0 0 16 16" fill="none">
                                         <path stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
                                     </svg>

@@ -1,12 +1,12 @@
 // Colores semánticos por plan, compartidos entre páginas admin.
-// Cada valor es una clase Tailwind de background (usar para puntos, barras, badges).
-export const PLAN_COLORS: Record<string, string> = {
-  Essential: "bg-blue-500",
-  Premium: "bg-violet-500",
-  Personalizado: "bg-emerald-500",
-  Speaking: "bg-yellow-orange-500",
-};
+// La fuente de verdad es el catálogo único de planes (app/lib/plans.ts);
+// este archivo se mantiene como punto de import estable para el admin.
+import { PLAN_LIST, planColor as planColorFromCatalog } from "@/app/lib/plans";
+
+export const PLAN_COLORS: Record<string, string> = Object.fromEntries(
+  PLAN_LIST.map((p) => [p.key, p.adminColor])
+);
 
 export function planColor(plan: string): string {
-  return PLAN_COLORS[plan] ?? "bg-gray-400";
+  return planColorFromCatalog(plan);
 }
