@@ -97,6 +97,9 @@ const PaymentForm = ({
     const [plan, setPlan] = useState<PlanType>(selectedPlan);
     const [loading, setLoading] = useState(false);
     const [emailSuggestion, setEmailSuggestion] = useState<string | null>(null);
+    // Si el correo ya tiene una suscripción activa, avisamos antes del checkout.
+    const [existingSub, setExistingSub] = useState<{ plan: string; periodEnd: string | null; cancelAtPeriodEnd: boolean } | null>(null);
+    const [subModal, setSubModal] = useState<null | "confirm" | "blocked">(null);
     const { dates: allDates } = useStartDates();
     const { isLevelAvailable } = useLevelAvailability();
     const availableDates = allDates.filter(d => !d.excludedPlans?.includes(plan));
@@ -172,6 +175,35 @@ const PaymentForm = ({
         return null;
     };
 
+    // Chequea (al salir del campo de correo) si ese email ya tiene una suscripción
+    // activa, para avisar que un nuevo checkout la cambia/cancela y vuelve a cobrar.
+    const checkExistingSub = async (
+        rawEmail: string,
+    ): Promise<{ plan: string; periodEnd: string | null; cancelAtPeriodEnd: boolean } | null> => {
+        const e = rawEmail.trim();
+        if (!e || !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(e)) { setExistingSub(null); return null; }
+        try {
+            const res = await fetch(`${BACKEND_URL}/verify-student`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ email: e }),
+            });
+            const data = await res.json();
+            const info = res.ok && data.found && data.user?.has_active_subscription
+                ? {
+                    plan: data.user.plan as string,
+                    periodEnd: (data.user.current_period_end as string | null) ?? null,
+                    cancelAtPeriodEnd: !!data.user.cancel_at_period_end,
+                }
+                : null;
+            setExistingSub(info);
+            return info;
+        } catch {
+            setExistingSub(null);
+            return null;
+        }
+    };
+
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
         const { name, value } = e.target;
         if (name === "plan") {
@@ -198,6 +230,23 @@ const PaymentForm = ({
         const validationError = validateForm();
         if (validationError) { setError(validationError); return; }
         if (!accepted) { setError("Debes aceptar los términos y confirmar tu fecha de inicio"); return; }
+        setError("");
+        // Si el correo ya tiene una suscripción recurrente viva: cambiar a
+        // Personalizado (pago único) va por soporte (evita doble cobro). Para
+        // cambios entre suscripciones, modal de confirmación.
+        const active = await checkExistingSub(formData.email);
+        if (active) {
+            // Personalizado (pago único) y downgrade (a plan menor) → soporte.
+            // Upgrade o mismo plan → confirmación normal.
+            const RANK: Record<string, number> = { Essential: 1, Premium: 2 };
+            const isDowngrade = !!RANK[plan] && !!RANK[active.plan] && RANK[plan] < RANK[active.plan];
+            setSubModal(plan === "Personalizado" || isDowngrade ? "blocked" : "confirm");
+            return;
+        }
+        await doCheckout();
+    };
+
+    const doCheckout = async () => {
         setLoading(true);
         try {
             const res = await fetch(`${BACKEND_URL}/create-checkout-session`, {
@@ -653,6 +702,82 @@ const PaymentForm = ({
 
                     </form>
                 </div>
+
+                {/* Modal de suscripción: confirmar (cambio entre suscripciones) o
+                    bloqueado (sub recurrente → Personalizado, que va por soporte) */}
+                {subModal && (
+                    <div className="fixed inset-0 z-50 flex items-center justify-center bg-zinc-900/60 px-4">
+                        <div className="w-full max-w-md rounded-2xl bg-white shadow-2xl">
+                            <div className="flex flex-col items-center gap-3 rounded-t-2xl bg-amber-50 px-6 py-6 text-center">
+                                <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-amber-100">
+                                    <svg className="h-6 w-6 text-amber-600" viewBox="0 0 20 20" fill="none">
+                                        <path d="M10 7v4m0 3h.01M10 2l8 14H2L10 2z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                                    </svg>
+                                </div>
+                                <p className="text-base font-bold text-amber-900">
+                                    {subModal === "blocked" ? "Coordinemos tu cambio de plan" : "Ya tienes una suscripción activa"}
+                                </p>
+                            </div>
+                            <div className="px-6 py-5 text-sm text-zinc-600">
+                                {subModal === "blocked" ? (
+                                    <>
+                                        <p>
+                                            Tienes una suscripción activa al plan <strong>{existingSub?.plan}</strong>.
+                                            Para este cambio de plan necesitamos coordinarlo contigo, para que no haya
+                                            cobros duplicados ni pierdas el tiempo que ya pagaste.
+                                        </p>
+                                        <p className="mt-3">
+                                            Escríbenos a{" "}
+                                            <a href="mailto:info@lz-englishacademy.com" className="font-semibold text-falu-red-700 underline underline-offset-2 hover:text-falu-red-800">info@lz-englishacademy.com</a>{" "}
+                                            y te ayudamos.
+                                        </p>
+                                        <div className="mt-5">
+                                            <button
+                                                type="button"
+                                                onClick={() => setSubModal(null)}
+                                                className="w-full rounded-xl bg-falu-red-700 px-4 py-3 text-sm font-semibold text-white transition hover:bg-falu-red-800"
+                                            >
+                                                Entendido
+                                            </button>
+                                        </div>
+                                    </>
+                                ) : (
+                                    <>
+                                        <p>
+                                            Tienes una suscripción activa al plan <strong>{existingSub?.plan}</strong>. Si
+                                            continúas con un plan distinto, se cancelará la actual y se te cobrará el nuevo
+                                            plan ahora. El cobro inicial de tu plan actual no se reembolsa automáticamente.
+                                        </p>
+                                        {existingSub?.periodEnd && (
+                                            <p className="mt-3 rounded-lg bg-zinc-50 px-3 py-2 text-xs text-zinc-500">
+                                                {existingSub.cancelAtPeriodEnd ? "Tu plan actual termina el " : "Tu plan actual está vigente hasta el "}
+                                                <strong className="text-zinc-700">
+                                                    {new Date(existingSub.periodEnd).toLocaleDateString("es-ES", { day: "numeric", month: "long", year: "numeric", timeZone: "UTC" })}
+                                                </strong>.
+                                            </p>
+                                        )}
+                                        <div className="mt-5 flex flex-col gap-2 sm:flex-row-reverse">
+                                            <button
+                                                type="button"
+                                                onClick={() => { setSubModal(null); doCheckout(); }}
+                                                className="flex-1 rounded-xl bg-falu-red-700 px-4 py-3 text-sm font-semibold text-white transition hover:bg-falu-red-800"
+                                            >
+                                                Continuar de todos modos
+                                            </button>
+                                            <button
+                                                type="button"
+                                                onClick={() => setSubModal(null)}
+                                                className="flex-1 rounded-xl border border-zinc-200 bg-white px-4 py-3 text-sm font-semibold text-zinc-600 transition hover:bg-zinc-50"
+                                            >
+                                                Volver
+                                            </button>
+                                        </div>
+                                    </>
+                                )}
+                            </div>
+                        </div>
+                    </div>
+                )}
         </div>
     );
 

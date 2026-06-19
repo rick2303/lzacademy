@@ -10,6 +10,10 @@ interface StudentData {
   level: string;
   inscription_date: string | null;
   country: string;
+  subscription_status?: string | null;
+  current_period_end?: string | null;
+  cancel_at_period_end?: boolean;
+  has_active_subscription?: boolean;
 }
 
 interface SpecialDate {
@@ -57,6 +61,7 @@ export default function PagoEstudiantesPage() {
   const [specialDates, setSpecialDates] = useState<SpecialDate[]>([]);
   const [checkoutLoading, setCheckoutLoading] = useState(false);
   const [formError, setFormError] = useState("");
+  const [subModal, setSubModal] = useState<null | "confirm" | "alert" | "blocked">(null);
 
   // Código de descuento (solo para planes elegibles; ver DISCOUNTABLE_PLANS abajo).
   const [discountCode, setDiscountCode] = useState("");
@@ -125,10 +130,7 @@ export default function PagoEstudiantesPage() {
     }
   }
 
-  async function handleCheckout(e: React.FormEvent) {
-    e.preventDefault();
-    if (!level) { setFormError("Selecciona tu nivel de inglés."); return; }
-    if (!interestDate) { setFormError("Selecciona una fecha de inicio."); return; }
+  async function doCheckout() {
     setCheckoutLoading(true);
     setFormError("");
     try {
@@ -154,6 +156,25 @@ export default function PagoEstudiantesPage() {
         : "No pudimos iniciar tu pago. Intenta nuevamente.");
       setCheckoutLoading(false);
     }
+  }
+
+  async function handleCheckout(e: React.FormEvent) {
+    e.preventDefault();
+    if (!level) { setFormError("Selecciona tu nivel de inglés."); return; }
+    if (!interestDate) { setFormError("Selecciona una fecha de inicio."); return; }
+    setFormError("");
+    // Con suscripción recurrente viva:
+    //  - Personalizado (pago único) → alerta (se permite, pero la sub no se cancela sola)
+    //  - Downgrade (a un plan menor) → soporte (se agenda al fin del periodo)
+    //  - Upgrade o mismo plan → confirmación normal (cambio inmediato)
+    if (student?.has_active_subscription) {
+      const RANK: Record<string, number> = { Essential: 1, Premium: 2 };
+      const cur = student.plan, sel = plan;
+      const isDowngrade = !!RANK[sel] && !!RANK[cur] && RANK[sel] < RANK[cur];
+      setSubModal(sel === "Personalizado" ? "alert" : isDowngrade ? "blocked" : "confirm");
+      return;
+    }
+    await doCheckout();
   }
 
   // ─── Step 1: Email input ───────────────────────────────────────────────────
@@ -558,6 +579,120 @@ export default function PagoEstudiantesPage() {
           ← Usar otro correo
         </button>
       </div>
+
+      {/* Modal de suscripción: confirmar (cambio entre suscripciones) o bloqueado
+          (sub recurrente → Personalizado, que va por soporte) */}
+      {subModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-zinc-900/60 px-4">
+          <div className="w-full max-w-md rounded-2xl bg-white shadow-2xl">
+            <div className="flex flex-col items-center gap-3 rounded-t-2xl bg-amber-50 px-6 py-6 text-center">
+              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-amber-100">
+                <svg className="h-6 w-6 text-amber-600" viewBox="0 0 20 20" fill="none">
+                  <path d="M10 7v4m0 3h.01M10 2l8 14H2L10 2z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+              </div>
+              <p className="text-base font-bold text-amber-900">
+                {subModal === "blocked"
+                  ? "Coordinemos tu cambio de plan"
+                  : subModal === "alert"
+                    ? "Antes de continuar con Personalizado"
+                    : "Ya tienes una suscripción activa"}
+              </p>
+            </div>
+            <div className="px-6 py-5 text-sm text-zinc-600">
+              {subModal === "blocked" ? (
+                <>
+                  <p>
+                    Tienes una suscripción activa al plan <strong>{student?.plan}</strong>. Para bajar de
+                    plan necesitamos coordinarlo contigo y que aplique al final de tu periodo actual, así
+                    no pierdes el tiempo que ya pagaste.
+                  </p>
+                  <p className="mt-3">
+                    Escríbenos a{" "}
+                    <a href="mailto:info@lz-englishacademy.com" className="font-semibold text-falu-red-700 underline underline-offset-2 hover:text-falu-red-800">info@lz-englishacademy.com</a>{" "}
+                    y te ayudamos.
+                  </p>
+                  <div className="mt-5">
+                    <button
+                      type="button"
+                      onClick={() => setSubModal(null)}
+                      className="w-full rounded-xl bg-falu-red-700 px-4 py-3 text-sm font-semibold text-white transition hover:bg-falu-red-800"
+                    >
+                      Entendido
+                    </button>
+                  </div>
+                </>
+              ) : subModal === "alert" ? (
+                <>
+                  <p>
+                    Tienes una suscripción activa al plan <strong>{student?.plan}</strong>. El plan
+                    Personalizado es un pago único y <strong>no cancela tu suscripción automáticamente</strong>.
+                  </p>
+                  {student?.current_period_end && (
+                    <p className="mt-2">
+                      Tu suscripción {student?.plan} seguirá {student.cancel_at_period_end ? "vigente hasta el " : "activa y cobrando hasta el "}
+                      <strong>{new Date(student.current_period_end).toLocaleDateString("es-ES", { day: "numeric", month: "long", year: "numeric", timeZone: "UTC" })}</strong>.
+                    </p>
+                  )}
+                  <p className="mt-2">
+                    Para no pagar ambos planes, cancela tu suscripción actual escribiéndonos a{" "}
+                    <a href="mailto:info@lz-englishacademy.com" className="font-semibold text-falu-red-700 underline underline-offset-2 hover:text-falu-red-800">info@lz-englishacademy.com</a>.
+                    Si continúas, se te cobrará el plan Personalizado ahora.
+                  </p>
+                  <div className="mt-5 flex flex-col gap-2 sm:flex-row-reverse">
+                    <button
+                      type="button"
+                      onClick={() => { setSubModal(null); doCheckout(); }}
+                      className="flex-1 rounded-xl bg-falu-red-700 px-4 py-3 text-sm font-semibold text-white transition hover:bg-falu-red-800"
+                    >
+                      Continuar de todos modos
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setSubModal(null)}
+                      className="flex-1 rounded-xl border border-zinc-200 bg-white px-4 py-3 text-sm font-semibold text-zinc-600 transition hover:bg-zinc-50"
+                    >
+                      Volver
+                    </button>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <p>
+                    Tienes una suscripción activa al plan <strong>{student?.plan}</strong>. Si continúas con
+                    un plan distinto, se cancelará la actual y se te cobrará el nuevo plan ahora. El cobro
+                    inicial de tu plan actual no se reembolsa automáticamente.
+                  </p>
+                  {student?.current_period_end && (
+                    <p className="mt-3 rounded-lg bg-zinc-50 px-3 py-2 text-xs text-zinc-500">
+                      {student.cancel_at_period_end ? "Tu plan actual termina el " : "Tu plan actual está vigente hasta el "}
+                      <strong className="text-zinc-700">
+                        {new Date(student.current_period_end).toLocaleDateString("es-ES", { day: "numeric", month: "long", year: "numeric", timeZone: "UTC" })}
+                      </strong>.
+                    </p>
+                  )}
+                  <div className="mt-5 flex flex-col gap-2 sm:flex-row-reverse">
+                    <button
+                      type="button"
+                      onClick={() => { setSubModal(null); doCheckout(); }}
+                      className="flex-1 rounded-xl bg-falu-red-700 px-4 py-3 text-sm font-semibold text-white transition hover:bg-falu-red-800"
+                    >
+                      Continuar de todos modos
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setSubModal(null)}
+                      className="flex-1 rounded-xl border border-zinc-200 bg-white px-4 py-3 text-sm font-semibold text-zinc-600 transition hover:bg-zinc-50"
+                    >
+                      Volver
+                    </button>
+                  </div>
+                </>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </main>
   );
 }
