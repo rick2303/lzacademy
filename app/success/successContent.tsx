@@ -125,6 +125,14 @@ const SuccessContent = () => {
             day: "numeric", month: "long", year: "numeric", timeZone: "UTC",
           })
         : null;
+
+    const accessEndDate = !isSubscription && userData?.inscription_date
+        ? (() => {
+            const d = new Date(userData.inscription_date + "T00:00:00Z");
+            d.setUTCDate(d.getUTCDate() + 28);
+            return d.toLocaleDateString("es-ES", { day: "numeric", month: "long", year: "numeric", timeZone: "UTC" });
+          })()
+        : null;
     const planMeta = getPlan(userData?.plan)?.chip ?? FALLBACK_CHIP;
     const firstName = userData?.full_name?.split(" ")[0] ?? null;
 
@@ -654,7 +662,7 @@ const SuccessContent = () => {
                                         </svg>
                                         {isSubscription
                                             ? `Suscripción · $${(amount / 100).toFixed(0)} USD · se renueva cada 4 semanas`
-                                            : `Pago único · $${(amount / 100).toFixed(0)} USD · sin renovación automática`}
+                                            : `28 días de acceso · $${(amount / 100).toFixed(0)} USD · sin renovación automática`}
                                     </span>
                                 )}
                             </div>
@@ -799,6 +807,25 @@ const SuccessContent = () => {
                                             <div>
                                                 <p className="sc-date-label">Fecha oficial de inicio</p>
                                                 <p className="sc-date-value">{formattedStartDate}</p>
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {/* Vencimiento de acceso (solo planes de pago por periodo) */}
+                                    {accessEndDate && (
+                                        <div className="sc-date-row">
+                                            <div className="sc-date-icon">
+                                                <svg viewBox="0 0 20 20" width="18" height="18" fill="none" stroke="#9c181d" strokeWidth="1.5">
+                                                    <rect x="2" y="5" width="16" height="11" rx="2.5" />
+                                                    <path d="M2 9h16" strokeLinecap="round" />
+                                                </svg>
+                                            </div>
+                                            <div>
+                                                <p className="sc-date-label">Tu acceso vence el</p>
+                                                <p className="sc-date-value">{accessEndDate}</p>
+                                                <p style={{ fontSize: "0.75rem", color: "#71717a", margin: "3px 0 0", lineHeight: 1.5 }}>
+                                                    Este pago cubre 28 días de acceso. Si deseas continuar al finalizar el periodo, deberás pagar nuevamente.
+                                                </p>
                                             </div>
                                         </div>
                                     )}
