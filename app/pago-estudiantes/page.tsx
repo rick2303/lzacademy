@@ -513,7 +513,7 @@ export default function PagoEstudiantesPage() {
             ) : (
               <div className="rounded-xl border border-zinc-200 bg-zinc-50 px-4 py-3">
                 <p className="text-xs leading-relaxed text-zinc-500">
-                  <span className="font-semibold text-zinc-700">Pago único</span> — no hay cobro automático ni renovación.
+                  <span className="font-semibold text-zinc-700">Pago por periodo (28 días)</span> — al finalizar no hay renovación automática. Si deseas continuar, deberás pagar nuevamente.
                 </p>
                 <p className="mt-1.5 text-xs text-zinc-400">
                   <a href="/terminos" className="underline underline-offset-2 hover:text-zinc-600">Términos y Condiciones</a>
