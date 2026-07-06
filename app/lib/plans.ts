@@ -14,7 +14,7 @@
 // cada plan) sigue viviendo en cada página, porque difiere entre páginas.
 // ─────────────────────────────────────────────────────────────────────────────
 
-export type PlanKey = "Essential" | "Premium" | "Personalizado" | "Speaking";
+export type PlanKey = "Essential" | "Premium" | "Personalizado" | "Fluidez" | "Speaking";
 export type DiscountPlan = "all" | PlanKey;
 
 export interface PlanChip {
@@ -116,6 +116,32 @@ export const PLAN_LIST: PlanDef[] = [
       "Corrección y feedback en tiempo real",
       "Seguimiento y motivación constante",
       "Avanza a tu ritmo con guía personalizada",
+    ],
+  },
+  {
+    key: "Fluidez",
+    label: "Programa de Fluidez",
+    priceCents: 20000,
+    recurring: false,
+    requiresScheduling: false,
+    hasLevels: true,
+    checkout: true,
+    // Reutiliza el personaje de Personalizado como placeholder para no romper el
+    // checkout; el asset propio de Fluidez lo agrega otra persona.
+    character: "/muñeca-personalizada.webp",
+    adminColor: "bg-amber-500",
+    badgeClass: "bg-amber-100 text-amber-700",
+    chip: { color: "#b45309", bg: "#fffbeb", border: "#fde68a" },
+    // Nivel A2+: disponible desde Básico (A2); NO en Principiante (A1).
+    levelAvailability: { ...ALL_LEVELS_ON, Principiante: false },
+    checkoutTagline: "Rompé la barrera de hablar con coaching de speaking 1:1.",
+    checkoutFeatures: [
+      "Todo lo del Plan Premium",
+      "Coaching de speaking 1:1 cada semana",
+      "Diagnóstico inicial + plan de acción escrito",
+      "Enfoque total en romper la barrera de hablar",
+      "Corrección y feedback personalizados en cada sesión",
+      "Cupos limitados",
     ],
   },
   {

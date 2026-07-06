@@ -7,7 +7,7 @@ const CALENDLY_SPEAKING_URL =
     process.env.NEXT_PUBLIC_CALENDLY_SPEAKING_URL || "https://calendly.com/lzacademy590/speaking-session";
 
 interface PlansSectionProps {
-    onSelectPlan?: (plan: "Essential" | "Premium" | "Personalizado") => void;
+    onSelectPlan?: (plan: "Essential" | "Premium" | "Personalizado" | "Fluidez") => void;
 }
 
 export default function PlansSection({ onSelectPlan }: PlansSectionProps) {
@@ -40,7 +40,7 @@ export default function PlansSection({ onSelectPlan }: PlansSectionProps) {
                     </p>
                 </div>
 
-                <div className="relative grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 rounded-2xl overflow-hidden ring-1 ring-zinc-200 shadow-lg">
+                <div className="relative grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 rounded-2xl overflow-hidden ring-1 ring-zinc-200 shadow-lg">
 
                     {/* ── 1. Essential ── */}
                     <div className="relative flex flex-col p-7 border-r border-[#c9a227]/30" style={{ background: "linear-gradient(160deg, #fdf6dc 0%, #f5e4a0 60%, #eedB82 100%)" }}>
@@ -201,7 +201,56 @@ export default function PlansSection({ onSelectPlan }: PlansSectionProps) {
                         </button>
                     </div>
 
-                    {/* ── 4. Speaking ── */}
+                    {/* ── 4. Programa de Fluidez ── */}
+                    <div className="relative flex flex-col p-7 bg-falu-red-950 border-r border-white/5">
+                        <div className="absolute top-4 right-4">
+                            <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-300/25 px-2.5 py-1 text-xs font-semibold text-amber-100 ring-1 ring-inset ring-amber-300/40">
+                                <span className="h-1.5 w-1.5 rounded-full bg-amber-300 animate-pulse" />
+                                Cupos limitados
+                            </span>
+                        </div>
+                        <div>
+                            <p className="text-xs font-semibold uppercase tracking-widest text-amber-200/60 mb-1">Programa de Fluidez</p>
+                            <h3 className="text-xl font-extrabold text-white">Rompé la barrera de hablar</h3>
+                            <div className="mt-4 flex items-baseline gap-1">
+                                <span className="text-4xl font-extrabold text-white">$200</span>
+                                <span className="text-sm text-white/40">/ 28 días</span>
+                            </div>
+                            <p className="mt-3 text-sm text-white/60 leading-relaxed">
+                                Coaching de speaking <span className="font-semibold text-white/80">1:1 cada semana</span> más todo lo de Premium. Disponible desde nivel A2.
+                            </p>
+                        </div>
+                        <div className="border-t border-white/10 pt-5 mt-6 flex-1">
+                            <p className="text-xs font-semibold text-amber-200/50 mb-3">Todo lo de Premium, más:</p>
+                            <ul className="space-y-3">
+                                {[
+                                    "Coaching de speaking 1:1 cada semana",
+                                    "Diagnóstico inicial + plan de acción escrito",
+                                    "Enfoque total en romper la barrera de hablar",
+                                    "Corrección y feedback personalizados en cada sesión",
+                                    "Acceso completo al Método 590",
+                                    "Cupos limitados",
+                                ].map((item) => (
+                                    <li key={item} className="flex items-start gap-2.5 text-sm text-white/75">
+                                        <svg className="mt-0.5 h-4 w-4 shrink-0 text-amber-300" viewBox="0 0 16 16" fill="none">
+                                            <circle cx="8" cy="8" r="7" stroke="currentColor" strokeWidth="1.2" opacity="0.3" />
+                                            <path d="M4.5 8l2.5 2.5L11.5 5.5" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+                                        </svg>
+                                        {item}
+                                    </li>
+                                ))}
+                            </ul>
+                            <p className="mt-4 text-xs text-white/30 italic">Requiere nivel A2 o superior. Cupos limitados por cohorte.</p>
+                        </div>
+                        <button
+                            onClick={() => onSelectPlan?.("Fluidez")}
+                            className="mt-6 w-full inline-flex items-center justify-center rounded-xl px-4 py-3 text-sm font-semibold text-falu-red-950 bg-white hover:bg-amber-50 transition"
+                        >
+                            Seleccionar Fluidez
+                        </button>
+                    </div>
+
+                    {/* ── 5. Speaking ── */}
                     <div className="flex flex-col p-7 bg-yellow-orange-50">
                         <div>
                             <p className="text-xs font-semibold uppercase tracking-widest text-zinc-400 mb-1">Speaking</p>

@@ -87,6 +87,32 @@ const plans = [
       "Avanza a tu ritmo con guía personalizada",
     ],
   },
+  {
+    id: "fluidez",
+    name: "Programa\nde Fluidez",
+    subtitle: "Todo lo de Premium, más:",
+    price: "$200",
+    priceUnit: "USD pago único",
+    billingNote: null,
+    cardBg: "#8a1f3d",
+    nameColor: "#fff",
+    checkColor: "#fde68a",
+    backBg: "#6d1228",
+    btnColor: "#6d1228",
+    popular: false,
+    badge: { text: "Cupos limitados", bg: "#fde68a", color: "#7a4a00" },
+    route: "/fluidez",
+    // Placeholder: reutiliza la muñeca de Personalizado hasta tener el asset propio.
+    muñeca: "/muñecapaso3personalizada.webp",
+    features: [
+      "Coaching de speaking 1:1 cada semana",
+      "Diagnóstico inicial + plan de acción escrito",
+      "Enfoque total en romper la barrera de hablar",
+      "Corrección y feedback personalizados en cada sesión",
+      "Acceso completo al Método 590",
+      "Requiere nivel A2 o superior",
+    ],
+  },
 ];
 
 function PasosTresContent() {
@@ -244,7 +270,7 @@ function PasosTresContent() {
         </div>
 
         {/* ── Cards desktop (con flip 3D) ── */}
-        <div className="hidden sm:grid w-full max-w-6xl mx-auto px-4 grid-cols-3 gap-3">
+        <div className="hidden sm:grid w-full max-w-6xl mx-auto px-4 grid-cols-2 lg:grid-cols-4 gap-3">
           {plans.map((plan) => (
             <div key={plan.id} className="flex flex-col items-center">
               <div
@@ -364,7 +390,7 @@ function PasosTresContent() {
         </div>
 
         {/* Fila de muñecas */}
-        <div className="hidden sm:grid w-full max-w-6xl mx-auto px-4 grid-cols-3 gap-0 mt-8 flex-1">
+        <div className="hidden sm:grid w-full max-w-6xl mx-auto px-4 grid-cols-2 lg:grid-cols-4 gap-0 mt-8 flex-1">
           {plans.map((plan) => (
             <div
               key={plan.id}

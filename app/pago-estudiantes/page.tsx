@@ -171,7 +171,7 @@ export default function PagoEstudiantesPage() {
       const RANK: Record<string, number> = { Essential: 1, Premium: 2 };
       const cur = student.plan, sel = plan;
       const isDowngrade = !!RANK[sel] && !!RANK[cur] && RANK[sel] < RANK[cur];
-      setSubModal(sel === "Personalizado" ? "alert" : isDowngrade ? "blocked" : "confirm");
+      setSubModal(sel === "Personalizado" || sel === "Fluidez" ? "alert" : isDowngrade ? "blocked" : "confirm");
       return;
     }
     await doCheckout();

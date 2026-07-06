@@ -9,10 +9,11 @@ const allPlans = [
   { id: "essential",    label: "Essential",    price: `${planPriceDisplay("Essential")}/mes`,     route: "/essential" },
   { id: "premium",      label: "Premium",      price: `${planPriceDisplay("Premium")}/mes`,       route: "/premium" },
   { id: "personalizada",label: "Personalizado", price: `${planPriceDisplay("Personalizado")}/mes`, route: "/personalizado" },
+  { id: "fluidez",      label: "Programa de Fluidez", price: `${planPriceDisplay("Fluidez")}`,     route: "/fluidez" },
 ];
 
 interface Props {
-  currentPlan: "essential" | "premium" | "personalizada";
+  currentPlan: "essential" | "premium" | "personalizada" | "fluidez";
   nivel: string;
 }
 
