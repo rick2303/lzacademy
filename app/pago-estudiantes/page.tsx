@@ -148,7 +148,15 @@ export default function PagoEstudiantesPage() {
         }),
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data?.error || "Error");
+      if (!res.ok) {
+        // Plan sin cupos: mensaje claro en vez del error genérico de pago.
+        if (res.status === 409 && data?.code === "PLAN_SOLD_OUT") {
+          setFormError("Este plan ya no tiene cupos disponibles.");
+          setCheckoutLoading(false);
+          return;
+        }
+        throw new Error(data?.error || "Error");
+      }
       window.location.href = data.url;
     } catch (err) {
       setFormError(err instanceof Error && err.message !== "Error"

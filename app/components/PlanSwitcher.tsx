@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { planPriceDisplay } from "@/app/lib/plans";
+import { usePlanCupos } from "@/app/hooks/usePlanCupos";
 
 // id/label/route son específicos de esta navegación; el precio sale del catálogo único.
 const allPlans = [
@@ -21,8 +22,12 @@ export default function PlanSwitcher({ currentPlan, nivel }: Props) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
+  const { isPlanAvailable } = usePlanCupos();
 
-  const otherPlans = allPlans.filter((p) => p.id !== currentPlan);
+  // Oculta Fluidez del switcher si se agotaron los cupos; el resto no maneja cupos.
+  const otherPlans = allPlans.filter(
+    (p) => p.id !== currentPlan && (p.id !== "fluidez" || isPlanAvailable("Fluidez"))
+  );
 
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {

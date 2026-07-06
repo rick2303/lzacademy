@@ -2,6 +2,7 @@
 
 import { Container } from "@/app/components/Container";
 import { useStartDates } from "../hooks/useStartDates";
+import { usePlanCupos } from "../hooks/usePlanCupos";
 
 const CALENDLY_SPEAKING_URL =
     process.env.NEXT_PUBLIC_CALENDLY_SPEAKING_URL || "https://calendly.com/lzacademy590/speaking-session";
@@ -12,6 +13,8 @@ interface PlansSectionProps {
 
 export default function PlansSection({ onSelectPlan }: PlansSectionProps) {
     const { dates } = useStartDates();
+    const { isPlanAvailable, cuposLabel } = usePlanCupos();
+    const fluidezLabel = cuposLabel("Fluidez") || "Cupos limitados";
     return (
         <section id="planes" className="relative py-16 sm:py-20 overflow-hidden">
             <div className="absolute inset-0 bg-zinc-50" />
@@ -202,11 +205,12 @@ export default function PlansSection({ onSelectPlan }: PlansSectionProps) {
                     </div>
 
                     {/* ── 4. Programa de Fluidez ── */}
+                    {isPlanAvailable("Fluidez") && (
                     <div className="relative flex flex-col p-7 bg-falu-red-950 border-r border-white/5">
                         <div className="absolute top-4 right-4">
                             <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-300/25 px-2.5 py-1 text-xs font-semibold text-amber-100 ring-1 ring-inset ring-amber-300/40">
                                 <span className="h-1.5 w-1.5 rounded-full bg-amber-300 animate-pulse" />
-                                Cupos limitados
+                                {fluidezLabel}
                             </span>
                         </div>
                         <div>
@@ -240,7 +244,7 @@ export default function PlansSection({ onSelectPlan }: PlansSectionProps) {
                                     </li>
                                 ))}
                             </ul>
-                            <p className="mt-4 text-xs text-white/30 italic">Requiere nivel A2 o superior. Cupos limitados por cohorte.</p>
+                            <p className="mt-4 text-xs text-white/30 italic">Requiere nivel A2 o superior. {fluidezLabel} por cohorte.</p>
                         </div>
                         <button
                             onClick={() => onSelectPlan?.("Fluidez")}
@@ -249,6 +253,7 @@ export default function PlansSection({ onSelectPlan }: PlansSectionProps) {
                             Seleccionar Fluidez
                         </button>
                     </div>
+                    )}
 
                     {/* ── 5. Speaking ── */}
                     <div className="flex flex-col p-7 bg-yellow-orange-50">

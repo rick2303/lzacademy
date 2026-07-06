@@ -265,7 +265,15 @@ const PaymentForm = ({
                 }),
             });
             const data = await res.json();
-            if (!res.ok) throw new Error(data?.error || "Error creando sesión");
+            if (!res.ok) {
+                // Plan sin cupos: mensaje claro en vez del error genérico de pago.
+                if (res.status === 409 && data?.code === "PLAN_SOLD_OUT") {
+                    setError("Este plan ya no tiene cupos disponibles.");
+                    setLoading(false);
+                    return;
+                }
+                throw new Error(data?.error || "Error creando sesión");
+            }
             window.location.href = data.url;
         } catch (err: any) {
             console.error("Error Checkout:", err);

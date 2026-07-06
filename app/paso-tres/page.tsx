@@ -5,6 +5,7 @@ import { Suspense, useState, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import PreguntasFrecuentes from "@/app/components/Questions";
 import { TestimonialsSection } from "@/app/components/Testimonials";
+import { usePlanCupos } from "@/app/hooks/usePlanCupos";
 
 const plans = [
   {
@@ -122,6 +123,17 @@ function PasosTresContent() {
   const dificultades = searchParams.get("dificultades") ?? "";
   const [flipped, setFlipped] = useState<Record<string, boolean>>({});
   const [reducedMotion, setReducedMotion] = useState(false);
+  const { isPlanAvailable, cuposLabel } = usePlanCupos();
+
+  // Oculta la card de Fluidez si se agotaron los cupos; el resto de planes no
+  // manejan cupos y siempre se muestran.
+  const visiblePlans = plans.filter((p) => p.id !== "fluidez" || isPlanAvailable("Fluidez"));
+
+  // Texto del badge: para Fluidez usa el conteo real de cupos cuando está disponible.
+  function badgeText(plan: (typeof plans)[number]): string | undefined {
+    if (plan.id === "fluidez") return cuposLabel("Fluidez") || plan.badge?.text;
+    return plan.badge?.text;
+  }
   useEffect(() => {
     const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
     setReducedMotion(mq.matches);
@@ -188,14 +200,14 @@ function PasosTresContent() {
 
         {/* ── Cards mobile (sin 3D) ── */}
         <div className="sm:hidden w-full max-w-6xl mx-auto px-4 flex flex-col gap-6">
-          {plans.map((plan) => (
+          {visiblePlans.map((plan) => (
             <div key={plan.id} className="relative">
               {plan.badge && (
                 <span
                   className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 z-10 text-[11px] font-extrabold uppercase tracking-widest px-5 py-1.5 rounded-full"
                   style={{ backgroundColor: plan.badge.bg, color: plan.badge.color }}
                 >
-                  {plan.badge.text}
+                  {badgeText(plan)}
                 </span>
               )}
               <div
@@ -271,7 +283,7 @@ function PasosTresContent() {
 
         {/* ── Cards desktop (con flip 3D) ── */}
         <div className="hidden sm:grid w-full max-w-6xl mx-auto px-4 grid-cols-2 lg:grid-cols-4 gap-3">
-          {plans.map((plan) => (
+          {visiblePlans.map((plan) => (
             <div key={plan.id} className="flex flex-col items-center">
               <div
                 className="w-full relative"
@@ -282,7 +294,7 @@ function PasosTresContent() {
                     className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 z-10 text-[11px] font-extrabold uppercase tracking-widest px-5 py-1.5 rounded-full"
                     style={{ backgroundColor: plan.badge.bg, color: plan.badge.color }}
                   >
-                    {plan.badge.text}
+                    {badgeText(plan)}
                   </span>
                 )}
                 <div
@@ -391,7 +403,7 @@ function PasosTresContent() {
 
         {/* Fila de muñecas */}
         <div className="hidden sm:grid w-full max-w-6xl mx-auto px-4 grid-cols-2 lg:grid-cols-4 gap-0 mt-8 flex-1">
-          {plans.map((plan) => (
+          {visiblePlans.map((plan) => (
             <div
               key={plan.id}
               className="relative h-[260px] sm:h-[320px] select-none overflow-hidden"
