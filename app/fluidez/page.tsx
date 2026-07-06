@@ -7,12 +7,12 @@ import ContactModal from "@/app/components/ContactModal";
 import PlanSwitcher from "@/app/components/PlanSwitcher";
 
 const features = [
-  "Coaching de speaking 1:1 cada semana",
-  "Diagnóstico inicial + plan de acción escrito",
-  "Enfoque total en romper la barrera de hablar",
-  "Corrección y feedback personalizados en cada sesión",
-  "Acceso completo al Método 590",
-  "Requiere nivel A2 o superior",
+  "Coaching de speaking 1:1 semanal, con método propio",
+  "Diagnóstico de tus bloqueos al hablar",
+  "Plan de acción escrito, semana a semana",
+  "Feedback y corrección mientras hablás",
+  "Reporte de tu progreso de fluidez",
+  "Enfoque 100% en romper la barrera de hablar",
 ];
 
 // Acento propio de Fluidez (tier tope).

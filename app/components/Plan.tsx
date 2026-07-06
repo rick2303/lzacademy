@@ -230,11 +230,11 @@ export default function PlansSection({ onSelectPlan }: PlansSectionProps) {
                             <p className="text-xs font-semibold text-amber-200/50 mb-3">Todo lo de Premium, más:</p>
                             <ul className="space-y-3">
                                 {[
-                                    "Coaching de speaking 1:1 cada semana",
-                                    "Diagnóstico inicial + plan de acción escrito",
-                                    "Enfoque total en romper la barrera de hablar",
-                                    "Corrección y feedback personalizados en cada sesión",
-                                    "Acceso completo al Método 590",
+                                    "Coaching de speaking 1:1 semanal, con método propio",
+                                    "Diagnóstico de tus bloqueos al hablar",
+                                    "Plan de acción escrito, semana a semana",
+                                    "Feedback y corrección mientras hablás",
+                                    "Reporte de tu progreso de fluidez",
                                     "Cupos limitados",
                                 ].map((item) => (
                                     <li key={item} className="flex items-start gap-2.5 text-sm text-white/75">
@@ -246,7 +246,7 @@ export default function PlansSection({ onSelectPlan }: PlansSectionProps) {
                                     </li>
                                 ))}
                             </ul>
-                            <p className="mt-4 text-xs text-white/30 italic">Requiere nivel A2 o superior. {fluidezLabel} por cohorte.</p>
+                            <p className="mt-4 text-xs text-white/30 italic">Para quien ya entiende inglés y se traba al hablar (A2+). {fluidezLabel}.</p>
                         </div>
                         <button
                             onClick={() => onSelectPlan?.("Fluidez")}
