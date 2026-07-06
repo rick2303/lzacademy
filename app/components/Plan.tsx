@@ -126,7 +126,7 @@ export default function PlansSection({ onSelectPlan }: PlansSectionProps) {
                             <p className="text-xs font-semibold text-white/50 mb-3">Todo lo de Essential, más:</p>
                             <ul className="space-y-3">
                                 {[
-                                    "1 hora de clase diaria (lunes a jueves)",
+                                    "1 hora de clase diaria (lunes a miércoles)",
                                     "Repasos los viernes para resolver dudas",
                                     "Explicación clara de teoría",
                                     "Práctica guiada en cada clase",
@@ -143,7 +143,7 @@ export default function PlansSection({ onSelectPlan }: PlansSectionProps) {
                                     </li>
                                 ))}
                             </ul>
-                            <p className="mt-4 text-xs text-white/40 italic">Horario fijo lunes a jueves.</p>
+                            <p className="mt-4 text-xs text-white/40 italic">Horario fijo lunes a miércoles.</p>
                         </div>
                         <button
                             onClick={() => onSelectPlan?.("Premium")}
@@ -176,7 +176,7 @@ export default function PlansSection({ onSelectPlan }: PlansSectionProps) {
                             <p className="text-xs font-semibold text-white/40 mb-3">Todo lo anterior, más:</p>
                             <ul className="space-y-3">
                                 {[
-                                    "2 sesiones privadas 1:1 por semana adaptadas a ti",
+                                    "3 sesiones privadas 1:1 por semana adaptadas a ti",
                                     "1 sesión de práctica grupal cada viernes",
                                     "Acceso completo al Método 590",
                                     "Horario flexible para tus sesiones privadas",

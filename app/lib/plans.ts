@@ -87,7 +87,7 @@ export const PLAN_LIST: PlanDef[] = [
     checkoutTagline: "Todo lo de Essential, con clases diarias en vivo.",
     checkoutFeatures: [
       "Todo lo del Plan Essential",
-      "1 hora de clase diaria (lunes a jueves)",
+      "1 hora de clase diaria (lunes a miércoles)",
       "Repasos los viernes para resolver dudas",
       "Práctica hablada diaria y acompañamiento constante",
     ],
@@ -108,7 +108,7 @@ export const PLAN_LIST: PlanDef[] = [
     checkoutTagline: "Acompañamiento 1:1 totalmente a tu medida.",
     checkoutFeatures: [
       "Todo lo del Plan Premium",
-      "2 sesiones privadas 1:1 por semana adaptadas a ti",
+      "3 sesiones privadas 1:1 por semana adaptadas a ti",
       "1 sesión de práctica grupal cada viernes",
       "Acceso completo al Método 590",
       "Horario flexible para tus sesiones privadas",

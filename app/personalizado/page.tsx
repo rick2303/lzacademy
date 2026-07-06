@@ -7,7 +7,7 @@ import ContactModal from "@/app/components/ContactModal";
 import PlanSwitcher from "@/app/components/PlanSwitcher";
 
 const features = [
-  "2 sesiones privadas 1:1 por semana adaptadas a ti",
+  "3 sesiones privadas 1:1 por semana adaptadas a ti",
   "1 sesión de práctica grupal cada viernes",
   "Acceso completo al Método 590",
   "Horario flexible para tus sesiones privadas",

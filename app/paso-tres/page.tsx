@@ -51,7 +51,7 @@ const plans = [
     muñeca: "/muñecapaso3premium.webp",
     features: [
       "Acceso completo al Método 590",
-      "1 hora de clase diaria (lunes a jueves)",
+      "1 hora de clase diaria (lunes a miércoles)",
       "Repasos los viernes para resolver dudas",
       "Explicación clara de teoría",
       "Práctica guiada en cada clase",
@@ -78,7 +78,7 @@ const plans = [
     route: "/personalizado",
     muñeca: "/muñecapaso3personalizada.webp",
     features: [
-      "2 sesiones privadas 1:1 por semana adaptadas a ti",
+      "3 sesiones privadas 1:1 por semana adaptadas a ti",
       "1 sesión de práctica grupal cada viernes",
       "Acceso completo al Método 590",
       "Horario flexible para tus sesiones privadas",
