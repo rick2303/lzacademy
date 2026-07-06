@@ -397,25 +397,17 @@ function PasosTresContent() {
                   </div>
                 </div>
               </div>
-            </div>
-          ))}
-        </div>
-
-        {/* Fila de muñecas (decorativa) */}
-        <div className="hidden sm:grid w-full max-w-6xl mx-auto px-4 grid-cols-4 gap-0 mt-8 flex-1">
-          {visiblePlans.map((plan) => (
-            <div
-              key={plan.id}
-              className="relative h-[260px] sm:h-[320px] select-none overflow-hidden"
-            >
-              <Image
-                src={plan.muñeca}
-                alt={`Muñeca ${plan.id}`}
-                fill
-                className="object-contain object-bottom [filter:drop-shadow(-20px_15px_25px_rgba(0,0,0,0.35))]"
-                sizes="33vw"
-                priority
-              />
+              {/* Muñeca dentro de la celda de la card (emparejada con su plan) */}
+              <div className="relative w-full h-[240px] -mt-1 select-none pointer-events-none">
+                <Image
+                  src={plan.muñeca}
+                  alt=""
+                  fill
+                  className="object-contain object-bottom [filter:drop-shadow(-20px_15px_25px_rgba(0,0,0,0.35))]"
+                  sizes="45vw"
+                  priority
+                />
+              </div>
             </div>
           ))}
         </div>
