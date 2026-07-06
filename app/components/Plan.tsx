@@ -166,8 +166,9 @@ export default function PlansSection({ onSelectPlan }: PlansSectionProps) {
                             <h3 className="text-xl font-extrabold text-white">Método 590 · 1:1</h3>
                             <div className="mt-4 flex items-baseline gap-1">
                                 <span className="text-4xl font-extrabold text-white">$120</span>
-                                <span className="text-sm text-white/40">/ 28 días</span>
+                                <span className="text-sm text-white/40">/ mes</span>
                             </div>
+                            <p className="mt-1 text-xs text-white/40">Pago único mensual · sin suscripción</p>
                             <p className="mt-3 text-sm text-white/60 leading-relaxed">
                                 Clases <span className="font-semibold text-white/80">1:1 privadas</span> con tu propio profesor — horario flexible, plan adaptado a ti desde el día 1.
                             </p>
@@ -218,8 +219,9 @@ export default function PlansSection({ onSelectPlan }: PlansSectionProps) {
                             <h3 className="text-xl font-extrabold text-white">Rompé la barrera de hablar</h3>
                             <div className="mt-4 flex items-baseline gap-1">
                                 <span className="text-4xl font-extrabold text-white">$200</span>
-                                <span className="text-sm text-white/40">/ 28 días</span>
+                                <span className="text-sm text-white/40">/ mes</span>
                             </div>
+                            <p className="mt-1 text-xs text-white/40">Pago único mensual · sin suscripción</p>
                             <p className="mt-3 text-sm text-white/60 leading-relaxed">
                                 Coaching de speaking <span className="font-semibold text-white/80">1:1 cada semana</span> más todo lo de Premium. Disponible desde nivel A2.
                             </p>

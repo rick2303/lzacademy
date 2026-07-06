@@ -83,9 +83,9 @@ function FluidezPlanContent() {
                   <p className="text-2xl lg:text-3xl font-extrabold text-zinc-800 mb-1">Fluidez</p>
                   <div className="flex items-baseline gap-1 mb-1" style={{ color: ACCENT }}>
                     <span className="text-4xl lg:text-5xl font-extrabold leading-none">$200</span>
-                    <span className="text-xs lg:text-sm font-bold"> USD</span>
+                    <span className="text-xs lg:text-sm font-bold"> USD / mes</span>
                   </div>
-                  <p className="text-[11px] lg:text-[12px] font-semibold text-zinc-400 mb-3">Pago único · cupos limitados</p>
+                  <p className="text-[11px] lg:text-[12px] font-semibold text-zinc-400 mb-3">Pago único mensual · sin suscripción · cupos limitados</p>
                   <p className="text-[12px] lg:text-[13px] text-zinc-500 font-medium leading-relaxed">
                     Para quienes ya entienden inglés (A2+) pero se traban al hablar. Rompé la barrera con coaching de speaking 1:1.
                   </p>
