@@ -355,6 +355,16 @@ function PasosTresContent() {
                     <p className="text-[13px] font-bold text-center mt-2 opacity-60" style={{ color: plan.nameColor }}>
                       Clic para ver el precio →
                     </p>
+                    {/* Muñeca chica de acento en la esquina — no estorba el texto */}
+                    <div className="pointer-events-none select-none absolute bottom-2 right-2 h-[150px] w-[115px]">
+                      <Image
+                        src={plan.muñeca}
+                        alt=""
+                        fill
+                        className="object-contain object-bottom [filter:drop-shadow(-10px_8px_14px_rgba(0,0,0,0.28))]"
+                        sizes="130px"
+                      />
+                    </div>
                   </div>
 
                   {/* REVERSO */}
