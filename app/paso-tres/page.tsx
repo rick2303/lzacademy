@@ -282,7 +282,7 @@ function PasosTresContent() {
         </div>
 
         {/* ── Cards desktop (con flip 3D) ── */}
-        <div className="hidden sm:grid w-full max-w-6xl mx-auto px-4 grid-cols-2 lg:grid-cols-4 gap-3">
+        <div className="hidden sm:grid w-full max-w-6xl mx-auto px-4 grid-cols-1 sm:grid-cols-2 gap-3">
           {visiblePlans.map((plan) => (
             <div key={plan.id} className="flex flex-col items-center">
               <div
@@ -401,8 +401,8 @@ function PasosTresContent() {
           ))}
         </div>
 
-        {/* Fila de muñecas */}
-        <div className="hidden sm:grid w-full max-w-6xl mx-auto px-4 grid-cols-2 lg:grid-cols-4 gap-0 mt-8 flex-1">
+        {/* Fila de muñecas (decorativa) */}
+        <div className="hidden sm:grid w-full max-w-6xl mx-auto px-4 grid-cols-4 gap-0 mt-8 flex-1">
           {visiblePlans.map((plan) => (
             <div
               key={plan.id}
