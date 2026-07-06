@@ -287,7 +287,7 @@ function PasosTresContent() {
             <div key={plan.id} className="flex flex-col items-center">
               <div
                 className="w-full relative"
-                style={{ perspective: "1000px", WebkitPerspective: "1000px", height: "560px" }}
+                style={{ perspective: "1000px", WebkitPerspective: "1000px", height: "440px" }}
               >
                 {plan.badge && (
                   <span
@@ -317,7 +317,7 @@ function PasosTresContent() {
                 >
                   {/* FRENTE */}
                   <div
-                    className="rounded-3xl px-6 py-5 flex flex-col shadow-lg overflow-hidden"
+                    className="rounded-3xl px-6 py-5 flex flex-col shadow-lg"
                     style={{
                       position: "absolute",
                       inset: 0,
@@ -335,7 +335,7 @@ function PasosTresContent() {
                         {plan.subtitle}
                       </p>
                     )}
-                    <ul className="flex flex-col gap-2">
+                    <ul className="flex flex-col gap-2 flex-1">
                       {plan.features.map((feat) => (
                         <li key={feat} className="flex items-start gap-2">
                           <span
@@ -355,16 +355,6 @@ function PasosTresContent() {
                     <p className="text-[13px] font-bold text-center mt-2 opacity-60" style={{ color: plan.nameColor }}>
                       Clic para ver el precio →
                     </p>
-                    {/* Muñeca dentro del recuadro de la card (pinned al fondo) */}
-                    <div className="relative mt-auto h-[200px] -mx-6 -mb-5 pointer-events-none select-none">
-                      <Image
-                        src={plan.muñeca}
-                        alt=""
-                        fill
-                        className="object-contain object-bottom [filter:drop-shadow(-16px_12px_20px_rgba(0,0,0,0.30))]"
-                        sizes="45vw"
-                      />
-                    </div>
                   </div>
 
                   {/* REVERSO */}
