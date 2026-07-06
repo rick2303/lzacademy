@@ -282,7 +282,7 @@ function PasosTresContent() {
         </div>
 
         {/* ── Cards desktop (con flip 3D) ── */}
-        <div className="hidden sm:grid w-full max-w-6xl mx-auto px-4 grid-cols-1 sm:grid-cols-2 gap-3">
+        <div className="hidden sm:grid w-full max-w-4xl mx-auto px-4 grid-cols-1 sm:grid-cols-2 gap-3">
           {visiblePlans.map((plan) => (
             <div key={plan.id} className="flex flex-col items-center">
               <div
