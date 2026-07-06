@@ -52,7 +52,7 @@ const plans = [
     features: [
       "Acceso completo al Método 590",
       "1 hora de clase diaria (lunes a miércoles)",
-      "Repasos los viernes para resolver dudas",
+      "Reuniones de práctica los viernes",
       "Explicación clara de teoría",
       "Práctica guiada en cada clase",
       "Práctica hablada diaria",
@@ -105,7 +105,9 @@ const plans = [
     route: "/fluidez",
     muñeca: "/muñecapaso3fluency.webp",
     features: [
-      "Coaching de speaking 1:1 semanal, con método propio",
+      "1 Sesión de coaching enfocado en speaking 1:1 semanal",
+      "Acceso completo al Método 590",
+      "Comunidad en Whatsapp",
       "Diagnóstico de tus bloqueos al hablar",
       "Plan de acción escrito, semana a semana",
       "Feedback y corrección mientras hablás",
@@ -124,8 +126,6 @@ function PasosTresContent() {
   const [reducedMotion, setReducedMotion] = useState(false);
   const { isPlanAvailable, cuposLabel } = usePlanCupos();
 
-  // Oculta la card de Fluidez si se agotaron los cupos; el resto de planes no
-  // manejan cupos y siempre se muestran.
   const visiblePlans = plans.filter((p) => p.id !== "fluidez" || isPlanAvailable("Fluidez"));
 
   // Texto del badge: para Fluidez usa el conteo real de cupos cuando está disponible.
