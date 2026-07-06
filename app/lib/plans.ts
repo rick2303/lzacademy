@@ -126,9 +126,7 @@ export const PLAN_LIST: PlanDef[] = [
     requiresScheduling: false,
     hasLevels: true,
     checkout: true,
-    // Reutiliza el personaje de Personalizado como placeholder para no romper el
-    // checkout; el asset propio de Fluidez lo agrega otra persona.
-    character: "/muñeca-personalizada.webp",
+    character: "/muñeca-fluency.webp",
     adminColor: "bg-amber-500",
     badgeClass: "bg-amber-100 text-amber-700",
     chip: { color: "#b45309", bg: "#fffbeb", border: "#fde68a" },

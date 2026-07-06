@@ -103,8 +103,7 @@ const plans = [
     popular: false,
     badge: { text: "Cupos limitados", bg: "#fde68a", color: "#7a4a00" },
     route: "/fluidez",
-    // Placeholder: reutiliza la muñeca de Personalizado hasta tener el asset propio.
-    muñeca: "/muñecapaso3personalizada.webp",
+    muñeca: "/muñecapaso3fluency.webp",
     features: [
       "Coaching de speaking 1:1 cada semana",
       "Diagnóstico inicial + plan de acción escrito",

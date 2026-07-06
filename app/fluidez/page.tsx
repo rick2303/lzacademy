@@ -51,7 +51,7 @@ function FluidezPlanContent() {
           {/* ── Columna izquierda: muñeca ── */}
           <div className="flex items-center justify-center order-2 lg:order-1">
             <Image
-              src="/muñeca-personalizada.webp"
+              src="/muñeca-fluency.webp"
               alt="Programa de Fluidez"
               width={582}
               height={568}
