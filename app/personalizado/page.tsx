@@ -7,7 +7,7 @@ import ContactModal from "@/app/components/ContactModal";
 import PlanSwitcher from "@/app/components/PlanSwitcher";
 
 const features = [
-  "2 sesiones privadas 1:1 por semana adaptadas a ti",
+  "3 sesiones privadas 1:1 por semana adaptadas a ti",
   "1 sesión de práctica grupal cada viernes",
   "Acceso completo al Método 590",
   "Horario flexible para tus sesiones privadas",
@@ -82,10 +82,11 @@ function PersonalizadoPlanContent() {
 
                 <div className="flex flex-col justify-center px-6 py-8 sm:w-[220px] lg:w-[250px] shrink-0">
                   <p className="text-2xl lg:text-3xl font-extrabold text-zinc-800 mb-1">Personalizado</p>
-                  <div className="flex items-baseline gap-1 mb-3" style={{ color: "#C0353E" }}>
+                  <div className="flex items-baseline gap-1 mb-1" style={{ color: "#C0353E" }}>
                     <span className="text-4xl lg:text-5xl font-extrabold leading-none">$120</span>
-                    <span className="text-xs lg:text-sm font-bold"> USD/mes</span>
+                    <span className="text-xs lg:text-sm font-bold"> USD / mes</span>
                   </div>
+                  <p className="text-[11px] lg:text-[12px] font-semibold text-zinc-400 mb-3">Pago único mensual · sin suscripción ni cobros automáticos</p>
                   <p className="text-[12px] lg:text-[13px] text-zinc-500 font-medium leading-relaxed">
                     Para quienes quieren avanzar rápido con clases 1:1 adaptadas a su horario y proceso.
                   </p>

@@ -74,6 +74,11 @@ const ICON = {
       <path strokeLinecap="round" strokeLinejoin="round" d="M12 3l9 4.5-9 4.5-9-4.5L12 3z M3 12l9 4.5 9-4.5 M3 16.5l9 4.5 9-4.5" />
     </svg>
   ),
+  ticket: (
+    <svg className="w-[18px] h-[18px]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+      <path strokeLinecap="round" strokeLinejoin="round" d="M15 5v2m0 4v2m0 4v2M5 5h14a2 2 0 012 2v3a2 2 0 000 4v3a2 2 0 01-2 2H5a2 2 0 01-2-2v-3a2 2 0 000-4V7a2 2 0 012-2z" />
+    </svg>
+  ),
   logout: (
     <svg className="w-[18px] h-[18px]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
       <path strokeLinecap="round" strokeLinejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h6a2 2 0 012 2v1" />
@@ -112,6 +117,7 @@ const navGroups: NavGroup[] = [
       { label: "Contenido", href: "/admin/contenido", icon: ICON.doc },
       { label: "Fechas de inicio", href: "/admin/fechas", icon: ICON.calendar },
       { label: "Niveles por plan", href: "/admin/niveles", icon: ICON.layers },
+      { label: "Cupos por plan", href: "/admin/cupos", icon: ICON.ticket },
       { label: "Accesos", href: "/admin/accesos", icon: ICON.key },
     ],
   },

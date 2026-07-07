@@ -148,7 +148,15 @@ export default function PagoEstudiantesPage() {
         }),
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data?.error || "Error");
+      if (!res.ok) {
+        // Plan sin cupos: mensaje claro en vez del error genérico de pago.
+        if (res.status === 409 && data?.code === "PLAN_SOLD_OUT") {
+          setFormError("Este plan ya no tiene cupos disponibles.");
+          setCheckoutLoading(false);
+          return;
+        }
+        throw new Error(data?.error || "Error");
+      }
       window.location.href = data.url;
     } catch (err) {
       setFormError(err instanceof Error && err.message !== "Error"
@@ -171,7 +179,7 @@ export default function PagoEstudiantesPage() {
       const RANK: Record<string, number> = { Essential: 1, Premium: 2 };
       const cur = student.plan, sel = plan;
       const isDowngrade = !!RANK[sel] && !!RANK[cur] && RANK[sel] < RANK[cur];
-      setSubModal(sel === "Personalizado" ? "alert" : isDowngrade ? "blocked" : "confirm");
+      setSubModal(sel === "Personalizado" || sel === "Fluidez" ? "alert" : isDowngrade ? "blocked" : "confirm");
       return;
     }
     await doCheckout();

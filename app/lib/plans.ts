@@ -14,7 +14,12 @@
 // cada plan) sigue viviendo en cada página, porque difiere entre páginas.
 // ─────────────────────────────────────────────────────────────────────────────
 
-export type PlanKey = "Essential" | "Premium" | "Personalizado" | "Speaking";
+export type PlanKey =
+  | "Essential"
+  | "Premium"
+  | "Personalizado"
+  | "Fluidez"
+  | "Speaking";
 export type DiscountPlan = "all" | PlanKey;
 
 export interface PlanChip {
@@ -27,14 +32,14 @@ export interface PlanDef {
   key: PlanKey;
   label: string;
   priceCents: number;
-  recurring: boolean;          // true = suscripción cada 4 semanas; false = pago único
+  recurring: boolean; // true = suscripción cada 4 semanas; false = pago único
   requiresScheduling: boolean; // true = agenda 1ª clase tras pagar (Premium)
-  hasLevels: boolean;          // participa en la matriz de niveles / accesos
-  checkout: boolean;           // seleccionable en los dropdowns de checkout y /pago-estudiantes
-  character?: string;          // imagen del personaje (paso-cuatro)
-  adminColor: string;          // clase Tailwind de background (punto/barra en admin)
-  badgeClass: string;          // clases Tailwind bg+text para chips/badges en admin
-  chip?: PlanChip;             // colores hex (chip de plan en /success)
+  hasLevels: boolean; // participa en la matriz de niveles / accesos
+  checkout: boolean; // seleccionable en los dropdowns de checkout y /pago-estudiantes
+  character?: string; // imagen del personaje (paso-cuatro)
+  adminColor: string; // clase Tailwind de background (punto/barra en admin)
+  badgeClass: string; // clases Tailwind bg+text para chips/badges en admin
+  chip?: PlanChip; // colores hex (chip de plan en /success)
   levelAvailability?: Record<string, boolean>; // defaults de niveles (solo hasLevels)
   // Resumen del plan en el checkout: tagline + bullets. Se muestra en el formulario
   // de pago y se envía como descripción del producto en Stripe (ambos flujos).
@@ -45,8 +50,11 @@ export interface PlanDef {
 // Defaults de disponibilidad de niveles: Essential todo; Premium sin B2.2;
 // Personalizado sin B2.1 ni B2.2. (Fallback si el backend no responde.)
 const ALL_LEVELS_ON = {
-  Principiante: true, Basico: true, Intermedio: true,
-  "Intermedio alto-gramatica": true, "Intermedio alto-produccion": true,
+  Principiante: true,
+  Basico: true,
+  Intermedio: true,
+  "Intermedio alto-gramatica": true,
+  "Intermedio alto-produccion": true,
 };
 
 export const PLAN_LIST: PlanDef[] = [
@@ -83,12 +91,15 @@ export const PLAN_LIST: PlanDef[] = [
     adminColor: "bg-violet-500",
     badgeClass: "bg-violet-100 text-violet-700",
     chip: { color: "#7c3aed", bg: "#faf5ff", border: "#ddd6fe" },
-    levelAvailability: { ...ALL_LEVELS_ON, "Intermedio alto-produccion": false },
+    levelAvailability: {
+      ...ALL_LEVELS_ON,
+      "Intermedio alto-produccion": false,
+    },
     checkoutTagline: "Todo lo de Essential, con clases diarias en vivo.",
     checkoutFeatures: [
       "Todo lo del Plan Essential",
-      "1 hora de clase diaria (lunes a jueves)",
-      "Repasos los viernes para resolver dudas",
+      "1 hora de clase diaria (lunes a miércoles)",
+      "Reuniones de práctica los viernes",
       "Práctica hablada diaria y acompañamiento constante",
     ],
   },
@@ -104,11 +115,15 @@ export const PLAN_LIST: PlanDef[] = [
     adminColor: "bg-emerald-500",
     badgeClass: "bg-falu-red-100 text-falu-red-700",
     chip: { color: "#9c181d", bg: "#fef2f2", border: "#ffc9cb" },
-    levelAvailability: { ...ALL_LEVELS_ON, "Intermedio alto-gramatica": false, "Intermedio alto-produccion": false },
+    levelAvailability: {
+      ...ALL_LEVELS_ON,
+      "Intermedio alto-gramatica": false,
+      "Intermedio alto-produccion": false,
+    },
     checkoutTagline: "Acompañamiento 1:1 totalmente a tu medida.",
     checkoutFeatures: [
       "Todo lo del Plan Premium",
-      "2 sesiones privadas 1:1 por semana adaptadas a ti",
+      "3 sesiones privadas 1:1 por semana adaptadas a ti",
       "1 sesión de práctica grupal cada viernes",
       "Acceso completo al Método 590",
       "Horario flexible para tus sesiones privadas",
@@ -116,6 +131,32 @@ export const PLAN_LIST: PlanDef[] = [
       "Corrección y feedback en tiempo real",
       "Seguimiento y motivación constante",
       "Avanza a tu ritmo con guía personalizada",
+    ],
+  },
+  {
+    key: "Fluidez",
+    label: "Programa de Fluidez",
+    priceCents: 20000,
+    recurring: false,
+    requiresScheduling: false,
+    hasLevels: true,
+    checkout: true,
+    character: "/muñeca-fluency.webp",
+    adminColor: "bg-amber-500",
+    badgeClass: "bg-amber-100 text-amber-700",
+    chip: { color: "#b45309", bg: "#fffbeb", border: "#fde68a" },
+    // Nivel A2+: disponible desde Básico (A2); NO en Principiante (A1).
+    levelAvailability: { ...ALL_LEVELS_ON, Principiante: false },
+    checkoutTagline: "Rompé la barrera de hablar con coaching de speaking 1:1.",
+    checkoutFeatures: [
+      "1 Sesión de coaching enfocado en speaking 1:1 semanal",
+      "Acceso completo al Método 590",
+      "Comunidad en Whatsapp",
+      "Diagnóstico de tus bloqueos al hablar",
+      "Plan de acción escrito, semana a semana",
+      "Feedback y corrección mientras hablás",
+      "Reporte de tu progreso de fluidez",
+      "Enfoque 100% en romper la barrera de hablar",
     ],
   },
   {
@@ -132,25 +173,41 @@ export const PLAN_LIST: PlanDef[] = [
 ];
 
 export const PLAN_MAP: Record<string, PlanDef> = Object.fromEntries(
-  PLAN_LIST.map((p) => [p.key, p])
+  PLAN_LIST.map((p) => [p.key, p]),
 );
 
 // ── Listas derivadas ─────────────────────────────────────────────────────────
 export const ALL_PLAN_KEYS = PLAN_LIST.map((p) => p.key);
-export const CHECKOUT_PLAN_KEYS = PLAN_LIST.filter((p) => p.checkout).map((p) => p.key);
-export const LEVELED_PLAN_KEYS = PLAN_LIST.filter((p) => p.hasLevels).map((p) => p.key);
-export const SUBSCRIPTION_PLANS = PLAN_LIST.filter((p) => p.recurring).map((p) => p.key);
+export const CHECKOUT_PLAN_KEYS = PLAN_LIST.filter((p) => p.checkout).map(
+  (p) => p.key,
+);
+export const LEVELED_PLAN_KEYS = PLAN_LIST.filter((p) => p.hasLevels).map(
+  (p) => p.key,
+);
+export const SUBSCRIPTION_PLANS = PLAN_LIST.filter((p) => p.recurring).map(
+  (p) => p.key,
+);
 // Planes que aceptan códigos de descuento: pago único y disponibles en checkout
 // (debe coincidir con el backend → discount.service.js / DISCOUNTS_FOR_SUBSCRIPTIONS).
-export const DISCOUNTABLE_PLANS = PLAN_LIST.filter((p) => !p.recurring && p.checkout).map((p) => p.key);
+export const DISCOUNTABLE_PLANS = PLAN_LIST.filter(
+  (p) => !p.recurring && p.checkout,
+).map((p) => p.key);
 // Opciones de plan para un código de descuento en el admin ("all" + planes de checkout).
-export const DISCOUNT_PLAN_OPTIONS: DiscountPlan[] = ["all", ...CHECKOUT_PLAN_KEYS];
+export const DISCOUNT_PLAN_OPTIONS: DiscountPlan[] = [
+  "all",
+  ...CHECKOUT_PLAN_KEYS,
+];
 
 // Matriz de niveles por plan (defaults) para useLevelAvailability.
-export const DEFAULT_LEVEL_AVAILABILITY: Record<string, Record<string, boolean>> =
-  Object.fromEntries(
-    LEVELED_PLAN_KEYS.map((k) => [k, { ...(PLAN_MAP[k].levelAvailability as Record<string, boolean>) }])
-  );
+export const DEFAULT_LEVEL_AVAILABILITY: Record<
+  string,
+  Record<string, boolean>
+> = Object.fromEntries(
+  LEVELED_PLAN_KEYS.map((k) => [
+    k,
+    { ...(PLAN_MAP[k].levelAvailability as Record<string, boolean>) },
+  ]),
+);
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 export function getPlan(key: string): PlanDef | undefined {

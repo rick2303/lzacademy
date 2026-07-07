@@ -49,7 +49,7 @@ function buildSlotDisplay(datetimePt: string) {
 }
 
 // El resumen del plan (tagline + features) vive en el catálogo único (app/lib/plans.ts).
-type PlanType = "Essential" | "Premium" | "Personalizado";
+type PlanType = "Essential" | "Premium" | "Personalizado" | "Fluidez";
 
 const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL!;
 
@@ -240,7 +240,7 @@ const PaymentForm = ({
             // Upgrade o mismo plan → confirmación normal.
             const RANK: Record<string, number> = { Essential: 1, Premium: 2 };
             const isDowngrade = !!RANK[plan] && !!RANK[active.plan] && RANK[plan] < RANK[active.plan];
-            setSubModal(plan === "Personalizado" || isDowngrade ? "blocked" : "confirm");
+            setSubModal(plan === "Personalizado" || plan === "Fluidez" || isDowngrade ? "blocked" : "confirm");
             return;
         }
         await doCheckout();
@@ -265,7 +265,15 @@ const PaymentForm = ({
                 }),
             });
             const data = await res.json();
-            if (!res.ok) throw new Error(data?.error || "Error creando sesión");
+            if (!res.ok) {
+                // Plan sin cupos: mensaje claro en vez del error genérico de pago.
+                if (res.status === 409 && data?.code === "PLAN_SOLD_OUT") {
+                    setError("Este plan ya no tiene cupos disponibles.");
+                    setLoading(false);
+                    return;
+                }
+                throw new Error(data?.error || "Error creando sesión");
+            }
             window.location.href = data.url;
         } catch (err: any) {
             console.error("Error Checkout:", err);

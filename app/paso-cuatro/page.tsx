@@ -6,7 +6,7 @@ import { useSearchParams } from "next/navigation";
 import PaymentForm from "@/app/components/Form";
 import { CHECKOUT_PLAN_KEYS, PLAN_MAP } from "@/app/lib/plans";
 
-type PlanType = "Essential" | "Premium" | "Personalizado";
+type PlanType = "Essential" | "Premium" | "Personalizado" | "Fluidez";
 
 // URL param (en minúsculas) → key del plan, derivado del catálogo (planes de checkout).
 const planMap: Record<string, PlanType> = Object.fromEntries(

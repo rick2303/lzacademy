@@ -5,6 +5,7 @@ import { Suspense, useState, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import PreguntasFrecuentes from "@/app/components/Questions";
 import { TestimonialsSection } from "@/app/components/Testimonials";
+import { usePlanCupos } from "@/app/hooks/usePlanCupos";
 
 const plans = [
   {
@@ -50,8 +51,8 @@ const plans = [
     muñeca: "/muñecapaso3premium.webp",
     features: [
       "Acceso completo al Método 590",
-      "1 hora de clase diaria (lunes a jueves)",
-      "Repasos los viernes para resolver dudas",
+      "1 hora de clase diaria (lunes a miércoles)",
+      "Reuniones de práctica los viernes",
       "Explicación clara de teoría",
       "Práctica guiada en cada clase",
       "Práctica hablada diaria",
@@ -65,8 +66,8 @@ const plans = [
     name: "Plan\nPersonalizado",
     subtitle: "Todo lo de Premium, más:",
     price: "$120",
-    priceUnit: "USD pago único",
-    billingNote: null,
+    priceUnit: "USD / mes",
+    billingNote: "Pago único mensual · sin suscripción",
     cardBg: "#a02845",
     nameColor: "#fff",
     checkColor: "#fff",
@@ -77,7 +78,7 @@ const plans = [
     route: "/personalizado",
     muñeca: "/muñecapaso3personalizada.webp",
     features: [
-      "2 sesiones privadas 1:1 por semana adaptadas a ti",
+      "3 sesiones privadas 1:1 por semana adaptadas a ti",
       "1 sesión de práctica grupal cada viernes",
       "Acceso completo al Método 590",
       "Horario flexible para tus sesiones privadas",
@@ -85,6 +86,33 @@ const plans = [
       "Corrección y feedback en tiempo real",
       "Seguimiento y motivación constante",
       "Avanza a tu ritmo con guía personalizada",
+    ],
+  },
+  {
+    id: "fluidez",
+    name: "Programa\nde Fluidez",
+    subtitle: "Todo lo de Premium, más:",
+    price: "$200",
+    priceUnit: "USD / mes",
+    billingNote: "Pago único mensual · sin suscripción",
+    cardBg: "#8a1f3d",
+    nameColor: "#fff",
+    checkColor: "#fde68a",
+    backBg: "#6d1228",
+    btnColor: "#6d1228",
+    popular: false,
+    badge: { text: "Cupos limitados", bg: "#fde68a", color: "#7a4a00" },
+    route: "/fluidez",
+    muñeca: "/muñecapaso3fluency.webp",
+    features: [
+      "1 Sesión de coaching enfocado en speaking 1:1 semanal",
+      "Acceso completo al Método 590",
+      "Comunidad en Whatsapp",
+      "Diagnóstico de tus bloqueos al hablar",
+      "Plan de acción escrito, semana a semana",
+      "Feedback y corrección mientras hablás",
+      "Reporte de tu progreso de fluidez",
+      "Enfoque 100% en romper la barrera de hablar",
     ],
   },
 ];
@@ -96,6 +124,15 @@ function PasosTresContent() {
   const dificultades = searchParams.get("dificultades") ?? "";
   const [flipped, setFlipped] = useState<Record<string, boolean>>({});
   const [reducedMotion, setReducedMotion] = useState(false);
+  const { isPlanAvailable, cuposLabel } = usePlanCupos();
+
+  const visiblePlans = plans.filter((p) => p.id !== "fluidez" || isPlanAvailable("Fluidez"));
+
+  // Texto del badge: para Fluidez usa el conteo real de cupos cuando está disponible.
+  function badgeText(plan: (typeof plans)[number]): string | undefined {
+    if (plan.id === "fluidez") return cuposLabel("Fluidez") || plan.badge?.text;
+    return plan.badge?.text;
+  }
   useEffect(() => {
     const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
     setReducedMotion(mq.matches);
@@ -162,14 +199,14 @@ function PasosTresContent() {
 
         {/* ── Cards mobile (sin 3D) ── */}
         <div className="sm:hidden w-full max-w-6xl mx-auto px-4 flex flex-col gap-6">
-          {plans.map((plan) => (
+          {visiblePlans.map((plan) => (
             <div key={plan.id} className="relative">
               {plan.badge && (
                 <span
                   className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 z-10 text-[11px] font-extrabold uppercase tracking-widest px-5 py-1.5 rounded-full"
                   style={{ backgroundColor: plan.badge.bg, color: plan.badge.color }}
                 >
-                  {plan.badge.text}
+                  {badgeText(plan)}
                 </span>
               )}
               <div
@@ -244,19 +281,19 @@ function PasosTresContent() {
         </div>
 
         {/* ── Cards desktop (con flip 3D) ── */}
-        <div className="hidden sm:grid w-full max-w-6xl mx-auto px-4 grid-cols-3 gap-3">
-          {plans.map((plan) => (
+        <div className="hidden sm:grid w-full max-w-4xl mx-auto px-4 grid-cols-1 sm:grid-cols-2 gap-3">
+          {visiblePlans.map((plan) => (
             <div key={plan.id} className="flex flex-col items-center">
               <div
                 className="w-full relative"
-                style={{ perspective: "1000px", WebkitPerspective: "1000px", height: "400px" }}
+                style={{ perspective: "1000px", WebkitPerspective: "1000px", height: "440px" }}
               >
                 {plan.badge && (
                   <span
                     className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 z-10 text-[11px] font-extrabold uppercase tracking-widest px-5 py-1.5 rounded-full"
                     style={{ backgroundColor: plan.badge.bg, color: plan.badge.color }}
                   >
-                    {plan.badge.text}
+                    {badgeText(plan)}
                   </span>
                 )}
                 <div
@@ -317,6 +354,16 @@ function PasosTresContent() {
                     <p className="text-[13px] font-bold text-center mt-2 opacity-60" style={{ color: plan.nameColor }}>
                       Clic para ver el precio →
                     </p>
+                    {/* Muñeca chica de acento en la esquina — no estorba el texto */}
+                    <div className="pointer-events-none select-none absolute bottom-2 right-2 h-[150px] w-[115px]">
+                      <Image
+                        src={plan.muñeca}
+                        alt=""
+                        fill
+                        className="object-contain object-bottom [filter:drop-shadow(-10px_8px_14px_rgba(0,0,0,0.28))]"
+                        sizes="130px"
+                      />
+                    </div>
                   </div>
 
                   {/* REVERSO */}
@@ -359,25 +406,6 @@ function PasosTresContent() {
                   </div>
                 </div>
               </div>
-            </div>
-          ))}
-        </div>
-
-        {/* Fila de muñecas */}
-        <div className="hidden sm:grid w-full max-w-6xl mx-auto px-4 grid-cols-3 gap-0 mt-8 flex-1">
-          {plans.map((plan) => (
-            <div
-              key={plan.id}
-              className="relative h-[260px] sm:h-[320px] select-none overflow-hidden"
-            >
-              <Image
-                src={plan.muñeca}
-                alt={`Muñeca ${plan.id}`}
-                fill
-                className="object-contain object-bottom [filter:drop-shadow(-20px_15px_25px_rgba(0,0,0,0.35))]"
-                sizes="33vw"
-                priority
-              />
             </div>
           ))}
         </div>
