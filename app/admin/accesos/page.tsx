@@ -650,36 +650,9 @@ export default function AccesosPage() {
                                     </td>
                                     <td className="px-5 py-3.5">
                                         <div className="flex flex-col gap-1.5">
-                                            {u.access_sent_at ? (
-                                                <button
-                                                    onClick={() => handleSend(u)}
-                                                    disabled={isSending || !configReady}
-                                                    className="inline-flex items-center gap-2 text-xs font-medium px-3 py-1.5 rounded-lg border border-gray-200 text-gray-500 hover:bg-gray-50 transition disabled:opacity-40 disabled:cursor-not-allowed"
-                                                    title={!configReady ? "Configura los links de este nivel primero" : ""}
-                                                >
-                                                    {isSending
-                                                        ? <svg className="w-3.5 h-3.5 animate-spin" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"/></svg>
-                                                        : <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>
-                                                    }
-                                                    Reenviar
-                                                </button>
-                                            ) : (
-                                                <button
-                                                    onClick={() => handleSend(u)}
-                                                    disabled={isSending || !configReady}
-                                                    className="inline-flex items-center gap-2 text-xs font-semibold px-3.5 py-2 rounded-xl bg-yellow-orange-500 text-white hover:bg-yellow-orange-600 transition shadow-sm disabled:opacity-40 disabled:cursor-not-allowed"
-                                                    title={!configReady ? "Configura los links de este nivel primero" : ""}
-                                                >
-                                                    {isSending
-                                                        ? <svg className="w-3.5 h-3.5 animate-spin" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"/></svg>
-                                                        : <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" /></svg>
-                                                    }
-                                                    {isSending ? "Enviando…" : "Enviar acceso"}
-                                                </button>
-                                            )}
                                             <button
                                                 onClick={() => handleToggleMark(u, !u.access_sent_at)}
-                                                className={`text-xs transition text-left px-1 ${u.access_sent_at ? "text-gray-400 hover:text-red-500" : "text-gray-400 hover:text-emerald-600"}`}
+                                                className={`inline-flex items-center gap-2 text-xs font-semibold px-3.5 py-2 rounded-xl transition shadow-sm ${u.access_sent_at ? "border border-gray-200 text-gray-500 hover:bg-gray-50" : "bg-emerald-500 text-white hover:bg-emerald-600"}`}
                                             >
                                                 {u.access_sent_at ? "Marcar como pendiente" : "Marcar como enviado"}
                                             </button>
@@ -738,20 +711,8 @@ export default function AccesosPage() {
                                 </div>
                                 <div className="flex flex-col gap-1.5 mt-3">
                                     <button
-                                        onClick={() => handleSend(u)}
-                                        disabled={isSending || !configReady}
-                                        className={`inline-flex items-center gap-2 text-xs font-semibold px-3 py-1.5 rounded-xl transition disabled:opacity-40 disabled:cursor-not-allowed ${u.access_sent_at ? "border border-gray-200 text-gray-500 hover:bg-gray-50" : "bg-yellow-orange-500 text-white hover:bg-yellow-orange-600 shadow-sm"}`}
-                                        title={!configReady ? "Configura los links de este nivel primero" : ""}
-                                    >
-                                        {isSending
-                                            ? <svg className="w-3.5 h-3.5 animate-spin" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"/></svg>
-                                            : <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" /></svg>
-                                        }
-                                        {isSending ? "Enviando…" : u.access_sent_at ? "Reenviar" : "Enviar acceso"}
-                                    </button>
-                                    <button
                                         onClick={() => handleToggleMark(u, !u.access_sent_at)}
-                                        className={`text-xs transition text-left px-1 ${u.access_sent_at ? "text-gray-400 hover:text-red-500" : "text-gray-400 hover:text-emerald-600"}`}
+                                        className={`inline-flex items-center gap-2 text-xs font-semibold px-3 py-1.5 rounded-xl transition ${u.access_sent_at ? "border border-gray-200 text-gray-500 hover:bg-gray-50" : "bg-emerald-500 text-white hover:bg-emerald-600 shadow-sm"}`}
                                     >
                                         {u.access_sent_at ? "Marcar como pendiente" : "Marcar como enviado"}
                                     </button>
