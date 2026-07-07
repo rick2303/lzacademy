@@ -207,54 +207,56 @@ export default function PlansSection({ onSelectPlan }: PlansSectionProps) {
 
                     {/* ── 4. Programa de Fluidez ── */}
                     {isPlanAvailable("Fluidez") && (
-                    <div className="relative flex flex-col p-7 bg-falu-red-950 border-r border-white/5">
-                        <div className="absolute top-4 right-4">
-                            <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-300/25 px-2.5 py-1 text-xs font-semibold text-amber-100 ring-1 ring-inset ring-amber-300/40">
-                                <span className="h-1.5 w-1.5 rounded-full bg-amber-300 animate-pulse" />
-                                {fluidezLabel}
-                            </span>
-                        </div>
-                        <div>
-                            <p className="text-xs font-semibold uppercase tracking-widest text-amber-200/60 mb-1">Programa de Fluidez</p>
-                            <h3 className="text-xl font-extrabold text-white">Rompé la barrera de hablar</h3>
-                            <div className="mt-4 flex items-baseline gap-1">
-                                <span className="text-4xl font-extrabold text-white">$200</span>
-                                <span className="text-sm text-white/40">/ mes</span>
+                        <div className="relative flex flex-col p-7 bg-falu-red-950 border-r border-white/5">
+                            <div className="absolute top-4 right-4">
+                                <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-300/25 px-2.5 py-1 text-xs font-semibold text-amber-100 ring-1 ring-inset ring-amber-300/40">
+                                    <span className="h-1.5 w-1.5 rounded-full bg-amber-300 animate-pulse" />
+                                    {fluidezLabel}
+                                </span>
                             </div>
-                            <p className="mt-1 text-xs text-white/40">Pago único mensual · sin suscripción</p>
-                            <p className="mt-3 text-sm text-white/60 leading-relaxed">
-                                Coaching de speaking <span className="font-semibold text-white/80">1:1 cada semana</span> más todo lo de Premium. Disponible desde nivel A2.
-                            </p>
+                            <div>
+                                <p className="text-xs font-semibold uppercase tracking-widest text-amber-200/60 mb-1">Programa de Fluidez</p>
+                                <h3 className="text-xl font-extrabold text-white">Rompé la barrera de hablar</h3>
+                                <div className="mt-4 flex items-baseline gap-1">
+                                    <span className="text-4xl font-extrabold text-white">$200</span>
+                                    <span className="text-sm text-white/40">/ mes</span>
+                                </div>
+                                <p className="mt-1 text-xs text-white/40">Pago único mensual · sin suscripción</p>
+                                <p className="mt-3 text-sm text-white/60 leading-relaxed">
+                                    Coaching de speaking <span className="font-semibold text-white/80">1:1 cada semana</span> más todo lo de Premium. Disponible desde nivel A2.
+                                </p>
+                            </div>
+                            <div className="border-t border-white/10 pt-5 mt-6 flex-1">
+                                <p className="text-xs font-semibold text-amber-200/50 mb-3">Todo lo de Premium, más:</p>
+                                <ul className="space-y-3">
+                                    {[
+                                        "1 Sesión de coaching enfocado en speaking 1:1 semanal",
+                                        "Acceso completo al Método 590",
+                                        "Comunidad en Whatsapp",
+                                        "Diagnóstico de tus bloqueos al hablar",
+                                        "Plan de acción escrito, semana a semana",
+                                        "Feedback y corrección mientras hablás",
+                                        "Reporte de tu progreso de fluidez",
+                                        "Enfoque 100% en romper la barrera de hablar",
+                                    ].map((item) => (
+                                        <li key={item} className="flex items-start gap-2.5 text-sm text-white/75">
+                                            <svg className="mt-0.5 h-4 w-4 shrink-0 text-amber-300" viewBox="0 0 16 16" fill="none">
+                                                <circle cx="8" cy="8" r="7" stroke="currentColor" strokeWidth="1.2" opacity="0.3" />
+                                                <path d="M4.5 8l2.5 2.5L11.5 5.5" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+                                            </svg>
+                                            {item}
+                                        </li>
+                                    ))}
+                                </ul>
+                                <p className="mt-4 text-xs text-white/30 italic">Para quien ya entiende inglés y se traba al hablar (A2+). {fluidezLabel}.</p>
+                            </div>
+                            <button
+                                onClick={() => onSelectPlan?.("Fluidez")}
+                                className="mt-6 w-full inline-flex items-center justify-center rounded-xl px-4 py-3 text-sm font-semibold text-falu-red-950 bg-white hover:bg-amber-50 transition"
+                            >
+                                Seleccionar Fluidez
+                            </button>
                         </div>
-                        <div className="border-t border-white/10 pt-5 mt-6 flex-1">
-                            <p className="text-xs font-semibold text-amber-200/50 mb-3">Todo lo de Premium, más:</p>
-                            <ul className="space-y-3">
-                                {[
-                                    "Coaching de speaking 1:1 semanal, con método propio",
-                                    "Diagnóstico de tus bloqueos al hablar",
-                                    "Plan de acción escrito, semana a semana",
-                                    "Feedback y corrección mientras hablás",
-                                    "Reporte de tu progreso de fluidez",
-                                    "Cupos limitados",
-                                ].map((item) => (
-                                    <li key={item} className="flex items-start gap-2.5 text-sm text-white/75">
-                                        <svg className="mt-0.5 h-4 w-4 shrink-0 text-amber-300" viewBox="0 0 16 16" fill="none">
-                                            <circle cx="8" cy="8" r="7" stroke="currentColor" strokeWidth="1.2" opacity="0.3" />
-                                            <path d="M4.5 8l2.5 2.5L11.5 5.5" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
-                                        </svg>
-                                        {item}
-                                    </li>
-                                ))}
-                            </ul>
-                            <p className="mt-4 text-xs text-white/30 italic">Para quien ya entiende inglés y se traba al hablar (A2+). {fluidezLabel}.</p>
-                        </div>
-                        <button
-                            onClick={() => onSelectPlan?.("Fluidez")}
-                            className="mt-6 w-full inline-flex items-center justify-center rounded-xl px-4 py-3 text-sm font-semibold text-falu-red-950 bg-white hover:bg-amber-50 transition"
-                        >
-                            Seleccionar Fluidez
-                        </button>
-                    </div>
                     )}
 
                     {/* ── 5. Speaking ── */}

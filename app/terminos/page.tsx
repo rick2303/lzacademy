@@ -128,7 +128,8 @@ export default function TerminosPage() {
                 modalidad.
               </p>
               <p>
-                4.3. <strong>Planes de pago único (Personalizado y Speaking Sessions).</strong>{" "}
+                4.3. <strong>Planes de pago único (Personalizado, Programa de Fluidez y Speaking
+                Sessions).</strong>{" "}
                 Estos Planes se cobran <strong>una sola vez</strong> por periodo o sesión. No hay
                 cobro automático ni renovación: si el Estudiante desea continuar, debe realizar
                 un nuevo pago de forma manual.
