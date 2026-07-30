@@ -354,26 +354,10 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         <main className="flex-1">{children}</main>
 
         <footer className="mt-8 mb-6 border-t border-gray-100 pt-6 px-4 md:px-8">
-          <div className="max-w-screen-xl mx-auto grid gap-3 sm:grid-cols-2 sm:items-center">
+          <div className="max-w-screen-xl mx-auto">
             <p className="text-xs text-gray-400">
               © {new Date().getFullYear()} LZ English Academy. Todos los derechos reservados.
             </p>
-            <div className="flex sm:justify-end">
-              <a
-                href="https://qali-t.com"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 rounded-2xl px-3 py-2 bg-white ring-1 ring-inset ring-zinc-200/70 shadow-sm hover:bg-zinc-50 transition"
-                aria-label="Powered by QALI-T"
-              >
-                <span className="inline-flex h-6 w-6 items-center justify-center rounded-xl bg-zinc-900/5 ring-1 ring-inset ring-zinc-200">
-                  <img src="/logo_solo.png" alt="QALI-T" className="h-4 w-auto object-contain" />
-                </span>
-                <span className="text-xs font-semibold text-zinc-800">
-                  Powered by <span className="text-falu-red-800">QALI-T</span>
-                </span>
-              </a>
-            </div>
           </div>
         </footer>
       </div>

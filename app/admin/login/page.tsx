@@ -158,22 +158,8 @@ export default function AdminLogin() {
                             </button>
                         </form>
 
-                        {/* Footer: copyright + powered by */}
+                        {/* Footer: copyright */}
                         <div className="mt-7 pt-5 border-t border-gray-100 flex flex-col items-center gap-3">
-                            <a
-                                href="https://qali-t.com"
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="inline-flex items-center gap-2 group"
-                                aria-label="Powered by QALI-T"
-                            >
-                                <span className="inline-flex h-5 w-5 items-center justify-center rounded-lg bg-zinc-900/5 ring-1 ring-inset ring-zinc-200 group-hover:ring-zinc-300 transition">
-                                    <img src="/logo_solo.png" alt="QALI-T" className="h-3 w-auto object-contain" />
-                                </span>
-                                <span className="text-[11px] font-semibold text-zinc-500 group-hover:text-zinc-700 transition">
-                                    Powered by <span className="text-falu-red-700">QALI-T</span>
-                                </span>
-                            </a>
                             <p className="text-[11px] text-gray-300">
                                 © {new Date().getFullYear()} LZ English Academy
                             </p>
