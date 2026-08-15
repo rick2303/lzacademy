@@ -2,15 +2,19 @@
 
 import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { planPriceDisplay } from "@/app/lib/plans";
+import { usePlanCupos } from "@/app/hooks/usePlanCupos";
 
+// id/label/route son específicos de esta navegación; el precio sale del catálogo único.
 const allPlans = [
-  { id: "essential",    label: "Essential",    price: "$10/mes",  route: "/essential" },
-  { id: "premium",      label: "Premium",      price: "$50/mes",  route: "/premium" },
-  { id: "personalizada",label: "Personalizado", price: "$120/mes", route: "/personalizado" },
+  { id: "essential",    label: "Essential",    price: `${planPriceDisplay("Essential")}/mes`,     route: "/essential" },
+  { id: "premium",      label: "Premium",      price: `${planPriceDisplay("Premium")}/mes`,       route: "/premium" },
+  { id: "personalizada",label: "Personalizado", price: `${planPriceDisplay("Personalizado")}/mes`, route: "/personalizado" },
+  { id: "fluidez",      label: "Programa de Fluidez", price: `${planPriceDisplay("Fluidez")}`,     route: "/fluidez" },
 ];
 
 interface Props {
-  currentPlan: "essential" | "premium" | "personalizada";
+  currentPlan: "essential" | "premium" | "personalizada" | "fluidez";
   nivel: string;
 }
 
@@ -18,8 +22,12 @@ export default function PlanSwitcher({ currentPlan, nivel }: Props) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
+  const { isPlanAvailable } = usePlanCupos();
 
-  const otherPlans = allPlans.filter((p) => p.id !== currentPlan);
+  // Oculta Fluidez del switcher si se agotaron los cupos; el resto no maneja cupos.
+  const otherPlans = allPlans.filter(
+    (p) => p.id !== currentPlan && (p.id !== "fluidez" || isPlanAvailable("Fluidez"))
+  );
 
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {

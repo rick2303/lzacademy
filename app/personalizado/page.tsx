@@ -7,13 +7,14 @@ import ContactModal from "@/app/components/ContactModal";
 import PlanSwitcher from "@/app/components/PlanSwitcher";
 
 const features = [
-  "Sesiones privadas 1:1 adaptadas a ti",
+  "3 sesiones privadas 1:1 por semana adaptadas a ti",
+  "1 sesión de práctica grupal cada viernes",
   "Acceso completo al Método 590",
-  "Horario 100% flexible",
+  "Horario flexible para tus sesiones privadas",
   "Plan de trabajo personalizado desde el día 1",
+  "Corrección y feedback en tiempo real",
   "Seguimiento y motivación constante",
-  "Corrección en tiempo real",
-  "Avanza exactamente a tu ritmo",
+  "Avanza a tu ritmo con guía personalizada",
 ];
 
 function PersonalizadoPlanContent() {
@@ -51,18 +52,18 @@ function PersonalizadoPlanContent() {
           {/* ── Columna izquierda: muñeca-personalizada ── */}
           <div className="flex items-center justify-center order-2 lg:order-1">
             <Image
-              src="/muñeca-personalizada.svg"
+              src="/muñeca-personalizada.webp"
               alt="Muñeca Personalizada"
               width={582}
               height={568}
-              className="w-[460px] h-auto lg:w-[560px]"
+              className="w-[460px] h-auto lg:w-[560px] [filter:drop-shadow(-40px_30px_50px_rgba(0,0,0,0.45))]"
+              sizes="(max-width: 1024px) 460px, 560px"
               priority
-              unoptimized
             />
           </div>
 
           {/* ── Columna derecha: contenido del plan ── */}
-          <div className="flex flex-col items-center justify-center py-6 lg:py-0 order-1 lg:order-2">
+          <div className="flex flex-col items-center justify-center pt-6 pb-14 lg:pt-8 lg:pb-12 order-1 lg:order-2">
 
             <div className="text-center mb-6 lg:mb-8 w-full">
               <h1
@@ -81,10 +82,11 @@ function PersonalizadoPlanContent() {
 
                 <div className="flex flex-col justify-center px-6 py-8 sm:w-[220px] lg:w-[250px] shrink-0">
                   <p className="text-2xl lg:text-3xl font-extrabold text-zinc-800 mb-1">Personalizado</p>
-                  <div className="flex items-baseline gap-1 mb-3" style={{ color: "#C0353E" }}>
+                  <div className="flex items-baseline gap-1 mb-1" style={{ color: "#C0353E" }}>
                     <span className="text-4xl lg:text-5xl font-extrabold leading-none">$120</span>
-                    <span className="text-xs lg:text-sm font-bold"> USD/mes</span>
+                    <span className="text-xs lg:text-sm font-bold"> USD / mes</span>
                   </div>
+                  <p className="text-[11px] lg:text-[12px] font-semibold text-zinc-400 mb-3">Pago único mensual · sin suscripción ni cobros automáticos</p>
                   <p className="text-[12px] lg:text-[13px] text-zinc-500 font-medium leading-relaxed">
                     Para quienes quieren avanzar rápido con clases 1:1 adaptadas a su horario y proceso.
                   </p>

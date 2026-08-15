@@ -1,6 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useLevelAvailability } from "../hooks/useLevelAvailability";
+import { CHECKOUT_PLAN_KEYS, planPriceDisplay, isSubscriptionPlan, isDiscountablePlan, checkoutDescription } from "@/app/lib/plans";
 
 interface StudentData {
   full_name: string;
@@ -8,18 +10,34 @@ interface StudentData {
   level: string;
   inscription_date: string | null;
   country: string;
+  subscription_status?: string | null;
+  current_period_end?: string | null;
+  cancel_at_period_end?: boolean;
+  has_active_subscription?: boolean;
 }
 
 interface SpecialDate {
   value: string;
   label: string;
   special: boolean;
+  excludedPlansSpecial?: string[]; // planes excluidos de /pago-estudiantes para esta fecha
 }
 
 const MONTH_NAMES_ES = [
   "enero", "febrero", "marzo", "abril", "mayo", "junio",
   "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre",
 ];
+
+// Fusión B2: el `level` guardado de un alumno heredado sigue siendo B2.1 o B2.2,
+// pero esos niveles ya no se ofrecen. Sin normalizar, el <select> se queda en
+// blanco (React no encuentra la opción) mientras el estado conserva el valor
+// viejo, así que el guard `if (!level)` no salta y se enviaría el nivel heredado.
+// Al B2 partido ya no se entra: cualquier forma de B2 resuelve al nivel único.
+const LEGACY_LEVEL_ALIASES: Record<string, string> = {
+  "Intermedio alto-gramatica": "Intermedio alto",
+  "Intermedio alto-produccion": "Intermedio alto",
+};
+const normalizeLevel = (level: string) => LEGACY_LEVEL_ALIASES[level] ?? level;
 
 function formatDate(value: string | null): string {
   if (!value) return "No registrada";
@@ -41,24 +59,36 @@ const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL!;
 const selectClass =
   "w-full rounded-xl border border-zinc-200 bg-zinc-50 px-4 py-3 text-sm text-zinc-900 transition focus:outline-none focus:ring-2 focus:ring-falu-red-400 focus:border-transparent focus:bg-white hover:border-zinc-300 appearance-none cursor-pointer";
 
-const PLAN_PRICES: Record<string, string> = {
-  Essential: "$10/mes",
-  Premium: "$50/mes",
-  Personalizado: "$100/mes",
-};
-
 export default function PagoEstudiantesPage() {
   const [email, setEmail] = useState("");
   const [verifying, setVerifying] = useState(false);
   const [student, setStudent] = useState<StudentData | null>(null);
   const [verifyError, setVerifyError] = useState("");
 
+  const { isLevelAvailable } = useLevelAvailability();
   const [plan, setPlan] = useState("Essential");
   const [level, setLevel] = useState("");
   const [interestDate, setInterestDate] = useState("");
   const [specialDates, setSpecialDates] = useState<SpecialDate[]>([]);
   const [checkoutLoading, setCheckoutLoading] = useState(false);
   const [formError, setFormError] = useState("");
+  const [subModal, setSubModal] = useState<null | "confirm" | "alert" | "blocked">(null);
+
+  // Código de descuento (solo para planes elegibles; ver DISCOUNTABLE_PLANS abajo).
+  const [discountCode, setDiscountCode] = useState("");
+  const [validatingDiscount, setValidatingDiscount] = useState(false);
+  const [discountError, setDiscountError] = useState("");
+  const [appliedDiscount, setAppliedDiscount] = useState<{ code: string; label: string; discountedAmount: number } | null>(null);
+
+  // Si el nivel deja de estar disponible para el plan, se limpia. Mismo patrón que
+  // Form.tsx. Hace falta un efecto y no basta con validar en el prellenado, porque
+  // useLevelAvailability arranca con los defaults de plans.ts y solo después llega
+  // la config real: un nivel prellenado puede volverse no disponible a media carga.
+  // Sin esto el <select> se queda en blanco (React no encuentra la opción) mientras
+  // el estado conserva el valor, el guard `if (!level)` no salta y se envía igual.
+  useEffect(() => {
+    if (level && !isLevelAvailable(plan, level)) setLevel("");
+  }, [plan, level, isLevelAvailable]);
 
   useEffect(() => {
     if (!student) return;
@@ -86,7 +116,7 @@ export default function PagoEstudiantesPage() {
       }
       setStudent(data.user);
       setPlan(data.user.plan || "Essential");
-      setLevel(data.user.level || "");
+      setLevel(normalizeLevel(data.user.level || ""));
     } catch {
       setVerifyError("Error al verificar. Intenta nuevamente.");
     } finally {
@@ -94,25 +124,86 @@ export default function PagoEstudiantesPage() {
     }
   }
 
-  async function handleCheckout(e: React.FormEvent) {
-    e.preventDefault();
-    if (!level) { setFormError("Selecciona tu nivel de inglés."); return; }
-    if (!interestDate) { setFormError("Selecciona una fecha de inicio."); return; }
+  async function handleApplyDiscount() {
+    const code = discountCode.trim();
+    if (!code || validatingDiscount) return;
+    setValidatingDiscount(true);
+    setDiscountError("");
+    try {
+      const res = await fetch(`${BACKEND_URL}/validate-discount`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ code, plan }),
+      });
+      const data = await res.json();
+      if (data.valid) {
+        setAppliedDiscount({ code: data.code, label: data.label, discountedAmount: data.discountedAmount });
+        setDiscountError("");
+      } else {
+        setAppliedDiscount(null);
+        setDiscountError(data.reason || "Código no válido.");
+      }
+    } catch {
+      setAppliedDiscount(null);
+      setDiscountError("No pudimos validar el código. Intenta de nuevo.");
+    } finally {
+      setValidatingDiscount(false);
+    }
+  }
+
+  async function doCheckout() {
     setCheckoutLoading(true);
     setFormError("");
     try {
       const res = await fetch(`${BACKEND_URL}/student-checkout`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: email.trim(), plan, level, interestDate }),
+        body: JSON.stringify({
+          email: email.trim(),
+          plan,
+          level,
+          interestDate,
+          interestDateLabel: futureDates.find((d) => d.value === interestDate)?.label ?? "",
+          description: checkoutDescription(plan),
+          discountCode: appliedDiscount ? appliedDiscount.code : undefined,
+        }),
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data?.error || "Error");
+      if (!res.ok) {
+        // Plan sin cupos: mensaje claro en vez del error genérico de pago.
+        if (res.status === 409 && data?.code === "PLAN_SOLD_OUT") {
+          setFormError("Este plan ya no tiene cupos disponibles.");
+          setCheckoutLoading(false);
+          return;
+        }
+        throw new Error(data?.error || "Error");
+      }
       window.location.href = data.url;
-    } catch {
-      setFormError("No pudimos iniciar tu pago. Intenta nuevamente.");
+    } catch (err) {
+      setFormError(err instanceof Error && err.message !== "Error"
+        ? err.message
+        : "No pudimos iniciar tu pago. Intenta nuevamente.");
       setCheckoutLoading(false);
     }
+  }
+
+  async function handleCheckout(e: React.FormEvent) {
+    e.preventDefault();
+    if (!level) { setFormError("Selecciona tu nivel de inglés."); return; }
+    if (!interestDate) { setFormError("Selecciona una fecha de inicio."); return; }
+    setFormError("");
+    // Con suscripción recurrente viva:
+    //  - Personalizado (pago único) → alerta (se permite, pero la sub no se cancela sola)
+    //  - Downgrade (a un plan menor) → soporte (se agenda al fin del periodo)
+    //  - Upgrade o mismo plan → confirmación normal (cambio inmediato)
+    if (student?.has_active_subscription) {
+      const RANK: Record<string, number> = { Essential: 1, Premium: 2 };
+      const cur = student.plan, sel = plan;
+      const isDowngrade = !!RANK[sel] && !!RANK[cur] && RANK[sel] < RANK[cur];
+      setSubModal(sel === "Personalizado" || sel === "Fluidez" ? "alert" : isDowngrade ? "blocked" : "confirm");
+      return;
+    }
+    await doCheckout();
   }
 
   // ─── Step 1: Email input ───────────────────────────────────────────────────
@@ -191,20 +282,32 @@ export default function PagoEstudiantesPage() {
   }
 
   // ─── Step 2: Student card + plan selection ─────────────────────────────────
-  const availableLevels = [
+  // Fusión B2: se ofrece el nivel único. Los alumnos heredados llegan aquí con su
+  // B2.1/B2.2 ya convertido a "Intermedio alto" por normalizeLevel.
+  const ALL_LEVELS = [
     { value: "Principiante", label: "Principiante (A1)" },
     { value: "Basico", label: "Básico (A2)" },
     { value: "Intermedio", label: "Intermedio (B1)" },
-    ...(plan !== "Personalizado"
-      ? [{ value: "Intermedio alto-gramatica", label: "Intermedio alto (B2.1)" }]
-      : []),
-    ...(plan === "Essential"
-      ? [{ value: "Intermedio alto-produccion", label: "Intermedio alto (B2.2)" }]
-      : []),
+    { value: "Intermedio alto", label: "Intermedio alto (B2)" },
   ];
+  const availableLevels = ALL_LEVELS.filter((l) => isLevelAvailable(plan, l.value));
 
-  const today = new Date().toISOString().split("T")[0];
-  const futureDates = specialDates.filter((d) => d.value >= today);
+  // "Hoy" en la zona horaria local del usuario (YYYY-MM-DD), no en UTC: cada fecha
+  // sigue disponible hasta las 11:59pm de la zona del usuario.
+  const today = new Intl.DateTimeFormat("sv-SE").format(new Date());
+  // Solo fechas futuras y que no excluyan el plan seleccionado en /pago-estudiantes.
+  const futureDates = specialDates
+    .filter((d) => d.value >= today)
+    .filter((d) => !(d.excludedPlansSpecial ?? []).includes(plan));
+
+  // Suscripción recurrente y elegibilidad de descuentos según el catálogo único.
+  const isSubscription = isSubscriptionPlan(plan);
+  const showDiscount = isDiscountablePlan(plan);
+  const formatPrice = (cents: number) => {
+    const v = cents / 100;
+    return `$${Number.isInteger(v) ? v : v.toFixed(2)}`;
+  };
+  const displayPrice = appliedDiscount ? formatPrice(appliedDiscount.discountedAmount) : planPriceDisplay(plan);
 
   return (
     <main className="min-h-screen bg-zinc-50 px-4 py-12">
@@ -264,18 +367,28 @@ export default function PagoEstudiantesPage() {
                   id="plan"
                   value={plan}
                   onChange={(e) => {
-                    setPlan(e.target.value);
-                    if (e.target.value === "Personalizado" &&
-                      (level === "Intermedio alto-gramatica" || level === "Intermedio alto-produccion")) {
+                    const newPlan = e.target.value;
+                    setPlan(newPlan);
+                    if (level && !isLevelAvailable(newPlan, level)) {
                       setLevel("");
                     }
+                    // Si la fecha elegida queda excluida para el nuevo plan, resetearla.
+                    if (interestDate) {
+                      const d = specialDates.find((s) => s.value === interestDate);
+                      if (d && (d.excludedPlansSpecial ?? []).includes(newPlan)) {
+                        setInterestDate("");
+                      }
+                    }
+                    // El descuento depende del plan: al cambiarlo se invalida.
+                    setAppliedDiscount(null);
+                    setDiscountError("");
                     setFormError("");
                   }}
                   className={selectClass}
                 >
-                  <option value="Essential">Essential — $10/mes</option>
-                  <option value="Premium">Premium — $50/mes</option>
-                  <option value="Personalizado">Personalizado — $100/mes</option>
+                  {CHECKOUT_PLAN_KEYS.map((k) => (
+                    <option key={k} value={k}>{`${k} — ${planPriceDisplay(k)}`}</option>
+                  ))}
                 </select>
                 <div className="pointer-events-none absolute inset-y-0 right-3 flex items-center">
                   <svg className="h-4 w-4 text-zinc-400" viewBox="0 0 16 16" fill="none">
@@ -283,6 +396,9 @@ export default function PagoEstudiantesPage() {
                   </svg>
                 </div>
               </div>
+              {isSubscription && (
+                <p className="mt-1.5 text-xs text-zinc-400">Facturación automática cada 4 semanas</p>
+              )}
             </div>
 
             {/* Level */}
@@ -343,6 +459,58 @@ export default function PagoEstudiantesPage() {
               )}
             </div>
 
+            {/* Código de descuento (solo planes elegibles) */}
+            {showDiscount && (
+              <div>
+                <label htmlFor="discount" className="block text-sm font-semibold text-zinc-700 mb-1.5">
+                  Código de descuento <span className="font-normal text-zinc-400">(opcional)</span>
+                </label>
+                {appliedDiscount ? (
+                  <div className="flex items-center justify-between gap-2 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3">
+                    <div className="flex items-center gap-2 min-w-0">
+                      <svg className="h-4 w-4 shrink-0 text-emerald-600" viewBox="0 0 16 16" fill="none">
+                        <path d="M2 6l3 3 5-5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                      </svg>
+                      <p className="text-sm text-emerald-700 truncate">
+                        <span className="font-mono font-semibold">{appliedDiscount.code}</span> · {appliedDiscount.label}
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => { setAppliedDiscount(null); setDiscountCode(""); setDiscountError(""); }}
+                      className="shrink-0 text-xs font-medium text-zinc-500 hover:text-red-500 transition"
+                    >
+                      Quitar
+                    </button>
+                  </div>
+                ) : (
+                  <div className="flex gap-2">
+                    <input
+                      id="discount"
+                      type="text"
+                      value={discountCode}
+                      onChange={(e) => { setDiscountCode(e.target.value.toUpperCase()); setDiscountError(""); }}
+                      placeholder="Ingresa tu código"
+                      className="flex-1 rounded-xl border border-zinc-200 bg-zinc-50 px-4 py-3 text-sm font-mono uppercase text-zinc-900 placeholder-zinc-400 transition focus:outline-none focus:ring-2 focus:ring-falu-red-400 focus:border-transparent focus:bg-white hover:border-zinc-300"
+                    />
+                    <button
+                      type="button"
+                      onClick={handleApplyDiscount}
+                      disabled={validatingDiscount || !discountCode.trim()}
+                      className="shrink-0 inline-flex items-center justify-center gap-2 rounded-xl px-5 py-3 text-sm font-semibold text-white bg-zinc-800 hover:bg-zinc-900 transition disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {validatingDiscount ? (
+                        <svg className="h-4 w-4 animate-spin" viewBox="0 0 16 16" fill="none">
+                          <circle cx="8" cy="8" r="6" stroke="currentColor" strokeWidth="2" strokeDasharray="28" strokeDashoffset="10" strokeLinecap="round" />
+                        </svg>
+                      ) : "Aplicar"}
+                    </button>
+                  </div>
+                )}
+                {discountError && <p className="mt-1.5 text-xs text-red-600">{discountError}</p>}
+              </div>
+            )}
+
             {formError && (
               <div className="flex items-start gap-2 rounded-xl bg-red-50 border border-red-200 px-4 py-3">
                 <svg className="mt-0.5 h-4 w-4 shrink-0 text-red-500" viewBox="0 0 16 16" fill="none">
@@ -350,6 +518,38 @@ export default function PagoEstudiantesPage() {
                   <path d="M8 5v3.5M8 11h.01" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
                 </svg>
                 <p className="text-sm text-red-600">{formError}</p>
+              </div>
+            )}
+
+            {/* Disclosure de facturación (requerido por Stripe / redes de tarjetas) */}
+            {isSubscription ? (
+              <div className="rounded-xl border border-zinc-200 bg-zinc-50 px-4 py-3">
+                <p className="text-xs leading-relaxed text-zinc-500">
+                  <span className="font-semibold text-zinc-700">Suscripción:</span>{" "}
+                  se te cobrará {planPriceDisplay(plan)} cada 4 semanas de forma automática hasta que canceles.
+                  Cancela cuando quieras escribiendo a{" "}
+                  <a href="mailto:info@lz-englishacademy.com" className="font-medium text-falu-red-700 underline underline-offset-2 hover:text-falu-red-800">info@lz-englishacademy.com</a>;
+                  conservas acceso hasta el final del periodo ya pagado.
+                </p>
+                <p className="mt-1.5 text-xs leading-relaxed text-zinc-500">
+                  Reembolso completo si cancelas antes de iniciar tus clases o dentro de los primeros 3 días.
+                </p>
+                <p className="mt-1.5 text-xs text-zinc-400">
+                  <a href="/terminos" className="underline underline-offset-2 hover:text-zinc-600">Términos y Condiciones</a>
+                  <span className="mx-1.5 opacity-50">·</span>
+                  <a href="/reembolsos" className="underline underline-offset-2 hover:text-zinc-600">Política de Reembolso</a>
+                </p>
+              </div>
+            ) : (
+              <div className="rounded-xl border border-zinc-200 bg-zinc-50 px-4 py-3">
+                <p className="text-xs leading-relaxed text-zinc-500">
+                  <span className="font-semibold text-zinc-700">Pago por periodo (28 días)</span> — al finalizar no hay renovación automática. Si deseas continuar, deberás pagar nuevamente.
+                </p>
+                <p className="mt-1.5 text-xs text-zinc-400">
+                  <a href="/terminos" className="underline underline-offset-2 hover:text-zinc-600">Términos y Condiciones</a>
+                  <span className="mx-1.5 opacity-50">·</span>
+                  <a href="/reembolsos" className="underline underline-offset-2 hover:text-zinc-600">Política de Reembolso</a>
+                </p>
               </div>
             )}
 
@@ -369,7 +569,15 @@ export default function PagoEstudiantesPage() {
                 </>
               ) : (
                 <>
-                  Ir al pago seguro — {PLAN_PRICES[plan] ?? ""}
+                  Ir al pago seguro —{" "}
+                  {appliedDiscount ? (
+                    <span className="inline-flex items-center gap-1.5">
+                      <span className="line-through opacity-60">{planPriceDisplay(plan)}</span>
+                      <span>{displayPrice}</span>
+                    </span>
+                  ) : (
+                    displayPrice
+                  )}
                   <svg className="h-4 w-4" viewBox="0 0 16 16" fill="none">
                     <path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
                   </svg>
@@ -401,6 +609,120 @@ export default function PagoEstudiantesPage() {
           ← Usar otro correo
         </button>
       </div>
+
+      {/* Modal de suscripción: confirmar (cambio entre suscripciones) o bloqueado
+          (sub recurrente → Personalizado, que va por soporte) */}
+      {subModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-zinc-900/60 px-4">
+          <div className="w-full max-w-md rounded-2xl bg-white shadow-2xl">
+            <div className="flex flex-col items-center gap-3 rounded-t-2xl bg-amber-50 px-6 py-6 text-center">
+              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-amber-100">
+                <svg className="h-6 w-6 text-amber-600" viewBox="0 0 20 20" fill="none">
+                  <path d="M10 7v4m0 3h.01M10 2l8 14H2L10 2z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+              </div>
+              <p className="text-base font-bold text-amber-900">
+                {subModal === "blocked"
+                  ? "Coordinemos tu cambio de plan"
+                  : subModal === "alert"
+                    ? "Antes de continuar con Personalizado"
+                    : "Ya tienes una suscripción activa"}
+              </p>
+            </div>
+            <div className="px-6 py-5 text-sm text-zinc-600">
+              {subModal === "blocked" ? (
+                <>
+                  <p>
+                    Tienes una suscripción activa al plan <strong>{student?.plan}</strong>. Para bajar de
+                    plan necesitamos coordinarlo contigo y que aplique al final de tu periodo actual, así
+                    no pierdes el tiempo que ya pagaste.
+                  </p>
+                  <p className="mt-3">
+                    Escríbenos a{" "}
+                    <a href="mailto:info@lz-englishacademy.com" className="font-semibold text-falu-red-700 underline underline-offset-2 hover:text-falu-red-800">info@lz-englishacademy.com</a>{" "}
+                    y te ayudamos.
+                  </p>
+                  <div className="mt-5">
+                    <button
+                      type="button"
+                      onClick={() => setSubModal(null)}
+                      className="w-full rounded-xl bg-falu-red-700 px-4 py-3 text-sm font-semibold text-white transition hover:bg-falu-red-800"
+                    >
+                      Entendido
+                    </button>
+                  </div>
+                </>
+              ) : subModal === "alert" ? (
+                <>
+                  <p>
+                    Tienes una suscripción activa al plan <strong>{student?.plan}</strong>. El plan
+                    Personalizado es un pago único y <strong>no cancela tu suscripción automáticamente</strong>.
+                  </p>
+                  {student?.current_period_end && (
+                    <p className="mt-2">
+                      Tu suscripción {student?.plan} seguirá {student.cancel_at_period_end ? "vigente hasta el " : "activa y cobrando hasta el "}
+                      <strong>{new Date(student.current_period_end).toLocaleDateString("es-ES", { day: "numeric", month: "long", year: "numeric", timeZone: "UTC" })}</strong>.
+                    </p>
+                  )}
+                  <p className="mt-2">
+                    Para no pagar ambos planes, cancela tu suscripción actual escribiéndonos a{" "}
+                    <a href="mailto:info@lz-englishacademy.com" className="font-semibold text-falu-red-700 underline underline-offset-2 hover:text-falu-red-800">info@lz-englishacademy.com</a>.
+                    Si continúas, se te cobrará el plan Personalizado ahora.
+                  </p>
+                  <div className="mt-5 flex flex-col gap-2 sm:flex-row-reverse">
+                    <button
+                      type="button"
+                      onClick={() => { setSubModal(null); doCheckout(); }}
+                      className="flex-1 rounded-xl bg-falu-red-700 px-4 py-3 text-sm font-semibold text-white transition hover:bg-falu-red-800"
+                    >
+                      Continuar de todos modos
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setSubModal(null)}
+                      className="flex-1 rounded-xl border border-zinc-200 bg-white px-4 py-3 text-sm font-semibold text-zinc-600 transition hover:bg-zinc-50"
+                    >
+                      Volver
+                    </button>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <p>
+                    Tienes una suscripción activa al plan <strong>{student?.plan}</strong>. Si continúas con
+                    un plan distinto, se cancelará la actual y se te cobrará el nuevo plan ahora. El cobro
+                    inicial de tu plan actual no se reembolsa automáticamente.
+                  </p>
+                  {student?.current_period_end && (
+                    <p className="mt-3 rounded-lg bg-zinc-50 px-3 py-2 text-xs text-zinc-500">
+                      {student.cancel_at_period_end ? "Tu plan actual termina el " : "Tu plan actual está vigente hasta el "}
+                      <strong className="text-zinc-700">
+                        {new Date(student.current_period_end).toLocaleDateString("es-ES", { day: "numeric", month: "long", year: "numeric", timeZone: "UTC" })}
+                      </strong>.
+                    </p>
+                  )}
+                  <div className="mt-5 flex flex-col gap-2 sm:flex-row-reverse">
+                    <button
+                      type="button"
+                      onClick={() => { setSubModal(null); doCheckout(); }}
+                      className="flex-1 rounded-xl bg-falu-red-700 px-4 py-3 text-sm font-semibold text-white transition hover:bg-falu-red-800"
+                    >
+                      Continuar de todos modos
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setSubModal(null)}
+                      className="flex-1 rounded-xl border border-zinc-200 bg-white px-4 py-3 text-sm font-semibold text-zinc-600 transition hover:bg-zinc-50"
+                    >
+                      Volver
+                    </button>
+                  </div>
+                </>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </main>
   );
 }

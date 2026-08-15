@@ -14,13 +14,13 @@ export const metadata: Metadata = {
     description:
       "Transforma tu inglés en 90 días con el Método 590: sesiones guiadas, speaking real y planes adaptados a tu nivel.",
     url: "https://lz-englishacademy.com/",
-    images: [{ url: "https://lz-englishacademy.com/og-image.jpg", width: 1200, height: 630 }],
+    images: [{ url: "https://lz-englishacademy.com/og-image.png", width: 1200, height: 630 }],
   },
   twitter: {
     title: "LZ English Academy | Aprende inglés rápido y con propósito",
     description:
       "Transforma tu inglés en 90 días con el Método 590: sesiones guiadas, speaking real y planes adaptados a tu nivel.",
-    images: ["https://lz-englishacademy.com/og-image.jpg"],
+    images: ["https://lz-englishacademy.com/og-image.png"],
   },
 };
 

@@ -8,8 +8,8 @@ import PlanSwitcher from "@/app/components/PlanSwitcher";
 
 const features = [
   "Acceso completo al Método 590",
-  "1 hora de clase diaria (lunes a jueves)",
-  "Repasos los viernes para resolver dudas",
+  "1 hora de clase diaria (lunes a miércoles)",
+  "Reuniones de práctica los viernes",
   "Explicación clara de teoría",
   "Práctica guiada en cada clase",
   "Práctica hablada diaria",
@@ -51,18 +51,18 @@ function PremiumPlanContent() {
             {/* ── Columna izquierda: muñeca-premium ── */}
             <div className="flex items-center justify-center order-2 lg:order-1">
               <Image
-                src="/muñeca-premium.svg"
+                src="/muñeca-premium.webp"
                 alt="Muñeca Premium"
                 width={582}
                 height={568}
-                className="w-[460px] h-auto lg:w-[560px]"
+                className="w-[460px] h-auto lg:w-[560px] [filter:drop-shadow(-40px_30px_50px_rgba(0,0,0,0.45))]"
+                sizes="(max-width: 1024px) 460px, 560px"
                 priority
-                unoptimized
               />
             </div>
 
             {/* ── Columna derecha: contenido del plan ── */}
-            <div className="flex flex-col items-center justify-center py-6 lg:py-0 order-1 lg:order-2">
+            <div className="flex flex-col items-center justify-center pt-6 pb-14 lg:pt-8 lg:pb-12 order-1 lg:order-2">
 
               <div className="text-center mb-6 lg:mb-8 w-full">
                 <h1
@@ -85,6 +85,7 @@ function PremiumPlanContent() {
                       <span className="text-4xl lg:text-5xl font-extrabold leading-none">$50</span>
                       <span className="text-xs lg:text-sm font-bold"> USD/mes</span>
                     </div>
+                    <p className="text-[11px] lg:text-[12px] text-zinc-400 font-medium mb-2">Facturación automática cada 4 semanas</p>
                     <p className="text-[12px] lg:text-[13px] text-zinc-500 font-medium leading-relaxed">
                       Para quienes quieren clases en vivo y avanzar más rápido con acompañamiento diario.
                     </p>
@@ -111,7 +112,7 @@ function PremiumPlanContent() {
                       ))}
                     </ul>
                     <p className="mt-5 text-[11.5px] lg:text-[13px] leading-relaxed italic" style={{ color: "#C0353E" }}>
-                      Horario fijo lunes a jueves. Accede hoy a la plataforma. Las clases en vivo inician en la fecha seleccionada en el formulario.
+                      Horario fijo lunes a miércoles. Accede hoy a la plataforma. Las clases en vivo inician en la fecha seleccionada en el formulario.
                     </p>
                   </div>
 

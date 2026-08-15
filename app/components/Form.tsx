@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { useStartDates } from "../hooks/useStartDates";
+import { useLevelAvailability } from "../hooks/useLevelAvailability";
+import { CHECKOUT_PLAN_KEYS, planPriceDisplay, isSubscriptionPlan, requiresScheduling, checkoutTagline, checkoutFeatures, checkoutDescription } from "@/app/lib/plans";
 
 interface PremiumSlot { id: string; datetime_pt: string; start_date: string; enabled: boolean; }
 
@@ -46,22 +48,8 @@ function buildSlotDisplay(datetimePt: string) {
     };
 }
 
-const planDetails = {
-    Essential: {
-        description:
-            "Plan Essential, incluye: Acceso completo a la plataforma, Rutina diaria guiada, Grupo de WhatsApp, Clases prácticas los viernes",
-    },
-    Premium: {
-        description:
-            "Plan Premium, incluye: Todo lo de Essential, más: 1 hora de clase diaria lunes a jueves, repasos los viernes, acompañamiento constante",
-    },
-    Personalizado: {
-        description:
-            "Plan Personalizado, incluye: Todo lo del Plan Premium, más: Rutinas personalizadas, Sesiones Personales, Seguimiento, Correciones en tiempo real.",
-    },
-};
-
-type PlanType = keyof typeof planDetails;
+// El resumen del plan (tagline + features) vive en el catálogo único (app/lib/plans.ts).
+type PlanType = "Essential" | "Premium" | "Personalizado" | "Fluidez";
 
 const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL!;
 
@@ -109,7 +97,11 @@ const PaymentForm = ({
     const [plan, setPlan] = useState<PlanType>(selectedPlan);
     const [loading, setLoading] = useState(false);
     const [emailSuggestion, setEmailSuggestion] = useState<string | null>(null);
+    // Si el correo ya tiene una suscripción activa, avisamos antes del checkout.
+    const [existingSub, setExistingSub] = useState<{ plan: string; periodEnd: string | null; cancelAtPeriodEnd: boolean } | null>(null);
+    const [subModal, setSubModal] = useState<null | "confirm" | "blocked">(null);
     const { dates: allDates } = useStartDates();
+    const { isLevelAvailable } = useLevelAvailability();
     const availableDates = allDates.filter(d => !d.excludedPlans?.includes(plan));
     const [formData, setFormData] = useState({
         email: "",
@@ -120,10 +112,19 @@ const PaymentForm = ({
         interestDate: "",
     });
     const [error, setError] = useState("");
+    const [accepted, setAccepted] = useState(false);
     const [premiumSlots, setPremiumSlots] = useState<PremiumSlot[]>([]);
     const [premiumSlotsLoading, setPremiumSlotsLoading] = useState(false);
 
-    const planPrice: Record<PlanType, string> = { Essential: "$10/mes", Premium: "$50/mes", Personalizado: "$120/mes" };
+    // Label legible de la fecha elegida (p. ej. "29 de junio de 2026"), para
+    // mostrarla en la nota, el checkbox y enviarla a Stripe.
+    const selectedDateLabel =
+        availableDates.find(d => d.value === formData.interestDate)?.label
+        ?? allDates.find(d => d.value === formData.interestDate)?.label
+        ?? "";
+
+    // Suscripción recurrente (cobro automático cada 4 semanas) según el catálogo.
+    const isSubscription = isSubscriptionPlan(plan);
 
     useEffect(() => { setPlan(selectedPlan); }, [selectedPlan]);
 
@@ -133,6 +134,14 @@ const PaymentForm = ({
         }
     }, [selectedNivel]);
 
+    // Si el nivel actual no está disponible para el plan (p. ej. viene preseleccionado
+    // desde paso-uno), se limpia para que el usuario lo vuelva a elegir entre los válidos.
+    useEffect(() => {
+        if (formData.englishLevel && !isLevelAvailable(plan, formData.englishLevel)) {
+            setFormData(prev => ({ ...prev, englishLevel: "" }));
+        }
+    }, [plan, formData.englishLevel, isLevelAvailable]);
+
     // Auto-select the nearest available date
     useEffect(() => {
         if (availableDates.length > 0 && !formData.interestDate) {
@@ -140,8 +149,12 @@ const PaymentForm = ({
         }
     }, [availableDates]);
 
+    // Re-confirmación obligatoria: si cambia el plan o la fecha, se desmarca el
+    // checkbox para que el alumno acepte la fecha vigente (no una anterior).
+    useEffect(() => { setAccepted(false); }, [plan, formData.interestDate]);
+
     useEffect(() => {
-        if (plan !== "Premium") { setPremiumSlots([]); return; }
+        if (!requiresScheduling(plan)) { setPremiumSlots([]); return; }
         setPremiumSlotsLoading(true);
         fetch(`${BACKEND_URL}/config/premium-slots`)
             .then(r => r.json())
@@ -162,16 +175,42 @@ const PaymentForm = ({
         return null;
     };
 
+    // Chequea (al salir del campo de correo) si ese email ya tiene una suscripción
+    // activa, para avisar que un nuevo checkout la cambia/cancela y vuelve a cobrar.
+    const checkExistingSub = async (
+        rawEmail: string,
+    ): Promise<{ plan: string; periodEnd: string | null; cancelAtPeriodEnd: boolean } | null> => {
+        const e = rawEmail.trim();
+        if (!e || !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(e)) { setExistingSub(null); return null; }
+        try {
+            const res = await fetch(`${BACKEND_URL}/verify-student`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ email: e }),
+            });
+            const data = await res.json();
+            const info = res.ok && data.found && data.user?.has_active_subscription
+                ? {
+                    plan: data.user.plan as string,
+                    periodEnd: (data.user.current_period_end as string | null) ?? null,
+                    cancelAtPeriodEnd: !!data.user.cancel_at_period_end,
+                }
+                : null;
+            setExistingSub(info);
+            return info;
+        } catch {
+            setExistingSub(null);
+            return null;
+        }
+    };
+
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
         const { name, value } = e.target;
         if (name === "plan") {
             setPlan(value as PlanType);
             onPlanChange?.(value as PlanType);
             const updates: Partial<typeof formData> = {};
-            if (
-                (value === "Personalizado" && (formData.englishLevel === "Intermedio alto-gramatica" || formData.englishLevel === "Intermedio alto-produccion")) ||
-                (value === "Premium" && formData.englishLevel === "Intermedio alto-produccion")
-            ) {
+            if (formData.englishLevel && !isLevelAvailable(value as PlanType, formData.englishLevel)) {
                 updates.englishLevel = "";
             }
             if (formData.interestDate && allDates.find(d => d.value === formData.interestDate)?.excludedPlans?.includes(value)) {
@@ -190,6 +229,24 @@ const PaymentForm = ({
         if (loading) return;
         const validationError = validateForm();
         if (validationError) { setError(validationError); return; }
+        if (!accepted) { setError("Debes aceptar los términos y confirmar tu fecha de inicio"); return; }
+        setError("");
+        // Si el correo ya tiene una suscripción recurrente viva: cambiar a
+        // Personalizado (pago único) va por soporte (evita doble cobro). Para
+        // cambios entre suscripciones, modal de confirmación.
+        const active = await checkExistingSub(formData.email);
+        if (active) {
+            // Personalizado (pago único) y downgrade (a plan menor) → soporte.
+            // Upgrade o mismo plan → confirmación normal.
+            const RANK: Record<string, number> = { Essential: 1, Premium: 2 };
+            const isDowngrade = !!RANK[plan] && !!RANK[active.plan] && RANK[plan] < RANK[active.plan];
+            setSubModal(plan === "Personalizado" || plan === "Fluidez" || isDowngrade ? "blocked" : "confirm");
+            return;
+        }
+        await doCheckout();
+    };
+
+    const doCheckout = async () => {
         setLoading(true);
         try {
             const res = await fetch(`${BACKEND_URL}/create-checkout-session`, {
@@ -202,12 +259,21 @@ const PaymentForm = ({
                     plan,
                     level: formData.englishLevel,
                     interestDate: formData.interestDate,
-                    description: planDetails[plan].description,
+                    interestDateLabel: selectedDateLabel,
+                    description: checkoutDescription(plan),
                     motive: selectedDificultades || "no especificado",
                 }),
             });
             const data = await res.json();
-            if (!res.ok) throw new Error(data?.error || "Error creando sesión");
+            if (!res.ok) {
+                // Plan sin cupos: mensaje claro en vez del error genérico de pago.
+                if (res.status === 409 && data?.code === "PLAN_SOLD_OUT") {
+                    setError("Este plan ya no tiene cupos disponibles.");
+                    setLoading(false);
+                    return;
+                }
+                throw new Error(data?.error || "Error creando sesión");
+            }
             window.location.href = data.url;
         } catch (err: any) {
             console.error("Error Checkout:", err);
@@ -238,8 +304,11 @@ const PaymentForm = ({
                         <div className="mt-3 inline-flex items-center gap-2 rounded-full px-4 py-1.5 text-xs font-semibold" style={{ backgroundColor: "#fadadd", color: "#C0353E" }}>
                             <span>Plan {plan}</span>
                             <span className="opacity-50">·</span>
-                            <span>{planPrice[plan]}</span>
+                            <span>{planPriceDisplay(plan)}</span>
                         </div>
+                    )}
+                    {embedded && isSubscription && (
+                        <p className="mt-1.5 text-xs text-zinc-400">Facturación automática cada 4 semanas</p>
                     )}
                     {!embedded && (
                         <div className="mt-3 inline-flex items-center gap-2 rounded-full bg-white px-4 py-1.5 text-xs font-semibold text-zinc-600 ring-1 ring-inset ring-zinc-200">
@@ -249,6 +318,26 @@ const PaymentForm = ({
                                 : "Cupos disponibles · Próximamente"}
                         </div>
                     )}
+                </div>
+
+                {/* Detalle del plan seleccionado */}
+                <div className="mb-5 rounded-2xl border border-zinc-200 bg-white shadow-sm overflow-hidden">
+                    <div className="px-5 py-3 bg-zinc-50 border-b border-zinc-100">
+                        <p className="text-xs font-bold uppercase tracking-wide text-zinc-500">Tu Plan {plan} incluye</p>
+                        <p className="text-[13px] text-zinc-600 mt-0.5">{checkoutTagline(plan)}</p>
+                    </div>
+                    <ul className="px-5 py-4 space-y-2.5">
+                        {checkoutFeatures(plan).map((feat) => (
+                            <li key={feat} className="flex items-start gap-2.5">
+                                <span className="mt-0.5 shrink-0 flex h-4 w-4 items-center justify-center rounded-full bg-emerald-100">
+                                    <svg className="h-2.5 w-2.5 text-emerald-600" viewBox="0 0 10 10" fill="none">
+                                        <polyline points="1.5,5 4,7.5 8.5,2" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+                                    </svg>
+                                </span>
+                                <span className="text-[13px] text-zinc-700 leading-snug">{feat}</span>
+                            </li>
+                        ))}
+                    </ul>
                 </div>
 
                 {/* Card del formulario */}
@@ -412,9 +501,9 @@ const PaymentForm = ({
                                         className={selectClass}
                                         required
                                     >
-                                        <option value="Essential">Essential — $10/mes</option>
-                                        <option value="Premium">Premium — $50/mes</option>
-                                        <option value="Personalizado">Personalizado — $120/mes</option>
+                                        {CHECKOUT_PLAN_KEYS.map((k) => (
+                                            <option key={k} value={k}>{`${k} — ${planPriceDisplay(k)}`}</option>
+                                        ))}
                                     </select>
                                     <div className="pointer-events-none absolute inset-y-0 right-3 flex items-center">
                                         <svg className="h-4 w-4 text-zinc-400" viewBox="0 0 16 16" fill="none">
@@ -439,11 +528,13 @@ const PaymentForm = ({
                                         required
                                     >
                                         <option value="">Selecciona tu nivel</option>
-                                        <option value="Principiante">Principiante (A1)</option>
-                                        <option value="Basico">Básico (A2)</option>
-                                        <option value="Intermedio">Intermedio (B1)</option>
-                                        {plan !== "Personalizado" && <option value="Intermedio alto-gramatica">Intermedio alto (B2.1)</option>}
-                                        {plan !== "Personalizado" && plan !== "Premium" && <option value="Intermedio alto-produccion">Intermedio alto (B2.2)</option>}
+                                        {isLevelAvailable(plan, "Principiante") && <option value="Principiante">Principiante (A1)</option>}
+                                        {isLevelAvailable(plan, "Basico") && <option value="Basico">Básico (A2)</option>}
+                                        {isLevelAvailable(plan, "Intermedio") && <option value="Intermedio">Intermedio (B1)</option>}
+                                        {/* Fusión B2: B2.1 y B2.2 ya no se venden por separado. Los dos
+                                            niveles heredados siguen existiendo en el catálogo del backend
+                                            para los alumnos que los están cursando, pero no se ofrecen aquí. */}
+                                        {isLevelAvailable(plan, "Intermedio alto") && <option value="Intermedio alto">Intermedio alto (B2)</option>}
                                     </select>
                                     <div className="pointer-events-none absolute inset-y-0 right-3 flex items-center">
                                         <svg className="h-4 w-4 text-zinc-400" viewBox="0 0 16 16" fill="none">
@@ -481,7 +572,7 @@ const PaymentForm = ({
                         </div>
 
                         {/* Horarios disponibles — solo Premium con fecha seleccionada */}
-                        {plan === "Premium" && formData.interestDate && (() => {
+                        {requiresScheduling(plan) && formData.interestDate && (() => {
                             const dateSlots = premiumSlots.filter(s => s.start_date === formData.interestDate);
                             if (premiumSlotsLoading) return null;
                             if (dateSlots.length === 0) return (
@@ -526,10 +617,56 @@ const PaymentForm = ({
                             <div>
                                 <p className="text-xs font-semibold text-falu-red-900">Importante sobre el inicio</p>
                                 <p className="mt-0.5 text-xs text-falu-red-700">
-                                    Accede hoy a la plataforma. Las clases grupales del viernes y sesiones 1:1 (si aplica) inician en la fecha seleccionada.
+                                    Accede hoy a la plataforma. Las clases grupales del viernes y sesiones 1:1 (si aplica) inician{" "}
+                                    {selectedDateLabel
+                                        ? <>el <span className="font-bold">{selectedDateLabel}</span></>
+                                        : "en la fecha seleccionada"}.
                                 </p>
                             </div>
                         </div>
+
+                        {/* Disclosure de facturación (requerido por Stripe / redes de tarjetas) */}
+                        {isSubscription ? (
+                            <div className="rounded-xl border border-zinc-200 bg-zinc-50 px-4 py-3">
+                                <p className="text-xs leading-relaxed text-zinc-500">
+                                    <span className="font-semibold text-zinc-700">Suscripción:</span>{" "}
+                                    Cancela cuando quieras desde{" "}
+                                    <a href="/mi-suscripcion" className="font-medium text-falu-red-700 underline underline-offset-2 hover:text-falu-red-800">tu portal de suscripción</a>.
+                                </p>
+                                <div className="mt-2.5 flex items-center gap-2 rounded-lg bg-emerald-50 border border-emerald-200 px-3 py-2">
+                                    <svg className="h-4 w-4 shrink-0 text-emerald-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8}>
+                                        <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75 11.25 15 15 9.75m-3-7.036A11.959 11.959 0 0 1 3.598 6 11.99 11.99 0 0 0 3 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285Z" />
+                                    </svg>
+                                    <span className="text-xs font-semibold text-emerald-800">Reembolso garantizado los primeros 3 días</span>
+                                </div>
+                            </div>
+                        ) : (
+                            <div className="rounded-xl border border-zinc-200 bg-zinc-50 px-4 py-3">
+                                <p className="text-xs leading-relaxed text-zinc-500">
+                                    <span className="font-semibold text-zinc-700">Pago por periodo (28 días)</span> — al finalizar no hay renovación automática. Si deseas continuar, deberás pagar nuevamente.
+                                </p>
+                            </div>
+                        )}
+
+                        {/* Confirmación de términos + fecha (clickwrap: aceptación activa y registrada) */}
+                        <label className={`flex items-start gap-2.5 cursor-pointer select-none rounded-xl border px-4 py-3 transition ${accepted ? "border-falu-red-300 bg-falu-red-50" : "border-zinc-200"}`}>
+                            <input
+                                type="checkbox"
+                                checked={accepted}
+                                onChange={(e) => { setAccepted(e.target.checked); setError(""); }}
+                                className="mt-0.5 h-4 w-4 shrink-0 rounded border-zinc-300 text-falu-red-700 focus:ring-falu-red-600"
+                            />
+                            <span className="text-xs leading-relaxed text-zinc-600">
+                                Acepto los{" "}
+                                <a href="/terminos" target="_blank" rel="noopener noreferrer" className="font-medium text-falu-red-700 underline underline-offset-2 hover:text-falu-red-800">Términos y Condiciones</a>
+                                {" "}y la{" "}
+                                <a href="/reembolsos" target="_blank" rel="noopener noreferrer" className="font-medium text-falu-red-700 underline underline-offset-2 hover:text-falu-red-800">Política de Reembolso</a>
+                                , y confirmo que mi Plan {plan}{" "}
+                                {selectedDateLabel
+                                    ? <>inicia el <span className="font-semibold text-zinc-800">{selectedDateLabel}</span></>
+                                    : "inicia en la fecha seleccionada"}.
+                            </span>
+                        </label>
 
                         {/* Divisor */}
                         <div className="border-t border-zinc-100 pt-2" />
@@ -537,7 +674,7 @@ const PaymentForm = ({
                         {/* CTA */}
                         <button
                             type="submit"
-                            disabled={loading}
+                            disabled={loading || !accepted}
                             className="w-full inline-flex items-center justify-center gap-2 rounded-xl px-6 py-3.5 text-sm font-semibold text-white bg-falu-red-700 hover:bg-falu-red-800 active:bg-falu-red-900 transition disabled:opacity-50 disabled:cursor-not-allowed shadow-sm"
                         >
                             {loading ? (
@@ -549,7 +686,7 @@ const PaymentForm = ({
                                 </>
                             ) : (
                                 <>
-                                    {{ Essential: "Comenzar Essential — $10/mes", Premium: "Comenzar Premium — $50/mes", Personalizado: "Comenzar Personalizado — $120/mes" }[plan]}
+                                    {`Comenzar ${plan} — ${planPriceDisplay(plan)}`}
                                     <svg className="h-4 w-4" viewBox="0 0 16 16" fill="none">
                                         <path stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
                                     </svg>
@@ -575,6 +712,82 @@ const PaymentForm = ({
 
                     </form>
                 </div>
+
+                {/* Modal de suscripción: confirmar (cambio entre suscripciones) o
+                    bloqueado (sub recurrente → Personalizado, que va por soporte) */}
+                {subModal && (
+                    <div className="fixed inset-0 z-50 flex items-center justify-center bg-zinc-900/60 px-4">
+                        <div className="w-full max-w-md rounded-2xl bg-white shadow-2xl">
+                            <div className="flex flex-col items-center gap-3 rounded-t-2xl bg-amber-50 px-6 py-6 text-center">
+                                <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-amber-100">
+                                    <svg className="h-6 w-6 text-amber-600" viewBox="0 0 20 20" fill="none">
+                                        <path d="M10 7v4m0 3h.01M10 2l8 14H2L10 2z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                                    </svg>
+                                </div>
+                                <p className="text-base font-bold text-amber-900">
+                                    {subModal === "blocked" ? "Coordinemos tu cambio de plan" : "Ya tienes una suscripción activa"}
+                                </p>
+                            </div>
+                            <div className="px-6 py-5 text-sm text-zinc-600">
+                                {subModal === "blocked" ? (
+                                    <>
+                                        <p>
+                                            Tienes una suscripción activa al plan <strong>{existingSub?.plan}</strong>.
+                                            Para este cambio de plan necesitamos coordinarlo contigo, para que no haya
+                                            cobros duplicados ni pierdas el tiempo que ya pagaste.
+                                        </p>
+                                        <p className="mt-3">
+                                            Escríbenos a{" "}
+                                            <a href="mailto:info@lz-englishacademy.com" className="font-semibold text-falu-red-700 underline underline-offset-2 hover:text-falu-red-800">info@lz-englishacademy.com</a>{" "}
+                                            y te ayudamos.
+                                        </p>
+                                        <div className="mt-5">
+                                            <button
+                                                type="button"
+                                                onClick={() => setSubModal(null)}
+                                                className="w-full rounded-xl bg-falu-red-700 px-4 py-3 text-sm font-semibold text-white transition hover:bg-falu-red-800"
+                                            >
+                                                Entendido
+                                            </button>
+                                        </div>
+                                    </>
+                                ) : (
+                                    <>
+                                        <p>
+                                            Tienes una suscripción activa al plan <strong>{existingSub?.plan}</strong>. Si
+                                            continúas con un plan distinto, se cancelará la actual y se te cobrará el nuevo
+                                            plan ahora. El cobro inicial de tu plan actual no se reembolsa automáticamente.
+                                        </p>
+                                        {existingSub?.periodEnd && (
+                                            <p className="mt-3 rounded-lg bg-zinc-50 px-3 py-2 text-xs text-zinc-500">
+                                                {existingSub.cancelAtPeriodEnd ? "Tu plan actual termina el " : "Tu plan actual está vigente hasta el "}
+                                                <strong className="text-zinc-700">
+                                                    {new Date(existingSub.periodEnd).toLocaleDateString("es-ES", { day: "numeric", month: "long", year: "numeric", timeZone: "UTC" })}
+                                                </strong>.
+                                            </p>
+                                        )}
+                                        <div className="mt-5 flex flex-col gap-2 sm:flex-row-reverse">
+                                            <button
+                                                type="button"
+                                                onClick={() => { setSubModal(null); doCheckout(); }}
+                                                className="flex-1 rounded-xl bg-falu-red-700 px-4 py-3 text-sm font-semibold text-white transition hover:bg-falu-red-800"
+                                            >
+                                                Continuar de todos modos
+                                            </button>
+                                            <button
+                                                type="button"
+                                                onClick={() => setSubModal(null)}
+                                                className="flex-1 rounded-xl border border-zinc-200 bg-white px-4 py-3 text-sm font-semibold text-zinc-600 transition hover:bg-zinc-50"
+                                            >
+                                                Volver
+                                            </button>
+                                        </div>
+                                    </>
+                                )}
+                            </div>
+                        </div>
+                    </div>
+                )}
         </div>
     );
 

@@ -2,24 +2,24 @@
 
 const ACCESOS_ENABLED = true;
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { supabase } from "../../lib/supabaseClient";
 import { useRouter } from "next/navigation";
 import dayjs from "dayjs";
 import utc from "dayjs/plugin/utc";
+import timezone from "dayjs/plugin/timezone";
+import { ErrorState } from "../_utils/ErrorState";
+import { LEVELED_PLAN_KEYS, planColor } from "@/app/lib/plans";
 dayjs.extend(utc);
+dayjs.extend(timezone);
 
-const PLAN_DOT: Record<string, string> = {
-    Essential:     "bg-blue-400",
-    Premium:       "bg-violet-500",
-    Personalizado: "bg-red-400",
-    Speaking:      "bg-orange-400",
-};
+const PT = "America/Los_Angeles";
 
 const LEVEL_LABEL: Record<string, string> = {
     "Principiante":               "Principiante · A1",
     "Basico":                     "Básico · A2",
     "Intermedio":                 "Intermedio · B1",
+    "Intermedio alto":            "Intermedio alto · B2",
     "Intermedio alto-gramatica":  "Intermedio alto · B2.1",
     "Intermedio alto-produccion": "Intermedio alto · B2.2",
 };
@@ -48,16 +48,19 @@ const LEVEL_LABELS: Record<string, string> = {
     "Principiante":               "A1",
     "Basico":                     "A2",
     "Intermedio":                 "B1",
+    "Intermedio alto":            "B2",
     "Intermedio alto-gramatica":  "B2.1",
     "Intermedio alto-produccion": "B2.2",
 };
 
-const PLANS = ["Essential", "Premium", "Personalizado"];
+// Planes con niveles, derivados del catálogo único de planes.
+const PLANS = LEVELED_PLAN_KEYS;
 
 const LEVEL_BADGE: Record<string, { bg: string; text: string; label: string }> = {
     "Principiante":               { bg: "bg-emerald-100", text: "text-emerald-700", label: "A1" },
     "Basico":                     { bg: "bg-blue-100",    text: "text-blue-700",    label: "A2" },
     "Intermedio":                 { bg: "bg-violet-100",  text: "text-violet-700",  label: "B1" },
+    "Intermedio alto":            { bg: "bg-rose-100",    text: "text-rose-700",    label: "B2" },
     "Intermedio alto-gramatica":  { bg: "bg-amber-100",   text: "text-amber-700",   label: "B2.1" },
     "Intermedio alto-produccion": { bg: "bg-orange-100",  text: "text-orange-700",  label: "B2.2" },
 };
@@ -74,19 +77,39 @@ function Avatar({ name }: { name: string }) {
     );
 }
 
+// Debe seguir a LEVELS de lzacademy-backend/src/config/plans.js. "Intermedio alto"
+// (B2) es el nivel único de la fusión; B2.1/B2.2 se quedan mientras haya alumnos
+// heredados en esos cursos, para poder seguir gestionando sus accesos.
 const LEVELS = [
     "Principiante",
     "Basico",
     "Intermedio",
+    "Intermedio alto",
     "Intermedio alto-gramatica",
     "Intermedio alto-produccion",
 ];
+
+const MONTHS_SHORT_ES = ["ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dic"];
+
+// Clave de cohorte (fecha de inicio) normalizada a "YYYY-MM-DD". Los usuarios sin
+// fecha caen en el grupo "none".
+const cohortKey = (u: AccessUser) =>
+    u.inscription_date ? dayjs.utc(u.inscription_date).format("YYYY-MM-DD") : "none";
+
+// Etiqueta corta para el tab de cohorte: "15 jun" / "Sin fecha".
+function cohortLabel(key: string) {
+    if (key === "none") return "Sin fecha";
+    const [, m, d] = key.split("-");
+    return `${parseInt(d, 10)} ${MONTHS_SHORT_ES[parseInt(m, 10) - 1]}`;
+}
 
 export default function AccesosPage() {
     const [users, setUsers] = useState<AccessUser[]>([]);
     const [links, setLinks] = useState<AccessLinks>({});
     const [loading, setLoading] = useState(true);
+    const [loadError, setLoadError] = useState<string | null>(null);
     const [filter, setFilter] = useState<"all" | "pending" | "sent">("pending");
+    const [dateFilter, setDateFilter] = useState<string>("all");
     const [search, setSearch] = useState("");
     const [currentPage, setCurrentPage] = useState(1);
     const [sending, setSending] = useState<number | null>(null);
@@ -97,8 +120,9 @@ export default function AccesosPage() {
     const [configPlan, setConfigPlan] = useState("Essential");
     const router = useRouter();
 
-    useEffect(() => {
-        async function load() {
+    const load = useCallback(async () => {
+        setLoadError(null);
+        try {
             const { data: { session } } = await supabase.auth.getSession();
             if (!session) { router.push("/admin/login"); return; }
             const headers = { Authorization: `Bearer ${session.access_token}` };
@@ -108,14 +132,20 @@ export default function AccesosPage() {
                 fetch(`${base}/admin/accesos`, { headers }),
                 fetch(`${base}/admin/accesos/config`, { headers }),
             ]);
+            if (!usersRes.ok) throw new Error(`Error cargando usuarios (${usersRes.status})`);
+            if (!configRes.ok) throw new Error(`Error cargando config (${configRes.status})`);
             const [usersData, configData] = await Promise.all([usersRes.json(), configRes.json()]);
             setUsers(usersData);
             setLinks(configData);
             setConfigDraft(configData);
+        } catch (e) {
+            setLoadError(e instanceof Error ? e.message : "Error de red");
+        } finally {
             setLoading(false);
         }
-        load();
-    }, []);
+    }, [router]);
+
+    useEffect(() => { load(); }, [load]);
 
     const showToast = (id: number, name: string, ok: boolean) => {
         setToast({ id, name, ok });
@@ -160,6 +190,29 @@ export default function AccesosPage() {
         }
     };
 
+    // Exporta los usuarios actualmente filtrados (respeta tab + búsqueda) a CSV.
+    // Pensado para importarlo en la plataforma (Classroom) y disparar las invitaciones.
+    const handleExportCSV = () => {
+        const headers = ["Nombre", "Correo", "Plan", "Nivel", "Fecha de inicio"];
+        const escape = (v: string) => `"${(v ?? "").replace(/"/g, '""')}"`;
+        const rows = filtered.map(u => [
+            u.full_name,
+            u.email,
+            u.plan,
+            LEVEL_LABEL[u.level] ?? u.level,
+            u.inscription_date ? dayjs.utc(u.inscription_date).format("DD/MM/YYYY") : "",
+        ].map(escape).join(","));
+        // BOM UTF-8 para que Excel/la plataforma respeten acentos y ñ.
+        const csv = "﻿" + [headers.map(escape).join(","), ...rows].join("\r\n");
+        const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `accesos-${filter}-${dateFilter === "all" ? "todas" : dateFilter}-${dayjs().format("YYYY-MM-DD")}.csv`;
+        a.click();
+        URL.revokeObjectURL(url);
+    };
+
     const handleSaveConfig = async () => {
         const { data: { session } } = await supabase.auth.getSession();
         if (!session) return;
@@ -177,7 +230,9 @@ export default function AccesosPage() {
         }
     };
 
-    const filtered = users.filter(u => {
+    // Coincidencia con los filtros que NO son la fecha de inicio (tab enviado/pendiente
+    // + búsqueda). Se reutiliza para el conteo de cada tab de cohorte.
+    const matchesNonDate = (u: AccessUser) => {
         if (filter === "pending" && u.access_sent_at) return false;
         if (filter === "sent" && !u.access_sent_at) return false;
         if (search) {
@@ -185,16 +240,29 @@ export default function AccesosPage() {
             if (!u.full_name.toLowerCase().includes(q) && !u.email.toLowerCase().includes(q)) return false;
         }
         return true;
-    });
+    };
+
+    // Cohortes (fechas de inicio) presentes en los usuarios, ascendente; "Sin fecha" al final.
+    const cohorts = Array.from(new Set(users.map(cohortKey)))
+        .sort((a, b) => (a === "none" ? 1 : b === "none" ? -1 : a.localeCompare(b)));
+
+    const cohortCount = (key: string) =>
+        users.filter(u => (key === "all" || cohortKey(u) === key) && matchesNonDate(u)).length;
+
+    const filtered = users.filter(u =>
+        (dateFilter === "all" || cohortKey(u) === dateFilter) && matchesNonDate(u)
+    );
 
     const PAGE_SIZE = 15;
     const totalPages = Math.ceil(filtered.length / PAGE_SIZE);
     const paginated = filtered.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
 
-    const pendingCount = users.filter(u => !u.access_sent_at).length;
-    const sentCount    = users.filter(u => !!u.access_sent_at).length;
+    // Las tarjetas de stats reflejan el cohorte seleccionado (todos si dateFilter = "all").
+    const dateScoped = dateFilter === "all" ? users : users.filter(u => cohortKey(u) === dateFilter);
+    const pendingCount = dateScoped.filter(u => !u.access_sent_at).length;
+    const sentCount    = dateScoped.filter(u => !!u.access_sent_at).length;
 
-    useEffect(() => { setCurrentPage(1); }, [filter, search]);
+    useEffect(() => { setCurrentPage(1); }, [filter, dateFilter, search]);
 
     const levelConfigOk = (plan: string, level: string) => {
         const c = links[plan]?.[level];
@@ -220,6 +288,8 @@ export default function AccesosPage() {
             </div>
         </div>
     );
+
+    if (loadError) return <ErrorState message={loadError} onRetry={load} />;
 
     if (loading) return (
         <div className="flex items-center justify-center min-h-[60vh]">
@@ -401,13 +471,24 @@ export default function AccesosPage() {
                     <h1 className="text-2xl md:text-3xl font-bold text-gray-800">Accesos</h1>
                     <p className="text-sm text-gray-400 mt-1">Envío de accesos al classroom por nivel</p>
                 </div>
-                <button
-                    onClick={() => setShowConfig(true)}
-                    className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-600 border border-gray-200 rounded-xl hover:bg-gray-50 transition"
-                >
-                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" /><path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
-                    Configurar links
-                </button>
+                <div className="flex items-center gap-2">
+                    <button
+                        onClick={handleExportCSV}
+                        disabled={filtered.length === 0}
+                        className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-600 border border-gray-200 rounded-xl hover:bg-gray-50 transition disabled:opacity-40 disabled:cursor-not-allowed"
+                        title={filtered.length === 0 ? "No hay usuarios para exportar" : `Exportar ${filtered.length} usuario(s) a CSV`}
+                    >
+                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
+                        Exportar CSV
+                    </button>
+                    <button
+                        onClick={() => setShowConfig(true)}
+                        className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-600 border border-gray-200 rounded-xl hover:bg-gray-50 transition"
+                    >
+                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" /><path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+                        Configurar links
+                    </button>
+                </div>
             </div>
 
             {/* Stat cards */}
@@ -418,7 +499,7 @@ export default function AccesosPage() {
                     </div>
                     <div>
                         <p className="text-xs text-gray-400 uppercase tracking-wide font-medium">Total activos</p>
-                        <p className="text-2xl font-bold text-gray-800">{users.length}</p>
+                        <p className="text-2xl font-bold text-gray-800">{dateScoped.length}</p>
                     </div>
                 </div>
                 <div className={`bg-white rounded-2xl border shadow-sm p-5 flex items-center gap-4 ${pendingCount > 0 ? "border-amber-200" : "border-gray-100"}`}>
@@ -467,6 +548,32 @@ export default function AccesosPage() {
                     </button>
                 )}
             </div>
+
+            {/* Cohort (start date) tabs */}
+            {cohorts.length > 1 && (
+                <div className="mb-4">
+                    <p className="text-xs font-medium text-gray-400 uppercase tracking-wide mb-2">Fecha de inicio</p>
+                    <div className="flex flex-wrap items-center gap-2">
+                        <button
+                            onClick={() => setDateFilter("all")}
+                            className={`inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full text-sm font-medium border transition ${dateFilter === "all" ? "bg-violet-600 text-white border-violet-600 shadow-sm" : "bg-white text-gray-600 border-gray-200 hover:bg-gray-50"}`}
+                        >
+                            Todas
+                            <span className={`text-xs font-semibold px-1.5 py-0.5 rounded-full ${dateFilter === "all" ? "bg-white/20 text-white" : "bg-gray-100 text-gray-500"}`}>{cohortCount("all")}</span>
+                        </button>
+                        {cohorts.map(key => (
+                            <button
+                                key={key}
+                                onClick={() => setDateFilter(key)}
+                                className={`inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full text-sm font-medium border transition ${dateFilter === key ? "bg-violet-600 text-white border-violet-600 shadow-sm" : "bg-white text-gray-600 border-gray-200 hover:bg-gray-50"}`}
+                            >
+                                {cohortLabel(key)}
+                                <span className={`text-xs font-semibold px-1.5 py-0.5 rounded-full ${dateFilter === key ? "bg-white/20 text-white" : "bg-gray-100 text-gray-500"}`}>{cohortCount(key)}</span>
+                            </button>
+                        ))}
+                    </div>
+                </div>
+            )}
 
             {/* Filter tabs */}
             <div className="flex items-center gap-1 bg-gray-100 rounded-xl p-1 w-fit mb-5">
@@ -521,7 +628,7 @@ export default function AccesosPage() {
                                     </td>
                                     <td className="px-5 py-3.5">
                                         <span className="inline-flex items-center gap-1.5 text-sm text-gray-700">
-                                            <span className={`w-2 h-2 rounded-full flex-shrink-0 ${PLAN_DOT[u.plan] ?? "bg-gray-300"}`} />
+                                            <span className={`w-2 h-2 rounded-full flex-shrink-0 ${planColor(u.plan)}`} />
                                             {u.plan}
                                         </span>
                                     </td>
@@ -539,7 +646,7 @@ export default function AccesosPage() {
                                                     <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
                                                     Enviado
                                                 </span>
-                                                <p className="text-xs text-gray-400 mt-1">{dayjs.utc(u.access_sent_at).format("DD/MM/YY")}</p>
+                                                <p className="text-xs text-gray-400 mt-1">{dayjs.utc(u.access_sent_at).tz(PT).format("DD/MM/YY")}</p>
                                             </div>
                                         ) : (
                                             <span className="inline-flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-full bg-amber-50 text-amber-700">
@@ -550,36 +657,9 @@ export default function AccesosPage() {
                                     </td>
                                     <td className="px-5 py-3.5">
                                         <div className="flex flex-col gap-1.5">
-                                            {u.access_sent_at ? (
-                                                <button
-                                                    onClick={() => handleSend(u)}
-                                                    disabled={isSending || !configReady}
-                                                    className="inline-flex items-center gap-2 text-xs font-medium px-3 py-1.5 rounded-lg border border-gray-200 text-gray-500 hover:bg-gray-50 transition disabled:opacity-40 disabled:cursor-not-allowed"
-                                                    title={!configReady ? "Configura los links de este nivel primero" : ""}
-                                                >
-                                                    {isSending
-                                                        ? <svg className="w-3.5 h-3.5 animate-spin" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"/></svg>
-                                                        : <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>
-                                                    }
-                                                    Reenviar
-                                                </button>
-                                            ) : (
-                                                <button
-                                                    onClick={() => handleSend(u)}
-                                                    disabled={isSending || !configReady}
-                                                    className="inline-flex items-center gap-2 text-xs font-semibold px-3.5 py-2 rounded-xl bg-falu-red-600 text-white hover:bg-falu-red-700 transition disabled:opacity-40 disabled:cursor-not-allowed"
-                                                    title={!configReady ? "Configura los links de este nivel primero" : ""}
-                                                >
-                                                    {isSending
-                                                        ? <svg className="w-3.5 h-3.5 animate-spin" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"/></svg>
-                                                        : <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" /></svg>
-                                                    }
-                                                    {isSending ? "Enviando…" : "Enviar acceso"}
-                                                </button>
-                                            )}
                                             <button
                                                 onClick={() => handleToggleMark(u, !u.access_sent_at)}
-                                                className={`text-xs transition text-left px-1 ${u.access_sent_at ? "text-gray-400 hover:text-red-500" : "text-gray-400 hover:text-emerald-600"}`}
+                                                className={`inline-flex items-center gap-2 text-xs font-semibold px-3.5 py-2 rounded-xl transition shadow-sm ${u.access_sent_at ? "border border-gray-200 text-gray-500 hover:bg-gray-50" : "bg-emerald-500 text-white hover:bg-emerald-600"}`}
                                             >
                                                 {u.access_sent_at ? "Marcar como pendiente" : "Marcar como enviado"}
                                             </button>
@@ -632,26 +712,14 @@ export default function AccesosPage() {
                                 </div>
                                 <div className="flex flex-wrap gap-1.5 mt-2">
                                     <span className="inline-flex items-center gap-1 text-xs text-gray-600 bg-gray-50 border border-gray-100 px-2 py-0.5 rounded-md">
-                                        <span className={`w-1.5 h-1.5 rounded-full ${PLAN_DOT[u.plan] ?? "bg-gray-300"}`} />{u.plan}
+                                        <span className={`w-1.5 h-1.5 rounded-full ${planColor(u.plan)}`} />{u.plan}
                                     </span>
                                     <span className="text-xs text-gray-500 bg-gray-50 border border-gray-100 px-2 py-0.5 rounded-md">{LEVEL_LABEL[u.level] ?? u.level}</span>
                                 </div>
                                 <div className="flex flex-col gap-1.5 mt-3">
                                     <button
-                                        onClick={() => handleSend(u)}
-                                        disabled={isSending || !configReady}
-                                        className={`inline-flex items-center gap-2 text-xs font-semibold px-3 py-1.5 rounded-xl transition disabled:opacity-40 disabled:cursor-not-allowed ${u.access_sent_at ? "border border-gray-200 text-gray-500 hover:bg-gray-50" : "bg-falu-red-600 text-white hover:bg-falu-red-700"}`}
-                                        title={!configReady ? "Configura los links de este nivel primero" : ""}
-                                    >
-                                        {isSending
-                                            ? <svg className="w-3.5 h-3.5 animate-spin" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"/></svg>
-                                            : <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" /></svg>
-                                        }
-                                        {isSending ? "Enviando…" : u.access_sent_at ? "Reenviar" : "Enviar acceso"}
-                                    </button>
-                                    <button
                                         onClick={() => handleToggleMark(u, !u.access_sent_at)}
-                                        className={`text-xs transition text-left px-1 ${u.access_sent_at ? "text-gray-400 hover:text-red-500" : "text-gray-400 hover:text-emerald-600"}`}
+                                        className={`inline-flex items-center gap-2 text-xs font-semibold px-3 py-1.5 rounded-xl transition ${u.access_sent_at ? "border border-gray-200 text-gray-500 hover:bg-gray-50" : "bg-emerald-500 text-white hover:bg-emerald-600 shadow-sm"}`}
                                     >
                                         {u.access_sent_at ? "Marcar como pendiente" : "Marcar como enviado"}
                                     </button>

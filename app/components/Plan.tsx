@@ -2,16 +2,19 @@
 
 import { Container } from "@/app/components/Container";
 import { useStartDates } from "../hooks/useStartDates";
+import { usePlanCupos } from "../hooks/usePlanCupos";
 
 const CALENDLY_SPEAKING_URL =
     process.env.NEXT_PUBLIC_CALENDLY_SPEAKING_URL || "https://calendly.com/lzacademy590/speaking-session";
 
 interface PlansSectionProps {
-    onSelectPlan?: (plan: "Essential" | "Premium" | "Personalizado") => void;
+    onSelectPlan?: (plan: "Essential" | "Premium" | "Personalizado" | "Fluidez") => void;
 }
 
 export default function PlansSection({ onSelectPlan }: PlansSectionProps) {
     const { dates } = useStartDates();
+    const { isPlanAvailable, cuposLabel } = usePlanCupos();
+    const fluidezLabel = cuposLabel("Fluidez") || "Cupos limitados";
     return (
         <section id="planes" className="relative py-16 sm:py-20 overflow-hidden">
             <div className="absolute inset-0 bg-zinc-50" />
@@ -40,7 +43,7 @@ export default function PlansSection({ onSelectPlan }: PlansSectionProps) {
                     </p>
                 </div>
 
-                <div className="relative grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 rounded-2xl overflow-hidden ring-1 ring-zinc-200 shadow-lg">
+                <div className="relative grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 rounded-2xl overflow-hidden ring-1 ring-zinc-200 shadow-lg">
 
                     {/* ── 1. Essential ── */}
                     <div className="relative flex flex-col p-7 border-r border-[#c9a227]/30" style={{ background: "linear-gradient(160deg, #fdf6dc 0%, #f5e4a0 60%, #eedB82 100%)" }}>
@@ -61,6 +64,7 @@ export default function PlansSection({ onSelectPlan }: PlansSectionProps) {
                                 <span className="text-4xl font-extrabold text-zinc-900">$10</span>
                                 <span className="text-sm text-[#8a6510]">/ mes</span>
                             </div>
+                            <p className="mt-1 text-xs text-[#9a7a30]">Facturación automática cada 4 semanas</p>
                             <p className="mt-3 text-sm text-zinc-700 leading-relaxed">
                                 Aprende con estructura clara — material completo, comunidad y clases grupales en vivo los viernes.
                             </p>
@@ -113,6 +117,7 @@ export default function PlansSection({ onSelectPlan }: PlansSectionProps) {
                                 <span className="text-4xl font-extrabold text-white">$50</span>
                                 <span className="text-sm text-white/50">/ mes</span>
                             </div>
+                            <p className="mt-1 text-xs text-white/50">Facturación automática cada 4 semanas</p>
                             <p className="mt-3 text-sm text-white/70 leading-relaxed">
                                 Para quienes quieren clases en vivo y avanzar más rápido con acompañamiento diario.
                             </p>
@@ -121,7 +126,7 @@ export default function PlansSection({ onSelectPlan }: PlansSectionProps) {
                             <p className="text-xs font-semibold text-white/50 mb-3">Todo lo de Essential, más:</p>
                             <ul className="space-y-3">
                                 {[
-                                    "1 hora de clase diaria (lunes a jueves)",
+                                    "1 hora de clase diaria (lunes a miércoles)",
                                     "Repasos los viernes para resolver dudas",
                                     "Explicación clara de teoría",
                                     "Práctica guiada en cada clase",
@@ -138,7 +143,7 @@ export default function PlansSection({ onSelectPlan }: PlansSectionProps) {
                                     </li>
                                 ))}
                             </ul>
-                            <p className="mt-4 text-xs text-white/40 italic">Horario fijo lunes a jueves.</p>
+                            <p className="mt-4 text-xs text-white/40 italic">Horario fijo lunes a miércoles.</p>
                         </div>
                         <button
                             onClick={() => onSelectPlan?.("Premium")}
@@ -163,6 +168,7 @@ export default function PlansSection({ onSelectPlan }: PlansSectionProps) {
                                 <span className="text-4xl font-extrabold text-white">$120</span>
                                 <span className="text-sm text-white/40">/ mes</span>
                             </div>
+                            <p className="mt-1 text-xs text-white/40">Pago único mensual · sin suscripción</p>
                             <p className="mt-3 text-sm text-white/60 leading-relaxed">
                                 Clases <span className="font-semibold text-white/80">1:1 privadas</span> con tu propio profesor — horario flexible, plan adaptado a ti desde el día 1.
                             </p>
@@ -171,13 +177,14 @@ export default function PlansSection({ onSelectPlan }: PlansSectionProps) {
                             <p className="text-xs font-semibold text-white/40 mb-3">Todo lo anterior, más:</p>
                             <ul className="space-y-3">
                                 {[
-                                    "Sesiones privadas 1:1 adaptadas a ti",
+                                    "3 sesiones privadas 1:1 por semana adaptadas a ti",
+                                    "1 sesión de práctica grupal cada viernes",
                                     "Acceso completo al Método 590",
-                                    "Horario 100% flexible",
+                                    "Horario flexible para tus sesiones privadas",
                                     "Plan de trabajo personalizado desde el día 1",
+                                    "Corrección y feedback en tiempo real",
                                     "Seguimiento y motivación constante",
-                                    "Corrección en tiempo real",
-                                    "Avanza exactamente a tu ritmo",
+                                    "Avanza a tu ritmo con guía personalizada",
                                 ].map((item) => (
                                     <li key={item} className="flex items-start gap-2.5 text-sm text-white/75">
                                         <svg className="mt-0.5 h-4 w-4 shrink-0 text-green-400" viewBox="0 0 16 16" fill="none">
@@ -198,7 +205,61 @@ export default function PlansSection({ onSelectPlan }: PlansSectionProps) {
                         </button>
                     </div>
 
-                    {/* ── 4. Speaking ── */}
+                    {/* ── 4. Programa de Fluidez ── */}
+                    {isPlanAvailable("Fluidez") && (
+                        <div className="relative flex flex-col p-7 bg-falu-red-950 border-r border-white/5">
+                            <div className="absolute top-4 right-4">
+                                <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-300/25 px-2.5 py-1 text-xs font-semibold text-amber-100 ring-1 ring-inset ring-amber-300/40">
+                                    <span className="h-1.5 w-1.5 rounded-full bg-amber-300 animate-pulse" />
+                                    {fluidezLabel}
+                                </span>
+                            </div>
+                            <div>
+                                <p className="text-xs font-semibold uppercase tracking-widest text-amber-200/60 mb-1">Programa de Fluidez</p>
+                                <h3 className="text-xl font-extrabold text-white">Rompé la barrera de hablar</h3>
+                                <div className="mt-4 flex items-baseline gap-1">
+                                    <span className="text-4xl font-extrabold text-white">$200</span>
+                                    <span className="text-sm text-white/40">/ mes</span>
+                                </div>
+                                <p className="mt-1 text-xs text-white/40">Pago único mensual · sin suscripción</p>
+                                <p className="mt-3 text-sm text-white/60 leading-relaxed">
+                                    Coaching de speaking <span className="font-semibold text-white/80">1:1 cada semana</span> más todo lo de Premium. Disponible desde nivel A2.
+                                </p>
+                            </div>
+                            <div className="border-t border-white/10 pt-5 mt-6 flex-1">
+                                <p className="text-xs font-semibold text-amber-200/50 mb-3">Todo lo de Premium, más:</p>
+                                <ul className="space-y-3">
+                                    {[
+                                        "1 Sesión de coaching enfocado en speaking 1:1 semanal",
+                                        "Acceso completo al Método 590",
+                                        "Comunidad en Whatsapp",
+                                        "Diagnóstico de tus bloqueos al hablar",
+                                        "Plan de acción escrito, semana a semana",
+                                        "Feedback y corrección mientras hablás",
+                                        "Reporte de tu progreso de fluidez",
+                                        "Enfoque 100% en romper la barrera de hablar",
+                                    ].map((item) => (
+                                        <li key={item} className="flex items-start gap-2.5 text-sm text-white/75">
+                                            <svg className="mt-0.5 h-4 w-4 shrink-0 text-amber-300" viewBox="0 0 16 16" fill="none">
+                                                <circle cx="8" cy="8" r="7" stroke="currentColor" strokeWidth="1.2" opacity="0.3" />
+                                                <path d="M4.5 8l2.5 2.5L11.5 5.5" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+                                            </svg>
+                                            {item}
+                                        </li>
+                                    ))}
+                                </ul>
+                                <p className="mt-4 text-xs text-white/30 italic">Para quien ya entiende inglés y se traba al hablar (A2+). {fluidezLabel}.</p>
+                            </div>
+                            <button
+                                onClick={() => onSelectPlan?.("Fluidez")}
+                                className="mt-6 w-full inline-flex items-center justify-center rounded-xl px-4 py-3 text-sm font-semibold text-falu-red-950 bg-white hover:bg-amber-50 transition"
+                            >
+                                Seleccionar Fluidez
+                            </button>
+                        </div>
+                    )}
+
+                    {/* ── 5. Speaking ── */}
                     <div className="flex flex-col p-7 bg-yellow-orange-50">
                         <div>
                             <p className="text-xs font-semibold uppercase tracking-widest text-zinc-400 mb-1">Speaking</p>

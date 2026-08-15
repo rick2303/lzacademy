@@ -47,13 +47,13 @@ function EssentialPlanContent() {
             {/* ── Columna izquierda: muñeca-essential ── */}
             <div className="flex items-center justify-center order-2 lg:order-1">
               <Image
-                src="/muñeca-essential.svg"
+                src="/muñeca-essential.webp"
                 alt="Muñeca Essential"
                 width={582}
                 height={568}
-                className="w-[380px] h-auto lg:w-[460px]"
+                className="w-[380px] h-auto lg:w-[460px] [filter:drop-shadow(-40px_30px_50px_rgba(0,0,0,0.45))]"
+                sizes="(max-width: 1024px) 380px, 460px"
                 priority
-                unoptimized
               />
             </div>
 
@@ -81,6 +81,7 @@ function EssentialPlanContent() {
                       <span className="text-4xl lg:text-5xl font-extrabold leading-none">$10</span>
                       <span className="text-xs lg:text-sm font-bold"> USD/mes</span>
                     </div>
+                    <p className="text-[11px] lg:text-[12px] text-zinc-400 font-medium mb-2">Facturación automática cada 4 semanas</p>
                     <p className="text-[12px] lg:text-[13px] text-zinc-500 font-medium leading-relaxed">
                       Para quienes quieren aprender con estructura clara y a su propio ritmo.
                     </p>

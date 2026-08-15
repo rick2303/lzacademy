@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import { useStartDates } from "../hooks/useStartDates";
+import { planPriceDisplay } from "@/app/lib/plans";
 
 const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL!;
 
@@ -312,7 +313,7 @@ export default function PremiumButton() {
                       Procesando...
                     </>
                   ) : (
-                    "Proceder al pago — $50/mes"
+                    `Proceder al pago — ${planPriceDisplay("Premium")}`
                   )}
                 </button>
 

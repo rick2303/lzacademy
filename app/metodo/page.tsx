@@ -14,6 +14,7 @@ export const metadata: Metadata = {
     description:
       "Descubre el Método 590: un sistema estructurado para aprender inglés en 90 días mediante 5 sesiones diarias que convierten el idioma en una rutina real y efectiva.",
     url: "https://lz-englishacademy.com/metodo",
+    images: [{ url: "https://lz-englishacademy.com/og-image.png", width: 1200, height: 630 }],
   },
 };
 

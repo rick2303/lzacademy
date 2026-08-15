@@ -1,11 +1,18 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { supabase } from "../../lib/supabaseClient";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import dayjs from "dayjs";
 import utc from "dayjs/plugin/utc";
+import timezone from "dayjs/plugin/timezone";
+import { planColor } from "../_utils/planColors";
+import { ErrorState } from "../_utils/ErrorState";
+import { PT, fmtDatePT } from "../_utils/format";
+import { ALL_PLAN_KEYS } from "@/app/lib/plans";
 dayjs.extend(utc);
+dayjs.extend(timezone);
 
 interface RecurringUser {
     email: string;
@@ -18,18 +25,8 @@ interface RecurringUser {
     last_payment: string;
 }
 
-const PLAN_COLORS: Record<string, string> = {
-    Essential: "bg-blue-500",
-    Premium: "bg-violet-500",
-    Personalizado: "bg-emerald-500",
-    Speaking: "bg-yellow-orange-500",
-};
-function planColor(plan: string) {
-    return PLAN_COLORS[plan] ?? "bg-gray-400";
-}
-
 const PAGE_SIZE = 15;
-const PLANS = ["Essential", "Premium", "Personalizado", "Speaking"];
+const PLANS = ALL_PLAN_KEYS;
 
 export default function RecurrentesPage() {
     const [users, setUsers] = useState<RecurringUser[]>([]);
@@ -38,21 +35,30 @@ export default function RecurrentesPage() {
     const [search, setSearch] = useState("");
     const [planFilter, setPlanFilter] = useState("all");
     const [sortBy, setSortBy] = useState<"payment_count" | "total_paid" | "last_payment">("payment_count");
+    const [loadError, setLoadError] = useState<string | null>(null);
     const router = useRouter();
 
-    useEffect(() => {
-        async function loadData() {
+    const loadData = useCallback(async () => {
+        setLoadError(null);
+        try {
             const { data: { session } } = await supabase.auth.getSession();
             if (!session) { router.push("/admin/login"); return; }
             const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/admin/recurrentes`, {
                 headers: { Authorization: `Bearer ${session.access_token}` },
             });
+            if (!response.ok) throw new Error(`Error del servidor (${response.status})`);
             const result = await response.json();
             if (Array.isArray(result)) setUsers(result);
+        } catch (e) {
+            setLoadError(e instanceof Error ? e.message : "Error de red");
+        } finally {
             setLoading(false);
         }
-        loadData();
-    }, []);
+    }, [router]);
+
+    useEffect(() => { loadData(); }, [loadData]);
+
+    if (loadError) return <ErrorState message={loadError} onRetry={loadData} />;
 
     if (loading) return (
         <div className="flex items-center justify-center min-h-[60vh]">
@@ -96,8 +102,8 @@ export default function RecurrentesPage() {
             u.plan,
             u.payment_count,
             (u.total_paid / 100).toFixed(2),
-            dayjs.utc(u.first_payment).format("YYYY-MM-DD"),
-            dayjs.utc(u.last_payment).format("YYYY-MM-DD"),
+            dayjs.utc(u.first_payment).tz(PT).format("YYYY-MM-DD"),
+            dayjs.utc(u.last_payment).tz(PT).format("YYYY-MM-DD"),
         ]);
         const csv = [headers, ...rows].map((r) => r.map((v) => `"${String(v).replace(/"/g, '""')}"`).join(",")).join("\n");
         const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
@@ -235,7 +241,7 @@ export default function RecurrentesPage() {
                             <table className="min-w-full divide-y divide-gray-100">
                                 <thead className="bg-gray-50">
                                     <tr>
-                                        {["Nombre", "Email", "País", "Plan", "Pagos", "Total pagado", "Primer pago", "Último pago"].map((h) => (
+                                        {["Nombre", "Email", "País", "Plan", "Pagos", "Total pagado", "Primer pago", "Último pago", "Gestionar"].map((h) => (
                                             <th key={h} className="px-5 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider whitespace-nowrap">{h}</th>
                                         ))}
                                     </tr>
@@ -258,8 +264,11 @@ export default function RecurrentesPage() {
                                                 </span>
                                             </td>
                                             <td className="px-5 py-3 text-sm font-bold text-gray-800">${(u.total_paid / 100).toFixed(2)}</td>
-                                            <td className="px-5 py-3 text-xs text-gray-400">{dayjs.utc(u.first_payment).format("DD/MM/YYYY")}</td>
-                                            <td className="px-5 py-3 text-xs text-gray-400">{dayjs.utc(u.last_payment).format("DD/MM/YYYY")}</td>
+                                            <td className="px-5 py-3 text-xs text-gray-400">{fmtDatePT(u.first_payment)}</td>
+                                            <td className="px-5 py-3 text-xs text-gray-400">{fmtDatePT(u.last_payment)}</td>
+                                            <td className="px-5 py-3 whitespace-nowrap">
+                                                <Link href={`/admin/busqueda?q=${encodeURIComponent(u.email)}`} className="text-xs font-medium text-falu-red-700 hover:text-falu-red-800 transition">Ver detalle →</Link>
+                                            </td>
                                         </tr>
                                     ))}
                                 </tbody>
@@ -302,9 +311,12 @@ export default function RecurrentesPage() {
                                     <span className="text-sm font-bold text-gray-800">${(u.total_paid / 100).toFixed(2)}</span>
                                 </div>
                                 <div className="flex gap-3 mt-2 text-xs text-gray-400">
-                                    <span>Desde: {dayjs.utc(u.first_payment).format("DD/MM/YY")}</span>
+                                    <span>Desde: {fmtDatePT(u.first_payment)}</span>
                                     <span>·</span>
-                                    <span>Último: {dayjs.utc(u.last_payment).format("DD/MM/YY")}</span>
+                                    <span>Último: {fmtDatePT(u.last_payment)}</span>
+                                </div>
+                                <div className="mt-3 pt-2 border-t border-gray-100">
+                                    <Link href={`/admin/busqueda?q=${encodeURIComponent(u.email)}`} className="text-xs font-medium text-falu-red-700 hover:text-falu-red-800 transition">Ver detalle →</Link>
                                 </div>
                             </div>
                         ))}

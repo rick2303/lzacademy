@@ -4,29 +4,38 @@ import { Suspense, useState } from "react";
 import Image from "next/image";
 import { useSearchParams } from "next/navigation";
 import PaymentForm from "@/app/components/Form";
+import { CHECKOUT_PLAN_KEYS, PLAN_MAP } from "@/app/lib/plans";
 
-type PlanType = "Essential" | "Premium" | "Personalizado";
+type PlanType = "Essential" | "Premium" | "Personalizado" | "Fluidez";
 
-const planMap: Record<string, PlanType> = {
-  essential:     "Essential",
-  premium:       "Premium",
-  personalizado: "Personalizado",
-};
+// URL param (en minúsculas) → key del plan, derivado del catálogo (planes de checkout).
+const planMap: Record<string, PlanType> = Object.fromEntries(
+  CHECKOUT_PLAN_KEYS.map((k) => [k.toLowerCase(), k])
+) as Record<string, PlanType>;
 
+// Fusión B2: "B2" es el código que emite /paso-uno desde el 2026-08-24.
+//
+// NO BORRAR las claves "B2.1" y "B2.2": /paso-uno ya no las genera, pero siguen
+// circulando en enlaces vivos (anuncios, mensajes de WhatsApp, marcadores, embudos
+// a medio terminar). Si desaparecen, nivelMap devuelve undefined, el `?? ""` de
+// abajo lo convierte en cadena vacía y el alumno llega al checkout SIN NIVEL y sin
+// ver ningún error — y como el backend solo bloquea lo explícitamente deshabilitado,
+// un nivel vacío pasa la validación y se cobra. Apuntan al nivel único porque al
+// B2 partido ya no se entra.
 const nivelMap: Record<string, string> = {
   "A1":   "Principiante",
   "A2":   "Basico",
   "B1":   "Intermedio",
-  "B2.1": "Intermedio alto-gramatica",
-  "B2.2": "Intermedio alto-produccion",
+  "B2":   "Intermedio alto",
+  "B2.1": "Intermedio alto",
+  "B2.2": "Intermedio alto",
   "?":    "",
 };
 
-const planCharacter: Record<string, string> = {
-  Essential:     "/muñeca-essential.svg",
-  Premium:       "/muñeca-premium.svg",
-  Personalizado: "/muñeca-personalizada.svg",
-};
+// Imagen del personaje por plan, derivada del catálogo.
+const planCharacter: Record<string, string> = Object.fromEntries(
+  CHECKOUT_PLAN_KEYS.map((k) => [k, PLAN_MAP[k].character ?? ""])
+);
 
 function PasoCuatroContent() {
   const searchParams = useSearchParams();
@@ -63,8 +72,8 @@ function PasoCuatroContent() {
               alt={`Muñeca ${activePlan}`}
               width={582}
               height={568}
-              className="w-auto h-[360px] lg:h-[520px] transition-opacity duration-300"
-              unoptimized
+              className="w-auto h-[360px] lg:h-[520px] transition-opacity duration-300 [filter:drop-shadow(-40px_30px_50px_rgba(0,0,0,0.45))]"
+              sizes="(max-width: 1024px) 360px, 520px"
               priority
             />
           </div>
