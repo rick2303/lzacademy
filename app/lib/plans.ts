@@ -49,10 +49,18 @@ export interface PlanDef {
 
 // Defaults de disponibilidad de niveles: Essential todo; Premium sin B2.2;
 // Personalizado sin B2.1 ni B2.2. (Fallback si el backend no responde.)
+//
+// Fusión B2 (vigente 2026-08-24): "Intermedio alto" (B2) es el nivel único y va
+// habilitado en los cuatro planes. Debe coincidir con lo que el backend valida en
+// createCheckoutSession — useLevelAvailability falla en abierto y se queda con
+// estos defaults si el fetch de config falla, así que un desajuste aquí ofrece
+// niveles que el checkout luego rechaza. Los B2.1/B2.2 heredados siguen en la
+// matriz mientras existan alumnos en esos cursos (salen en la fase 4).
 const ALL_LEVELS_ON = {
   Principiante: true,
   Basico: true,
   Intermedio: true,
+  "Intermedio alto": true,
   "Intermedio alto-gramatica": true,
   "Intermedio alto-produccion": true,
 };

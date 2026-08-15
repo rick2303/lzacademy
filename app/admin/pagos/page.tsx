@@ -62,10 +62,11 @@ const LEVEL_LABEL: Record<string, string> = {
     "Principiante":               "Principiante · A1",
     "Basico":                     "Básico · A2",
     "Intermedio":                 "Intermedio · B1",
+    "Intermedio alto":            "Intermedio alto · B2",
     "Intermedio alto-gramatica":  "Intermedio alto · B2.1",
     "Intermedio alto-produccion": "Intermedio alto · B2.2",
 };
-const LEVEL_ORDER = ["Principiante", "Basico", "Intermedio", "Intermedio alto-gramatica", "Intermedio alto-produccion"];
+const LEVEL_ORDER = ["Principiante", "Basico", "Intermedio", "Intermedio alto", "Intermedio alto-gramatica", "Intermedio alto-produccion"];
 
 function CopyEmail({ email }: { email: string }) {
     const [copied, setCopied] = useState(false);
