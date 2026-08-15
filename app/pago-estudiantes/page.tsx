@@ -28,6 +28,17 @@ const MONTH_NAMES_ES = [
   "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre",
 ];
 
+// Fusión B2: el `level` guardado de un alumno heredado sigue siendo B2.1 o B2.2,
+// pero esos niveles ya no se ofrecen. Sin normalizar, el <select> se queda en
+// blanco (React no encuentra la opción) mientras el estado conserva el valor
+// viejo, así que el guard `if (!level)` no salta y se enviaría el nivel heredado.
+// Al B2 partido ya no se entra: cualquier forma de B2 resuelve al nivel único.
+const LEGACY_LEVEL_ALIASES: Record<string, string> = {
+  "Intermedio alto-gramatica": "Intermedio alto",
+  "Intermedio alto-produccion": "Intermedio alto",
+};
+const normalizeLevel = (level: string) => LEGACY_LEVEL_ALIASES[level] ?? level;
+
 function formatDate(value: string | null): string {
   if (!value) return "No registrada";
   const [year, month, day] = value.split("-");
@@ -69,6 +80,16 @@ export default function PagoEstudiantesPage() {
   const [discountError, setDiscountError] = useState("");
   const [appliedDiscount, setAppliedDiscount] = useState<{ code: string; label: string; discountedAmount: number } | null>(null);
 
+  // Si el nivel deja de estar disponible para el plan, se limpia. Mismo patrón que
+  // Form.tsx. Hace falta un efecto y no basta con validar en el prellenado, porque
+  // useLevelAvailability arranca con los defaults de plans.ts y solo después llega
+  // la config real: un nivel prellenado puede volverse no disponible a media carga.
+  // Sin esto el <select> se queda en blanco (React no encuentra la opción) mientras
+  // el estado conserva el valor, el guard `if (!level)` no salta y se envía igual.
+  useEffect(() => {
+    if (level && !isLevelAvailable(plan, level)) setLevel("");
+  }, [plan, level, isLevelAvailable]);
+
   useEffect(() => {
     if (!student) return;
     fetch(`${BACKEND_URL}/config/special-dates`)
@@ -95,7 +116,7 @@ export default function PagoEstudiantesPage() {
       }
       setStudent(data.user);
       setPlan(data.user.plan || "Essential");
-      setLevel(data.user.level || "");
+      setLevel(normalizeLevel(data.user.level || ""));
     } catch {
       setVerifyError("Error al verificar. Intenta nuevamente.");
     } finally {
@@ -261,12 +282,13 @@ export default function PagoEstudiantesPage() {
   }
 
   // ─── Step 2: Student card + plan selection ─────────────────────────────────
+  // Fusión B2: se ofrece el nivel único. Los alumnos heredados llegan aquí con su
+  // B2.1/B2.2 ya convertido a "Intermedio alto" por normalizeLevel.
   const ALL_LEVELS = [
     { value: "Principiante", label: "Principiante (A1)" },
     { value: "Basico", label: "Básico (A2)" },
     { value: "Intermedio", label: "Intermedio (B1)" },
-    { value: "Intermedio alto-gramatica", label: "Intermedio alto (B2.1)" },
-    { value: "Intermedio alto-produccion", label: "Intermedio alto (B2.2)" },
+    { value: "Intermedio alto", label: "Intermedio alto (B2)" },
   ];
   const availableLevels = ALL_LEVELS.filter((l) => isLevelAvailable(plan, l.value));
 

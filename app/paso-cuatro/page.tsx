@@ -13,12 +13,22 @@ const planMap: Record<string, PlanType> = Object.fromEntries(
   CHECKOUT_PLAN_KEYS.map((k) => [k.toLowerCase(), k])
 ) as Record<string, PlanType>;
 
+// Fusión B2: "B2" es el código que emite /paso-uno desde el 2026-08-24.
+//
+// NO BORRAR las claves "B2.1" y "B2.2": /paso-uno ya no las genera, pero siguen
+// circulando en enlaces vivos (anuncios, mensajes de WhatsApp, marcadores, embudos
+// a medio terminar). Si desaparecen, nivelMap devuelve undefined, el `?? ""` de
+// abajo lo convierte en cadena vacía y el alumno llega al checkout SIN NIVEL y sin
+// ver ningún error — y como el backend solo bloquea lo explícitamente deshabilitado,
+// un nivel vacío pasa la validación y se cobra. Apuntan al nivel único porque al
+// B2 partido ya no se entra.
 const nivelMap: Record<string, string> = {
   "A1":   "Principiante",
   "A2":   "Basico",
   "B1":   "Intermedio",
-  "B2.1": "Intermedio alto-gramatica",
-  "B2.2": "Intermedio alto-produccion",
+  "B2":   "Intermedio alto",
+  "B2.1": "Intermedio alto",
+  "B2.2": "Intermedio alto",
   "?":    "",
 };
 

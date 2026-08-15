@@ -15,12 +15,16 @@ const PLAN_META: Record<string, { label: string; chip: string }> = Object.fromEn
   PLANS.map((p) => [p, { label: planLabel(p), chip: planBadgeClass(p) }])
 );
 
+// Debe seguir a LEVELS de lzacademy-backend/src/config/plans.js. Este panel es el
+// que controla qué niveles se venden: el corte de la fusión B2 (encender B2 y
+// apagar B2.1/B2.2) se hace desde aquí, sin desplegar.
 const LEVELS: { value: string; label: string }[] = [
   { value: "Principiante",                label: "Principiante (A1)" },
   { value: "Basico",                      label: "Básico (A2)" },
   { value: "Intermedio",                  label: "Intermedio (B1)" },
-  { value: "Intermedio alto-gramatica",   label: "Intermedio alto (B2.1)" },
-  { value: "Intermedio alto-produccion",  label: "Intermedio alto (B2.2)" },
+  { value: "Intermedio alto",             label: "Intermedio alto (B2)" },
+  { value: "Intermedio alto-gramatica",   label: "Intermedio alto (B2.1) · heredado" },
+  { value: "Intermedio alto-produccion",  label: "Intermedio alto (B2.2) · heredado" },
 ];
 
 export default function NivelesPage() {

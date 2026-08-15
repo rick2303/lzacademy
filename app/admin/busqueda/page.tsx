@@ -22,6 +22,7 @@ const LEVELS = [
     { value: "Principiante",              label: "Principiante · A1" },
     { value: "Basico",                    label: "Básico · A2" },
     { value: "Intermedio",                label: "Intermedio · B1" },
+    { value: "Intermedio alto",           label: "Intermedio alto · B2" },
     { value: "Intermedio alto-gramatica", label: "Intermedio alto · B2.1" },
     { value: "Intermedio alto-produccion",label: "Intermedio alto · B2.2" },
 ];

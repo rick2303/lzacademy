@@ -8,8 +8,7 @@ const levels = [
   { code: "A1",   name: "Principiante",                    desc: "Solo entiendo y uso frases muy básicas" },
   { code: "A2",   name: "Básico",                          desc: "Puedo comunicarme en situaciones simples" },
   { code: "B1",   name: "Intermedio",                      desc: "Me desenvuelvo en conversaciones cotidianas" },
-  { code: "B2.1", name: "Intermedio alto (Gramática)",     desc: "Expreso ideas con bastante claridad" },
-  { code: "B2.2", name: "Intermedio alto (Producción)",    desc: "Me comunico con fluidez y precisión" },
+  { code: "B2",   name: "Intermedio alto",                 desc: "Expreso ideas con claridad y bastante fluidez" },
   { code: "?",    name: "No estoy seguro/a",               desc: "Necesito descubrirlo primero" },
 ];
 

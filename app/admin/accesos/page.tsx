@@ -19,6 +19,7 @@ const LEVEL_LABEL: Record<string, string> = {
     "Principiante":               "Principiante · A1",
     "Basico":                     "Básico · A2",
     "Intermedio":                 "Intermedio · B1",
+    "Intermedio alto":            "Intermedio alto · B2",
     "Intermedio alto-gramatica":  "Intermedio alto · B2.1",
     "Intermedio alto-produccion": "Intermedio alto · B2.2",
 };
@@ -47,6 +48,7 @@ const LEVEL_LABELS: Record<string, string> = {
     "Principiante":               "A1",
     "Basico":                     "A2",
     "Intermedio":                 "B1",
+    "Intermedio alto":            "B2",
     "Intermedio alto-gramatica":  "B2.1",
     "Intermedio alto-produccion": "B2.2",
 };
@@ -58,6 +60,7 @@ const LEVEL_BADGE: Record<string, { bg: string; text: string; label: string }> =
     "Principiante":               { bg: "bg-emerald-100", text: "text-emerald-700", label: "A1" },
     "Basico":                     { bg: "bg-blue-100",    text: "text-blue-700",    label: "A2" },
     "Intermedio":                 { bg: "bg-violet-100",  text: "text-violet-700",  label: "B1" },
+    "Intermedio alto":            { bg: "bg-rose-100",    text: "text-rose-700",    label: "B2" },
     "Intermedio alto-gramatica":  { bg: "bg-amber-100",   text: "text-amber-700",   label: "B2.1" },
     "Intermedio alto-produccion": { bg: "bg-orange-100",  text: "text-orange-700",  label: "B2.2" },
 };
@@ -74,10 +77,14 @@ function Avatar({ name }: { name: string }) {
     );
 }
 
+// Debe seguir a LEVELS de lzacademy-backend/src/config/plans.js. "Intermedio alto"
+// (B2) es el nivel único de la fusión; B2.1/B2.2 se quedan mientras haya alumnos
+// heredados en esos cursos, para poder seguir gestionando sus accesos.
 const LEVELS = [
     "Principiante",
     "Basico",
     "Intermedio",
+    "Intermedio alto",
     "Intermedio alto-gramatica",
     "Intermedio alto-produccion",
 ];
