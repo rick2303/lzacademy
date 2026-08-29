@@ -106,8 +106,21 @@ function EssentialPlanContent() {
                         </li>
                       ))}
                     </ul>
+                    {/* Essential no va por cohorte (2026-08-28) y NO tiene clases en
+                        vivo — ver `requiresCohort: false` y el comentario del plan en
+                        lzacademy-backend/src/config/plans.js.
+
+                        Esta frase decía "las clases en vivo inician en la fecha
+                        seleccionada en el formulario", y era falsa por partida doble:
+                        ese campo ya no se le muestra a un Essential, y las clases en
+                        vivo son de Premium. Es la pantalla inmediatamente anterior al
+                        checkout del plan que más se vende.
+
+                        En premium/page.tsx y personalizado/page.tsx la frase se
+                        conserva porque ahí SÍ es cierta: esos planes tienen las dos
+                        cosas. */}
                     <p className="mt-5 text-[11.5px] lg:text-[13px] leading-relaxed italic" style={{ color: "#C0353E" }}>
-                      Accede hoy a la plataforma. Las clases en vivo inician en la fecha seleccionada en el formulario.
+                      Accede hoy a la plataforma: empiezas el mismo día que pagas, sin esperar a ninguna fecha de inicio.
                     </p>
                   </div>
 

@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useStartDates } from "../hooks/useStartDates";
 import { useLevelAvailability } from "../hooks/useLevelAvailability";
+import { usePlanCohorte } from "../hooks/usePlanCohorte";
 import { CHECKOUT_PLAN_KEYS, planPriceDisplay, isSubscriptionPlan, requiresScheduling, checkoutTagline, checkoutFeatures, checkoutDescription } from "@/app/lib/plans";
 
 interface PremiumSlot { id: string; datetime_pt: string; start_date: string; enabled: boolean; }
@@ -102,6 +103,9 @@ const PaymentForm = ({
     const [subModal, setSubModal] = useState<null | "confirm" | "blocked">(null);
     const { dates: allDates } = useStartDates();
     const { isLevelAvailable } = useLevelAvailability();
+    const { requiresCohort, loading: cohorteLoading } = usePlanCohorte();
+    // Essential empieza el mismo día del pago: no elige fecha ni la envía.
+    const needsCohorte = requiresCohort(plan);
     const availableDates = allDates.filter(d => !d.excludedPlans?.includes(plan));
     const [formData, setFormData] = useState({
         email: "",
@@ -142,12 +146,19 @@ const PaymentForm = ({
         }
     }, [plan, formData.englishLevel, isLevelAvailable]);
 
-    // Auto-select the nearest available date
+    // Auto-select the nearest available date — solo para los planes con cohorte.
+    // En un plan sin cohorte se limpia la fecha en vez de preseleccionarla: si el
+    // alumno venía de Premium y cambia a Essential, la fecha que ya había elegido
+    // debe DESAPARECER del formData, no viajar escondida hasta el checkout.
     useEffect(() => {
+        if (!needsCohorte) {
+            if (formData.interestDate) setFormData(prev => ({ ...prev, interestDate: "" }));
+            return;
+        }
         if (availableDates.length > 0 && !formData.interestDate) {
             setFormData(prev => ({ ...prev, interestDate: availableDates[0].value }));
         }
-    }, [availableDates]);
+    }, [availableDates, needsCohorte, formData.interestDate]);
 
     // Re-confirmación obligatoria: si cambia el plan o la fecha, se desmarca el
     // checkbox para que el alumno acepte la fecha vigente (no una anterior).
@@ -229,7 +240,19 @@ const PaymentForm = ({
         if (loading) return;
         const validationError = validateForm();
         if (validationError) { setError(validationError); return; }
-        if (!accepted) { setError("Debes aceptar los términos y confirmar tu fecha de inicio"); return; }
+        // Guard explícito: un plan con cohorte NO puede comprarse sin fecha. El
+        // `required` del select no basta —el campo no se renderiza mientras el
+        // catálogo carga— y sin fecha el cobro se anclaría al próximo cohorte y
+        // el alumno se quedaría sin horario de clase asignado.
+        if (needsCohorte && !formData.interestDate) {
+            setError("Selecciona tu fecha de inicio."); return;
+        }
+        if (!accepted) {
+            setError(needsCohorte
+                ? "Debes aceptar los términos y confirmar tu fecha de inicio"
+                : "Debes aceptar los términos para continuar");
+            return;
+        }
         setError("");
         // Si el correo ya tiene una suscripción recurrente viva: cambiar a
         // Personalizado (pago único) va por soporte (evita doble cobro). Para
@@ -544,31 +567,46 @@ const PaymentForm = ({
                                 </div>
                             </div>
 
-                            <div>
-                                <FieldLabel htmlFor="interestDate">Fecha de inicio *</FieldLabel>
-                                <div className="relative">
-                                    <select
-                                        id="interestDate"
-                                        name="interestDate"
-                                        value={formData.interestDate}
-                                        onChange={handleChange}
-                                        className={selectClass}
-                                        required
-                                    >
-                                        <option value="">Selecciona una fecha</option>
-                                        {availableDates.map((date) => (
-                                            <option key={date.value} value={date.value}>
-                                                {date.label}
-                                            </option>
-                                        ))}
-                                    </select>
-                                    <div className="pointer-events-none absolute inset-y-0 right-3 flex items-center">
-                                        <svg className="h-4 w-4 text-zinc-400" viewBox="0 0 16 16" fill="none">
-                                            <path d="M4 6l4 4 4-4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                                        </svg>
+                            {!cohorteLoading && needsCohorte && (
+                                <div>
+                                    <FieldLabel htmlFor="interestDate">Fecha de inicio *</FieldLabel>
+                                    <div className="relative">
+                                        <select
+                                            id="interestDate"
+                                            name="interestDate"
+                                            value={formData.interestDate}
+                                            onChange={handleChange}
+                                            className={selectClass}
+                                            required
+                                        >
+                                            <option value="">Selecciona una fecha</option>
+                                            {availableDates.map((date) => (
+                                                <option key={date.value} value={date.value}>
+                                                    {date.label}
+                                                </option>
+                                            ))}
+                                        </select>
+                                        <div className="pointer-events-none absolute inset-y-0 right-3 flex items-center">
+                                            <svg className="h-4 w-4 text-zinc-400" viewBox="0 0 16 16" fill="none">
+                                                <path d="M4 6l4 4 4-4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                                            </svg>
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
+                            )}
+
+                            {/* Sin cohorte: en lugar del selector, la promesa de que empieza hoy. */}
+                            {!cohorteLoading && !needsCohorte && (
+                                <div>
+                                    <FieldLabel htmlFor="">Fecha de inicio</FieldLabel>
+                                    <div className="flex items-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3">
+                                        <svg className="h-4 w-4 shrink-0 text-emerald-600" viewBox="0 0 16 16" fill="none">
+                                            <path d="M3 8.4l3.2 3.2L13 4.8" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                                        </svg>
+                                        <span className="text-sm font-semibold text-emerald-800">Empiezas hoy mismo</span>
+                                    </div>
+                                </div>
+                            )}
                         </div>
 
                         {/* Horarios disponibles — solo Premium con fecha seleccionada */}
@@ -616,12 +654,26 @@ const PaymentForm = ({
                             </svg>
                             <div>
                                 <p className="text-xs font-semibold text-falu-red-900">Importante sobre el inicio</p>
-                                <p className="mt-0.5 text-xs text-falu-red-700">
-                                    Accede hoy a la plataforma. Las clases grupales del viernes y sesiones 1:1 (si aplica) inician{" "}
-                                    {selectedDateLabel
-                                        ? <>el <span className="font-bold">{selectedDateLabel}</span></>
-                                        : "en la fecha seleccionada"}.
-                                </p>
+                                {/* Mientras el catálogo carga NO se afirma nada sobre la fecha: el
+                                    render del servidor asume cohorte (el default seguro del hook) y
+                                    un Essential vería "inicia en la fecha seleccionada" durante unos
+                                    cientos de ms antes de que el texto cambie solo. */}
+                                {cohorteLoading ? (
+                                    <p className="mt-0.5 text-xs text-falu-red-700">
+                                        Accede hoy a la plataforma.
+                                    </p>
+                                ) : needsCohorte ? (
+                                    <p className="mt-0.5 text-xs text-falu-red-700">
+                                        Accede hoy a la plataforma. Las clases grupales del viernes y sesiones 1:1 (si aplica) inician{" "}
+                                        {selectedDateLabel
+                                            ? <>el <span className="font-bold">{selectedDateLabel}</span></>
+                                            : "en la fecha seleccionada"}.
+                                    </p>
+                                ) : (
+                                    <p className="mt-0.5 text-xs text-falu-red-700">
+                                        Tu acceso a la plataforma se activa <span className="font-bold">hoy mismo</span>: no esperas a ninguna fecha de inicio. Las sesiones de práctica en vivo son todos los viernes, así que puedes entrar a la próxima.
+                                    </p>
+                                )}
                             </div>
                         </div>
 
@@ -661,10 +713,20 @@ const PaymentForm = ({
                                 <a href="/terminos" target="_blank" rel="noopener noreferrer" className="font-medium text-falu-red-700 underline underline-offset-2 hover:text-falu-red-800">Términos y Condiciones</a>
                                 {" "}y la{" "}
                                 <a href="/reembolsos" target="_blank" rel="noopener noreferrer" className="font-medium text-falu-red-700 underline underline-offset-2 hover:text-falu-red-800">Política de Reembolso</a>
-                                , y confirmo que mi Plan {plan}{" "}
-                                {selectedDateLabel
-                                    ? <>inicia el <span className="font-semibold text-zinc-800">{selectedDateLabel}</span></>
-                                    : "inicia en la fecha seleccionada"}.
+                                {/* El clickwrap es la aceptación que queda registrada: no puede
+                                    afirmar una fecha que todavía no se sabe si existe. Mientras
+                                    carga el catálogo se acepta solo lo que es cierto en ambos casos,
+                                    y el botón de pago está deshabilitado igualmente. */}
+                                {cohorteLoading ? "." : (
+                                    <>
+                                        , y confirmo que mi Plan {plan}{" "}
+                                        {!needsCohorte
+                                            ? <>empieza <span className="font-semibold text-zinc-800">hoy mismo</span></>
+                                            : selectedDateLabel
+                                                ? <>inicia el <span className="font-semibold text-zinc-800">{selectedDateLabel}</span></>
+                                                : "inicia en la fecha seleccionada"}.
+                                    </>
+                                )}
                             </span>
                         </label>
 
@@ -674,7 +736,7 @@ const PaymentForm = ({
                         {/* CTA */}
                         <button
                             type="submit"
-                            disabled={loading || !accepted}
+                            disabled={loading || !accepted || cohorteLoading}
                             className="w-full inline-flex items-center justify-center gap-2 rounded-xl px-6 py-3.5 text-sm font-semibold text-white bg-falu-red-700 hover:bg-falu-red-800 active:bg-falu-red-900 transition disabled:opacity-50 disabled:cursor-not-allowed shadow-sm"
                         >
                             {loading ? (
