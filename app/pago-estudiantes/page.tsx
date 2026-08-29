@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useLevelAvailability } from "../hooks/useLevelAvailability";
+import { usePlanCohorte } from "../hooks/usePlanCohorte";
 import { CHECKOUT_PLAN_KEYS, planPriceDisplay, isSubscriptionPlan, isDiscountablePlan, checkoutDescription } from "@/app/lib/plans";
 
 interface StudentData {
@@ -66,6 +67,7 @@ export default function PagoEstudiantesPage() {
   const [verifyError, setVerifyError] = useState("");
 
   const { isLevelAvailable } = useLevelAvailability();
+  const { requiresCohort, loading: cohorteLoading } = usePlanCohorte();
   const [plan, setPlan] = useState("Essential");
   const [level, setLevel] = useState("");
   const [interestDate, setInterestDate] = useState("");
@@ -73,6 +75,8 @@ export default function PagoEstudiantesPage() {
   const [checkoutLoading, setCheckoutLoading] = useState(false);
   const [formError, setFormError] = useState("");
   const [subModal, setSubModal] = useState<null | "confirm" | "alert" | "blocked">(null);
+  // Essential empieza el mismo día del pago: no elige fecha ni la envía.
+  const needsCohorte = requiresCohort(plan);
 
   // Código de descuento (solo para planes elegibles; ver DISCOUNTABLE_PLANS abajo).
   const [discountCode, setDiscountCode] = useState("");
@@ -162,8 +166,11 @@ export default function PagoEstudiantesPage() {
           email: email.trim(),
           plan,
           level,
-          interestDate,
-          interestDateLabel: futureDates.find((d) => d.value === interestDate)?.label ?? "",
+          // Sin cohorte no se manda fecha (el backend además la descarta).
+          interestDate: needsCohorte ? interestDate : "",
+          interestDateLabel: needsCohorte
+            ? (futureDates.find((d) => d.value === interestDate)?.label ?? "")
+            : "",
           description: checkoutDescription(plan),
           discountCode: appliedDiscount ? appliedDiscount.code : undefined,
         }),
@@ -190,7 +197,10 @@ export default function PagoEstudiantesPage() {
   async function handleCheckout(e: React.FormEvent) {
     e.preventDefault();
     if (!level) { setFormError("Selecciona tu nivel de inglés."); return; }
-    if (!interestDate) { setFormError("Selecciona una fecha de inicio."); return; }
+    // La fecha solo se exige a los planes que van por cohorte. Essential empieza
+    // el mismo día del pago, así que su recompra no depende de que haya una fecha
+    // especial abierta.
+    if (needsCohorte && !interestDate) { setFormError("Selecciona una fecha de inicio."); return; }
     setFormError("");
     // Con suscripción recurrente viva:
     //  - Personalizado (pago único) → alerta (se permite, pero la sub no se cancela sola)
@@ -425,10 +435,19 @@ export default function PagoEstudiantesPage() {
               </div>
             </div>
 
-            {/* Special dates */}
+            {/* Special dates — solo para los planes que van por cohorte */}
             <div>
               <label htmlFor="interestDate" className="block text-sm font-semibold text-zinc-700 mb-1.5">Fecha de inicio</label>
-              {futureDates.length === 0 ? (
+              {cohorteLoading ? (
+                <div className="h-[46px] rounded-xl border border-zinc-200 bg-zinc-50" aria-hidden="true" />
+              ) : !needsCohorte ? (
+                <div className="flex items-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3">
+                  <svg className="h-4 w-4 shrink-0 text-emerald-600" viewBox="0 0 16 16" fill="none">
+                    <path d="M3 8.4l3.2 3.2L13 4.8" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                  <span className="text-sm font-semibold text-emerald-800">Empiezas hoy mismo</span>
+                </div>
+              ) : futureDates.length === 0 ? (
                 <div className="flex items-center gap-2 rounded-xl border border-zinc-200 bg-zinc-50 px-4 py-3 text-sm text-zinc-500">
                   <svg className="h-4 w-4 shrink-0 text-zinc-400" viewBox="0 0 16 16" fill="none">
                     <rect x="2" y="3" width="12" height="11" rx="1.5" stroke="currentColor" strokeWidth="1.5" />
@@ -557,7 +576,11 @@ export default function PagoEstudiantesPage() {
 
             <button
               type="submit"
-              disabled={checkoutLoading || futureDates.length === 0}
+              // La falta de fechas especiales solo puede bloquear a los planes que
+              // van por cohorte. Sin este matiz, un Essential veía "Empiezas hoy
+              // mismo" y el botón de pago muerto, porque hoy no hay ninguna fecha
+              // `special` futura abierta.
+              disabled={checkoutLoading || cohorteLoading || (needsCohorte && futureDates.length === 0)}
               className="w-full inline-flex items-center justify-center gap-2 rounded-xl px-6 py-3.5 text-sm font-semibold text-white bg-falu-red-700 hover:bg-falu-red-800 active:bg-falu-red-900 transition disabled:opacity-50 disabled:cursor-not-allowed shadow-sm"
             >
               {checkoutLoading ? (
