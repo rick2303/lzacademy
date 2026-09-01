@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { ErrorState } from "../_utils/ErrorState";
 import { todayPT, nowPTInput } from "../_utils/ptTime";
 import { CHECKOUT_PLAN_KEYS } from "@/app/lib/plans";
+import { usePlanCohorte } from "@/app/hooks/usePlanCohorte";
 
 interface StartDate {
     value: string;
@@ -53,6 +54,16 @@ function buildSlotLabel(datetimePt: string): string {
 
 export default function FechasPage() {
     const router = useRouter();
+
+    // Los chips de exclusión solo tienen sentido para los planes que SE COMPRAN
+    // PARA UNA FECHA. Un plan sin cohorte (Essential, Speaking) empieza el día del
+    // pago y `createCheckoutSession` le borra la fecha ANTES de llegar a la
+    // validación de `excludedPlans`, así que su chip nunca hizo nada: prometía un
+    // control que el servidor ignora. La lista se deriva de GET /config/plans
+    // (mismo catálogo del backend) en vez de hardcodearse, para que un plan nuevo
+    // o un cambio de `requiresCohort` no deje este panel desincronizado.
+    const { requiresCohort } = usePlanCohorte();
+    const cohortPlanKeys = CHECKOUT_PLAN_KEYS.filter(requiresCohort);
 
     // Start dates
     const [dates, setDates]     = useState<StartDate[]>([]);
@@ -216,7 +227,7 @@ export default function FechasPage() {
             : "border-violet-200 bg-violet-50 text-violet-600";
         return (
             <div className="flex flex-wrap items-center gap-1.5">
-                {CHECKOUT_PLAN_KEYS.map((p) => {
+                {cohortPlanKeys.map((p) => {
                     const current = date[field] ?? [];
                     const excluded = current.includes(p);
                     return (
