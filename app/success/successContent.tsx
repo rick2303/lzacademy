@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { getPlan, isSubscriptionPlan as isSubPlan, requiresScheduling } from "@/app/lib/plans";
+import { usePlanCohorte } from "@/app/hooks/usePlanCohorte";
 
 interface PremiumSlot { id: string; datetime_pt: string; enabled: boolean; }
 
@@ -67,6 +68,13 @@ type UiState = "loading" | "success" | "error";
 const SuccessContent = () => {
     const router = useRouter();
     const searchParams = useSearchParams();
+    // `loading` sí se consume aquí, al revés que en el checkout. El hook falla
+    // CERRADO (sin datos, todos los planes llevan cohorte), que es la dirección
+    // correcta al comprar —protege de que un Premium pague sin fecha— pero la
+    // equivocada en esta pantalla: durante los primeros milisegundos le pintaría a
+    // un Essential un "Inicio: ‹fecha vieja›" que luego desaparece. Es mejor no
+    // enseñar fecha un instante que enseñar la equivocada y retirarla.
+    const { requiresCohort, loading: cohorteLoading } = usePlanCohorte();
     const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL;
     const session_id = useMemo(() => searchParams.get("session_id"), [searchParams]);
 
@@ -136,7 +144,23 @@ const SuccessContent = () => {
     const planMeta = getPlan(userData?.plan)?.chip ?? FALLBACK_CHIP;
     const firstName = userData?.full_name?.split(" ")[0] ?? null;
 
-    const formattedStartDate = userData?.inscription_date
+    /**
+     * Fecha de inicio a ENSEÑAR, o null si a este plan no le corresponde ninguna.
+     *
+     * ⚠️ El guard de `requiresCohort` es la pieza que faltaba: sin él esta misma
+     * pantalla se contradecía a sí misma —cuatro centímetros más arriba le dice a
+     * un Essential "te enviamos los accesos hoy mismo" y aquí le pintaba un chip
+     * "Inicio: 21 de septiembre"—. Alimenta los DOS sitios donde se enseña la
+     * fecha (el chip de la cabecera y la tarjeta del resumen).
+     *
+     * A quién le pasaba de verdad: una compra NUEVA de Essential guarda
+     * `inscription_date = null` (el servidor la normaliza antes de escribirla), así
+     * que el chip ni se pintaba. El caso real es la cuenta creada ANTES del cambio
+     * que vuelve a comprar: conserva su fecha vieja y la vería anunciada como su
+     * inicio, justo debajo del texto que le dice que empieza hoy.
+     */
+    const formattedStartDate =
+        userData?.inscription_date && !cohorteLoading && requiresCohort(userData?.plan ?? "")
         ? new Date(userData.inscription_date + "T00:00:00Z").toLocaleDateString("es-ES", {
             day: "numeric", month: "long", year: "numeric", timeZone: "UTC",
           })
@@ -181,7 +205,12 @@ const SuccessContent = () => {
         },
         {
             title: "Recibirás tus accesos",
-            desc: "Te enviamos los accesos a la plataforma antes de tu fecha de inicio.",
+            // Sin cohorte no hay "fecha de inicio" que esperar. Esta cadena no
+            // interpolaba ninguna fecha, así que no aparecía en las búsquedas por
+            // `inscription_date` — y es justo la que el alumno lee después de pagar.
+            desc: requiresCohort(userData?.plan ?? "")
+                ? "Te enviamos los accesos a la plataforma antes de tu fecha de inicio."
+                : "Te enviamos los accesos a la plataforma hoy mismo, para que puedas empezar ya.",
         },
     ];
 

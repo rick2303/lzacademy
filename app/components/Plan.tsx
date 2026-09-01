@@ -89,8 +89,12 @@ export default function PlansSection({ onSelectPlan }: PlansSectionProps) {
                                     </li>
                                 ))}
                             </ul>
+                            {/* Essential ya no va por cohorte: empieza el mismo día del pago.
+                                El "Próximo inicio: …" del encabezado de esta sección habla de las
+                                fechas de los planes CON clase en vivo, así que aquí hay que decir
+                                explícitamente que a Essential no le aplica. */}
                             <p className="mt-4 text-xs text-[#7a5c10] italic">
-                                Accede hoy a la plataforma. Las clases en vivo inician en la fecha seleccionada en el formulario.
+                                Empiezas hoy mismo: no esperas a ninguna fecha de inicio. Las sesiones de práctica en vivo son todos los viernes.
                             </p>
                         </div>
 

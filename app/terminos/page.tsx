@@ -142,10 +142,16 @@ export default function TerminosPage() {
             </Section>
 
             <Section title="5. Acceso, fechas de inicio y cohortes">
+              {/* ⚠️ Desde el 2026-08-28 no todos los planes van por cohorte: Essential
+                  empieza el mismo día del pago. Decirlo aquí importa porque de esta
+                  cláusula cuelga la ventana de reembolso (§ 8) y el clickwrap del
+                  checkout ata al comprador a este documento. */}
               <p>
-                5.1. Las clases inician en <strong>fechas de cohorte</strong> que abren
-                aproximadamente cada 4 semanas. Al inscribirte se te informa la fecha de inicio
-                correspondiente.
+                5.1. Los planes con <strong>clases en vivo</strong> inician en{" "}
+                <strong>fechas de cohorte</strong> que abren aproximadamente cada 4 semanas;
+                al inscribirte se te informa la fecha de inicio correspondiente. Los planes
+                sin clases en vivo <strong>comienzan el mismo día del pago</strong> y no
+                tienen fecha de cohorte.
               </p>
               <p>
                 5.2. <strong>Acceso entre el pago y el inicio de clases.</strong> El cobro se
@@ -208,7 +214,8 @@ export default function TerminosPage() {
                 </Link>
                 , que forma parte integral de estos Términos. En resumen: los estudiantes nuevos
                 disponen de una garantía de reembolso completo si cancelan antes de iniciar sus
-                clases o dentro de los primeros 3 días naturales de su cohorte; las renovaciones y
+                clases o dentro de los primeros 3 días naturales de su cohorte —o de su fecha
+                de pago, en los planes que empiezan el mismo día—; las renovaciones y
                 reinscripciones no son reembolsables.
               </p>
             </Section>

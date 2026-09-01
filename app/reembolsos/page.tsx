@@ -70,11 +70,18 @@ export default function ReembolsosPage() {
                 En resumen
               </p>
               <ul className="mt-3 list-disc space-y-2 pl-5 text-[15px] leading-relaxed text-zinc-700">
+                {/* ⚠️ Desde el 2026-08-28 hay planes SIN cohorte (Essential), que
+                    empiezan el mismo día del pago. Decir solo "de tu cohorte" dejaba
+                    su ventana de devolución sin comienzo definido, y éste es el
+                    documento al que el clickwrap del checkout le ata. Criterio del
+                    negocio (2026-08-29): para esos planes los 3 días corren desde la
+                    FECHA DE PAGO, que es cuando empieza a usar el servicio. */}
                 <li>
                   <strong>Reembolso completo</strong> si cancelas{" "}
                   <strong>antes de iniciar tus clases</strong> o dentro de los{" "}
-                  <strong>primeros 3 días naturales</strong> de tu cohorte (solo primera
-                  inscripción).
+                  <strong>primeros 3 días naturales</strong> desde el inicio de tu cohorte
+                  —o desde la <strong>fecha de pago</strong>, si tu plan empieza el mismo
+                  día y no va por cohorte— (solo primera inscripción).
                 </li>
                 <li>
                   Después de los 3 días, el periodo en curso <strong>no es reembolsable</strong>,
@@ -106,7 +113,9 @@ export default function ReembolsosPage() {
                 <li>antes de que inicien tus clases, o</li>
                 <li>
                   dentro de los primeros <strong>3 días naturales</strong> (calendario)
-                  posteriores al inicio de tu cohorte.
+                  posteriores al inicio de tu cohorte. En los planes que{" "}
+                  <strong>empiezan el mismo día del pago</strong> y no van por cohorte,
+                  esos 3 días se cuentan desde la <strong>fecha de pago</strong>.
                 </li>
               </ul>
               <p>
